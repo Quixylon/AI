@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#080a0f" />
     <meta
       name="description"
-      content="Мониторинг публичного статуса Steam-профиля через GitHub Pages и GitHub Actions."
+      content="Мониторинг публичного Steam-профиля и статистики CS2 через GitHub Pages и GitHub Actions."
     />
-    <title>Steam Status Tracker — Quixylon AI Lab</title>
+    <title>Steam & CS2 Tracker — Quixylon AI Lab</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -18,9 +18,9 @@
     <main class="shell">
       <header class="hero">
         <p class="eyebrow">QUIXYLON AI LAB</p>
-        <h1>Steam Status Tracker</h1>
+        <h1>Steam & CS2 Tracker</h1>
         <p class="intro">
-          Бесплатный мониторинг публичного Steam-профиля. GitHub проверяет статус по расписанию и обновляет эту страницу.
+          Бесплатный мониторинг одного публичного Steam-профиля. GitHub проверяет статус, сохраняет историю и обновляет статистику CS2 с CSRep.
         </p>
       </header>
 
@@ -30,7 +30,7 @@
             <p class="section-label">АВТОМАТИЧЕСКИЙ МОНИТОРИНГ</p>
             <h2 id="monitor-title">Отслеживаемый профиль</h2>
           </div>
-          <span class="live-indicator"><span></span> Обновление примерно раз в 5 минут</span>
+          <span class="live-indicator"><span></span> Steam проверяется примерно раз в 5 минут</span>
         </div>
         <p class="help-text">
           Данные получает GitHub Actions. Секретный Steam API key не отправляется в браузер и не хранится в коде.
@@ -66,7 +66,28 @@
         </div>
       </section>
 
-      <section id="history-panel" class="lookup-panel" hidden aria-labelledby="history-title" style="margin-top: 18px">
+      <section id="csrep-panel" class="lookup-panel section-panel" aria-labelledby="csrep-title">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">CS2 · CSREP.GG</p>
+            <h2 id="csrep-title">Игровая статистика</h2>
+          </div>
+          <a
+            id="csrep-link"
+            class="external-link"
+            href="https://csrep.gg/player/76561199524001992"
+            target="_blank"
+            rel="noreferrer"
+          >Открыть CSRep</a>
+        </div>
+        <p id="csrep-message" class="help-text" aria-live="polite">
+          Ожидание первой проверки CSRep через GitHub Actions.
+        </p>
+        <div id="csrep-metrics" class="details-grid" hidden></div>
+        <p id="csrep-updated" class="data-timestamp"></p>
+      </section>
+
+      <section id="history-panel" class="lookup-panel section-panel" hidden aria-labelledby="history-title">
         <div class="panel-heading">
           <div>
             <p class="section-label">ИСТОРИЯ ИЗМЕНЕНИЙ</p>
@@ -78,7 +99,7 @@
 
       <footer>
         <span>GitHub Pages + GitHub Actions</span>
-        <span>Без платного сервера</span>
+        <span>Steam Web API + CSRep.gg</span>
       </footer>
     </main>
 
