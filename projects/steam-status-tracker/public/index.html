@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#05060a" />
-    <meta name="description" content="Персональная страница Qu’lon: ссылки, Discord и Steam Tracker." />
+    <meta name="description" content="Персональная страница Qu’lon: цифровые следы, ссылки и Steam Tracker." />
     <title>Qu’lon</title>
-    <link rel="stylesheet" href="./styles.css?v=7" />
+    <link rel="stylesheet" href="./styles.css?v=8" />
   </head>
   <body>
     <canvas id="interactive-background" aria-hidden="true"></canvas>
@@ -34,31 +34,29 @@
           </div>
         </header>
 
-        <p id="profile-description" class="description depth-layer">
-          Steam, CS2, соцсети и всё важное — в одном месте.
-        </p>
+        <section class="about depth-layer" aria-label="Описание профиля">
+          <p class="about-greeting"><span>Привет</span><span class="about-emoji" aria-hidden="true">🐈</span></p>
+          <p id="profile-description" class="description">
+            Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.
+          </p>
+          <span class="about-line" aria-hidden="true"></span>
+        </section>
 
         <nav id="profile-links" class="profile-links depth-layer" aria-label="Ссылки Qu’lon"></nav>
 
-        <a id="guns-card" class="guns-card depth-layer" href="https://guns.lol/quixylon" target="_blank" rel="noreferrer">
+        <a id="guns-card" class="guns-card floating-action depth-layer" href="https://guns.lol/quixylon" target="_blank" rel="noreferrer">
           <span id="guns-dot" class="presence-dot unknown" aria-hidden="true"></span>
-          <span class="guns-copy">
-            <strong id="guns-presence">Статус Discord</strong>
-            <small>Онлайн Discord</small>
-          </span>
+          <strong>guns.lol</strong>
           <span class="card-arrow" aria-hidden="true">↗</span>
         </a>
 
-        <a class="tracker-button depth-layer" href="./tracker/">
+        <a class="tracker-button floating-action depth-layer" href="./tracker/">
           <span class="tracker-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img">
               <path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path>
             </svg>
           </span>
-          <span class="tracker-copy">
-            <strong>Открыть Steam Tracker</strong>
-            <small>Статус, игры и история сессий</small>
-          </span>
+          <strong>Steam Tracker</strong>
           <span class="card-arrow" aria-hidden="true">→</span>
         </a>
 
@@ -68,10 +66,8 @@
           <span id="view-count">Просмотры: …</span>
         </footer>
       </section>
-
-      <p class="interaction-hint">Точки реагируют на курсор и касания · карточка наклоняется в 3D</p>
     </main>
 
-    <script type="module" src="./app.js?v=7"></script>
+    <script type="module" src="./app.js?v=8"></script>
   </body>
 </html>
