@@ -1,83 +1,113 @@
 # Steam Status Tracker
 
-A lightweight web application that checks a public Steam profile and displays its current status, current game, avatar, and last logoff time.
+Бесплатный мониторинг одного публичного Steam-профиля на базе **GitHub Pages** и **GitHub Actions**.
 
-## Current features
+Отдельный сервер, Railway, Timeweb и база данных для базовой версии не нужны.
 
-- Looks up a profile by 17-digit SteamID64
-- Keeps the Steam Web API key on the server
-- Displays online, offline, away, busy, snooze, and in-game states
-- Shows the current game when Steam provides it
-- Refreshes the active profile every 60 seconds
-- Remembers the last SteamID64 in the browser
-- Works without third-party application dependencies
-- Includes a responsive mobile interface
+## Как это работает
 
-## Requirements
+1. GitHub Actions запускается по расписанию примерно раз в 5 минут.
+2. Workflow обращается к Steam Web API, используя секретный ключ из GitHub Secrets.
+3. Текущий статус и изменения активности записываются в JSON.
+4. GitHub Pages публикует статический сайт.
+5. Браузер загружает уже готовые данные — Steam API key никогда не попадает на страницу.
 
-- Node.js 20 or newer
-- A Steam Web API key
-- A public Steam profile
+## Возможности
 
-## Local setup
+- отображение статуса онлайн, офлайн, отошёл, занят и в игре;
+- отображение текущей игры;
+- аватар и ссылка на профиль;
+- время последней проверки;
+- история последних изменений статуса и игры;
+- обновление страницы без перезагрузки;
+- адаптивный интерфейс для телефона и компьютера;
+- полностью бесплатный запуск в публичном репозитории.
 
-1. Open this project directory:
+## Настройка GitHub
 
-   ```bash
-   cd projects/steam-status-tracker
-   ```
+### 1. Включить GitHub Pages
 
-2. Create your private environment file from `.env.example`.
+Откройте репозиторий `Quixylon/AI`:
 
-3. Replace the placeholder with your real Steam Web API key:
+`Settings → Pages → Build and deployment → Source → GitHub Actions`
 
-   ```env
-   STEAM_API_KEY=your_real_key_here
-   PORT=3000
-   ```
+### 2. Добавить Steam API key
 
-4. Start the development server:
+Откройте:
 
-   ```bash
-   npm run dev
-   ```
+`Settings → Secrets and variables → Actions → Secrets → New repository secret`
 
-5. Open `http://localhost:3000` in a browser.
-
-## API endpoints
-
-### Health check
+Создайте секрет:
 
 ```text
-GET /api/health
+Name: STEAM_API_KEY
+Secret: ваш Steam Web API key
 ```
 
-Reports whether the server is running and whether a Steam API key is configured. It never returns the key itself.
+### 3. Добавить SteamID64
 
-### Profile status
+В том же разделе откройте вкладку `Variables` и создайте переменную:
 
 ```text
-GET /api/status?steamId=7656119XXXXXXXXXX
+Name: STEAM_ID64
+Value: 17-значный SteamID64 отслеживаемого профиля
 ```
 
-Returns normalized public profile information from Steam.
+SteamID64 не является паролем, поэтому хранится как обычная переменная.
 
-## Security
+### 4. Запустить первый раз
 
-Never commit your real `.env` file or API key. Use environment variables in local development and in the hosting provider's settings.
+Откройте:
 
-## Current limitations
+`Actions → Steam Status Tracker → Run workflow → Run workflow`
 
-- No persistent database yet
-- No status history yet
-- No push notifications yet
-- Only SteamID64 input is supported
-- Private profile data cannot be retrieved
+После успешного выполнения сайт появится по адресу:
 
-## Next steps
+```text
+https://quixylon.github.io/AI/
+```
 
-1. Add a PostgreSQL database for status history.
-2. Save changes only when the player's state changes.
-3. Add activity charts.
-4. Add browser push notifications.
-5. Deploy the service and connect a domain.
+## Расписание
+
+Workflow использует расписание `*/5 * * * *`. GitHub старается запускать его раз в 5 минут, но во время высокой нагрузки возможны задержки.
+
+В публичных репозиториях GitHub может отключить scheduled workflows после длительного отсутствия активности. Их можно снова включить в разделе `Actions`.
+
+## Структура
+
+```text
+steam-status-tracker/
+├── public/
+│   ├── data/
+│   │   ├── status.json
+│   │   └── history.json
+│   ├── index.html
+│   ├── styles.css
+│   ├── app.js
+│   └── .nojekyll
+├── scripts/
+│   └── update-steam-status.mjs
+├── package.json
+└── README.md
+```
+
+Workflow находится в корне репозитория:
+
+```text
+.github/workflows/steam-status-pages.yml
+```
+
+## Безопасность
+
+- `STEAM_API_KEY` хранится только в GitHub Secrets.
+- Ключ не записывается в JSON, HTML, JavaScript или историю Git.
+- Не добавляйте настоящий ключ в `.env`, README или исходный код.
+- Публично сохраняются только данные публичного Steam-профиля и история его статуса.
+
+## Ограничения бесплатной версии
+
+- отслеживается один SteamID64;
+- обновление не является мгновенным;
+- браузерные push-уведомления пока не реализованы;
+- если Steam скрывает данные профиля, GitHub не сможет получить их;
+- история хранится в публичном репозитории.
