@@ -1,0 +1,6 @@
+{
+  "configured": false,
+  "message": "Добавьте STEAM_API_KEY в GitHub Secrets и STEAM_ID64 в GitHub Variables, затем запустите workflow вручную.",
+  "checkedAt": null,
+  "player": null
+}
