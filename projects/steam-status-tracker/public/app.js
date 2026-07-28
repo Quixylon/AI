@@ -1,18 +1,31 @@
-const messagePanel = document.querySelector('#message-panel');
-const profileCard = document.querySelector('#profile-card');
+const entryScreen = document.querySelector('#entry-screen');
+const enterButton = document.querySelector('#enter-button');
+const backgroundArt = document.querySelector('#background-art');
+const bioCover = document.querySelector('#bio-cover');
+const bioName = document.querySelector('#bio-name');
+const bioHandle = document.querySelector('#bio-handle');
+const bioDescription = document.querySelector('#bio-description');
+const bioLinks = document.querySelector('#bio-links');
 const profileAvatar = document.querySelector('#profile-avatar');
-const profileName = document.querySelector('#profile-name');
-const profileLink = document.querySelector('#profile-link');
+const profileSteamName = document.querySelector('#profile-steam-name');
 const statusPill = document.querySelector('#status-pill');
 const currentGame = document.querySelector('#current-game');
 const lastLogoff = document.querySelector('#last-logoff');
 const lastChecked = document.querySelector('#last-checked');
+const messagePanel = document.querySelector('#message-panel');
 const historyPanel = document.querySelector('#history-panel');
 const historyList = document.querySelector('#history-list');
 const csrepLink = document.querySelector('#csrep-link');
 const csrepMessage = document.querySelector('#csrep-message');
 const csrepMetrics = document.querySelector('#csrep-metrics');
 const csrepUpdated = document.querySelector('#csrep-updated');
+const musicCover = document.querySelector('#music-cover');
+const musicTitle = document.querySelector('#music-title');
+const musicArtist = document.querySelector('#music-artist');
+const musicToggle = document.querySelector('#music-toggle');
+const musicProgress = document.querySelector('#music-progress');
+const musicTime = document.querySelector('#music-time');
+const musicAudio = document.querySelector('#music-audio');
 
 const statusNames = {
   offline: 'Не в сети',
@@ -26,9 +39,14 @@ const statusNames = {
   unknown: 'Неизвестно'
 };
 
+let typewriterTimer = null;
+let descriptionsKey = '';
+let linksKey = '';
+let musicKey = '';
+let latestBioConfig = null;
+
 function formatDate(value, fallback = 'Нет данных') {
   if (!value) return fallback;
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
 
@@ -47,29 +65,24 @@ function formatNumber(value, maximumFractionDigits = 2) {
   }).format(value);
 }
 
-function formatDuration(startedAt, endedAt, savedDurationSeconds) {
-  let totalSeconds = Number(savedDurationSeconds);
+function formatClock(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const whole = Math.floor(seconds);
+  const minutes = Math.floor(whole / 60);
+  const remainder = String(whole % 60).padStart(2, '0');
+  return `${minutes}:${remainder}`;
+}
 
-  if (!Number.isFinite(totalSeconds)) {
-    const start = new Date(startedAt).getTime();
-    const end = endedAt ? new Date(endedAt).getTime() : Date.now();
-    if (!Number.isFinite(start) || !Number.isFinite(end)) return 'Неизвестно';
-    totalSeconds = Math.max(0, Math.round((end - start) / 1000));
-  }
+function formatDuration(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return 'Неизвестно';
+  const rounded = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(rounded / 3600);
+  const minutes = Math.floor((rounded % 3600) / 60);
+  const secs = rounded % 60;
 
-  const minutes = Math.floor(totalSeconds / 60);
-  if (minutes < 1) return 'меньше минуты';
-
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const remainingMinutes = minutes % 60;
-  const parts = [];
-
-  if (days > 0) parts.push(`${days} д`);
-  if (hours > 0) parts.push(`${hours} ч`);
-  if (remainingMinutes > 0 || parts.length === 0) parts.push(`${remainingMinutes} мин`);
-
-  return parts.slice(0, 2).join(' ');
+  if (hours > 0) return `${hours} ч ${minutes} мин`;
+  if (minutes > 0) return `${minutes} мин ${secs} сек`;
+  return `${secs} сек`;
 }
 
 function showMessage(message) {
@@ -80,26 +93,6 @@ function showMessage(message) {
 function clearMessage() {
   messagePanel.hidden = true;
   messagePanel.textContent = '';
-}
-
-function renderPlayer(data) {
-  const player = data.player;
-
-  profileAvatar.src = player.avatar;
-  profileAvatar.alt = `Аватар профиля ${player.name}`;
-  profileName.textContent = player.name;
-  profileLink.href = player.profileUrl;
-  statusPill.className = `status-pill ${player.status}`;
-  statusPill.textContent = statusNames[player.status] || statusNames.unknown;
-  currentGame.textContent = player.gameName || 'Не играет';
-  lastLogoff.textContent = formatDate(player.lastLogoff);
-  lastChecked.textContent = formatDate(data.checkedAt, 'Ещё не проверялось');
-  profileCard.hidden = false;
-
-  const checkedAt = new Date(data.checkedAt).getTime();
-  if (Number.isFinite(checkedAt) && Date.now() - checkedAt > 20 * 60 * 1000) {
-    showMessage('Данные Steam давно не обновлялись. Проверьте последний запуск workflow в разделе Actions.');
-  }
 }
 
 function createMetricCard(labelText, valueText) {
@@ -118,39 +111,152 @@ function createMetricCard(labelText, valueText) {
   return card;
 }
 
-function createHistoryCard(entry) {
-  const card = document.createElement('article');
-  card.className = `detail-card history-card ${entry.status || 'unknown'}`;
-  if (!entry.endedAt) card.classList.add('active');
+function startTypewriter(descriptions) {
+  const lines = Array.isArray(descriptions) && descriptions.length > 0
+    ? descriptions.map(String).filter(Boolean)
+    : ['Steam & CS2 activity tracker'];
+  const key = JSON.stringify(lines);
+  if (key === descriptionsKey) return;
 
-  const type = document.createElement('p');
-  type.className = 'detail-label';
-  type.textContent = entry.gameName
-    ? 'ИГРОВАЯ СЕССИЯ'
-    : entry.status === 'offline'
-      ? 'НЕ В СЕТИ'
-      : 'СТАТУС STEAM';
+  descriptionsKey = key;
+  if (typewriterTimer) window.clearTimeout(typewriterTimer);
 
-  const value = document.createElement('p');
-  value.className = 'detail-value history-value';
-  value.textContent = entry.gameName
-    ? entry.gameName
-    : statusNames[entry.status] || statusNames.unknown;
+  let lineIndex = 0;
+  let characterIndex = 0;
+  let deleting = false;
 
-  const interval = document.createElement('p');
-  interval.className = 'history-meta';
-  interval.textContent = `${formatDate(entry.startedAt)} → ${entry.endedAt ? formatDate(entry.endedAt) : 'сейчас'}`;
+  const tick = () => {
+    const line = lines[lineIndex];
+    bioDescription.textContent = line.slice(0, characterIndex);
 
-  const duration = document.createElement('p');
-  duration.className = 'history-duration';
-  duration.textContent = `${entry.endedAt ? 'Длительность' : 'Идёт'}: ${formatDuration(
-    entry.startedAt,
-    entry.endedAt,
-    entry.durationSeconds
-  )}`;
+    if (!deleting && characterIndex < line.length) {
+      characterIndex += 1;
+      typewriterTimer = window.setTimeout(tick, 48);
+      return;
+    }
 
-  card.append(type, value, interval, duration);
-  return card;
+    if (!deleting) {
+      deleting = true;
+      typewriterTimer = window.setTimeout(tick, 1700);
+      return;
+    }
+
+    if (characterIndex > 0) {
+      characterIndex -= 1;
+      typewriterTimer = window.setTimeout(tick, 24);
+      return;
+    }
+
+    deleting = false;
+    lineIndex = (lineIndex + 1) % lines.length;
+    typewriterTimer = window.setTimeout(tick, 280);
+  };
+
+  tick();
+}
+
+function renderLinks(links) {
+  const safeLinks = Array.isArray(links) ? links.filter((item) => item?.url && item?.label) : [];
+  const key = JSON.stringify(safeLinks);
+  if (key === linksKey) return;
+  linksKey = key;
+  bioLinks.replaceChildren();
+
+  for (const link of safeLinks) {
+    const anchor = document.createElement('a');
+    anchor.className = 'bio-link';
+    anchor.href = link.url;
+    anchor.target = '_blank';
+    anchor.rel = 'noreferrer';
+
+    const icon = document.createElement('span');
+    icon.className = 'bio-link-icon';
+    icon.textContent = String(link.icon || link.label).slice(0, 2).toUpperCase();
+
+    const label = document.createElement('span');
+    label.textContent = link.label;
+
+    const arrow = document.createElement('span');
+    arrow.className = 'bio-link-arrow';
+    arrow.textContent = '↗';
+
+    anchor.append(icon, label, arrow);
+    bioLinks.append(anchor);
+  }
+}
+
+function setMusicButtonState() {
+  musicToggle.textContent = musicAudio.paused ? '▶' : '❚❚';
+  musicToggle.setAttribute('aria-label', musicAudio.paused ? 'Воспроизвести' : 'Пауза');
+}
+
+function configureMusic(music = {}) {
+  const key = JSON.stringify(music || {});
+  if (key === musicKey) return;
+  musicKey = key;
+
+  const audioUrl = typeof music.audioUrl === 'string' ? music.audioUrl.trim() : '';
+  musicTitle.textContent = music.title || 'Трек не выбран';
+  musicArtist.textContent = music.artist || 'Музыка будет здесь';
+
+  if (music.coverUrl) {
+    musicCover.style.backgroundImage = `linear-gradient(135deg, rgba(8, 9, 13, 0.08), rgba(8, 9, 13, 0.72)), url("${music.coverUrl}")`;
+    musicCover.classList.add('has-image');
+  } else {
+    musicCover.style.backgroundImage = '';
+    musicCover.classList.remove('has-image');
+  }
+
+  musicAudio.pause();
+  musicAudio.removeAttribute('src');
+  musicAudio.load();
+  musicProgress.value = '0';
+  musicTime.textContent = '0:00 / 0:00';
+
+  const enabled = Boolean(audioUrl);
+  musicToggle.disabled = !enabled;
+  musicProgress.disabled = !enabled;
+
+  if (enabled) {
+    musicAudio.src = audioUrl;
+    musicAudio.load();
+  }
+
+  setMusicButtonState();
+}
+
+function renderBio(config, player) {
+  latestBioConfig = config || {};
+  bioName.textContent = config?.displayName || 'Quixylon';
+  bioHandle.textContent = config?.handle || '@quixylon';
+  startTypewriter(config?.descriptions);
+  renderLinks(config?.links);
+  configureMusic(config?.music);
+
+  if (!player) return;
+  profileAvatar.src = player.avatar;
+  profileAvatar.alt = `Аватар Steam-профиля ${player.name}`;
+  profileSteamName.textContent = player.name;
+
+  const layeredBackground = `linear-gradient(180deg, rgba(8, 9, 13, 0.08), rgba(8, 9, 13, 0.75)), url("${player.avatar}")`;
+  backgroundArt.style.backgroundImage = layeredBackground;
+  bioCover.style.backgroundImage = layeredBackground;
+}
+
+function renderPlayer(data) {
+  const player = data.player;
+  const statusText = statusNames[player.status] || statusNames.unknown;
+
+  statusPill.className = `status-pill ${player.status}`;
+  statusPill.textContent = player.gameName ? `В игре · ${player.gameName}` : statusText;
+  currentGame.textContent = player.gameName || statusText;
+  lastLogoff.textContent = formatDate(player.lastLogoff);
+  lastChecked.textContent = formatDate(data.checkedAt, 'Ещё не проверялось');
+
+  const checkedAt = new Date(data.checkedAt).getTime();
+  if (Number.isFinite(checkedAt) && Date.now() - checkedAt > 20 * 60 * 1000) {
+    showMessage('Данные Steam давно не обновлялись. Проверьте последний запуск workflow в разделе Actions.');
+  }
 }
 
 function renderCsrep(data) {
@@ -160,8 +266,8 @@ function renderCsrep(data) {
   if (!data?.available || !data?.stats) {
     csrepMetrics.hidden = true;
     csrepMessage.textContent = data?.error
-      ? `CSRep пока не отдал статистику автоматически. Профиль можно открыть по кнопке выше. ${data.error}`
-      : 'Статистика CSRep ещё не проверялась.';
+      ? data.error
+      : 'Автоматическая статистика CSRep сейчас недоступна. Профиль открывается кнопкой выше.';
     csrepUpdated.textContent = data?.lastAttemptAt
       ? `Последняя попытка: ${formatDate(data.lastAttemptAt)}`
       : '';
@@ -184,15 +290,9 @@ function renderCsrep(data) {
     ['Точность прицеливания', formatNumber(metrics.aimAccuracy, 1), '%'],
     ['Точность в голову', formatNumber(metrics.headAccuracy, 1), '%'],
     ['KAST', formatNumber(metrics.kast, 1), '%'],
-    ['Положение прицела', formatNumber(metrics.crosshairPlacementDeg), '°'],
-    ['Preaim', formatNumber(metrics.preaimDeg), '°'],
-    ['Убийства прострелом', formatNumber(metrics.wallbangKillPercent, 1), '%'],
-    ['Убийства через дым', formatNumber(metrics.smokeKillPercent, 1), '%'],
     ['Возраст аккаунта', account.age || null, ''],
     ['Часы в CS2', account.cs2Hours || null, ''],
-    ['Уровень Steam', account.steamLevel || null, ''],
-    ['Стоимость инвентаря', account.inventoryValue || null, ''],
-    ['Коллекционные предметы', account.collectibles || null, '']
+    ['Уровень Steam', account.steamLevel || null, '']
   ];
 
   for (const [label, value, suffix] of items) {
@@ -202,14 +302,50 @@ function renderCsrep(data) {
 
   csrepMetrics.hidden = csrepMetrics.childElementCount === 0;
   csrepMessage.textContent = data.fresh
-    ? 'Показатели получены непосредственно с публичной страницы CSRep.'
-    : 'Показаны последние успешно полученные показатели. Новая проверка CSRep временно не удалась.';
+    ? 'Показатели получены с публичной страницы CSRep.'
+    : 'Показаны последние успешно полученные показатели.';
+  csrepUpdated.textContent = data.checkedAt ? `Данные: ${formatDate(data.checkedAt)}` : '';
+}
 
-  const checked = data.checkedAt ? `Данные: ${formatDate(data.checkedAt)}` : '';
-  const attempted = data.lastAttemptAt && data.lastAttemptAt !== data.checkedAt
-    ? ` · последняя попытка: ${formatDate(data.lastAttemptAt)}`
-    : '';
-  csrepUpdated.textContent = `${checked}${attempted}`;
+function createHistoryEntry(entry, isCurrent) {
+  const card = document.createElement('article');
+  card.className = `history-entry ${entry.status || 'unknown'}`;
+
+  const marker = document.createElement('span');
+  marker.className = 'history-marker';
+
+  const content = document.createElement('div');
+  content.className = 'history-content';
+
+  const top = document.createElement('div');
+  top.className = 'history-top';
+
+  const title = document.createElement('h3');
+  const status = statusNames[entry.status] || statusNames.unknown;
+  title.textContent = entry.gameName ? entry.gameName : status;
+
+  const badge = document.createElement('span');
+  badge.className = 'history-badge';
+  badge.textContent = entry.gameName ? 'Игра' : status;
+  top.append(title, badge);
+
+  const timing = document.createElement('p');
+  timing.className = 'history-timing';
+  const endLabel = entry.endedAt ? formatDate(entry.endedAt) : 'сейчас';
+  timing.textContent = `${formatDate(entry.startedAt)} → ${endLabel}`;
+
+  const duration = document.createElement('p');
+  duration.className = 'history-duration';
+  const computedSeconds = entry.durationSeconds ?? (
+    isCurrent ? Math.max(0, (Date.now() - new Date(entry.startedAt).getTime()) / 1000) : null
+  );
+  duration.textContent = isCurrent
+    ? `Сессия идёт · ${formatDuration(computedSeconds)}`
+    : `Длительность · ${formatDuration(computedSeconds)}`;
+
+  content.append(top, timing, duration);
+  card.append(marker, content);
+  return card;
 }
 
 function renderHistory(history) {
@@ -220,50 +356,99 @@ function renderHistory(history) {
     return;
   }
 
-  const latestEntries = history.slice(-30).reverse();
-  for (const entry of latestEntries) {
-    historyList.append(createHistoryCard(entry));
-  }
+  const latestEntries = history.slice(-24).reverse();
+  latestEntries.forEach((entry, index) => {
+    const isCurrent = index === 0 && !entry.endedAt;
+    historyList.append(createHistoryEntry(entry, isCurrent));
+  });
 
   historyPanel.hidden = false;
+}
+
+async function fetchJson(path, fallback = null) {
+  const response = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
+  if (!response.ok) return fallback;
+  return response.json();
 }
 
 async function loadData() {
   clearMessage();
 
   try {
-    const cacheBreaker = Date.now();
-    const [statusResponse, historyResponse, csrepResponse] = await Promise.all([
-      fetch(`./data/status.json?v=${cacheBreaker}`, { cache: 'no-store' }),
-      fetch(`./data/history.json?v=${cacheBreaker}`, { cache: 'no-store' }),
-      fetch(`./data/csrep.json?v=${cacheBreaker}`, { cache: 'no-store' })
+    const [statusData, history, csrep, bio] = await Promise.all([
+      fetchJson('./data/status.json'),
+      fetchJson('./data/history.json', []),
+      fetchJson('./data/csrep.json'),
+      fetchJson('./data/bio.json', {})
     ]);
 
-    if (!statusResponse.ok) {
-      throw new Error(`Не удалось загрузить статус Steam: HTTP ${statusResponse.status}`);
-    }
-
-    const data = await statusResponse.json();
-    const history = historyResponse.ok ? await historyResponse.json() : [];
-    const csrep = csrepResponse.ok ? await csrepResponse.json() : null;
-
+    renderBio(bio || {}, statusData?.player || null);
     renderCsrep(csrep);
 
-    if (!data.configured || !data.player) {
-      profileCard.hidden = true;
+    if (!statusData?.configured || !statusData?.player) {
+      statusPill.className = 'status-pill unknown';
+      statusPill.textContent = 'Нет данных';
+      currentGame.textContent = 'Мониторинг не настроен';
       historyPanel.hidden = true;
-      showMessage(data.message || 'Мониторинг Steam ещё не настроен в GitHub Actions.');
+      showMessage(statusData?.message || 'Мониторинг Steam ещё не настроен в GitHub Actions.');
       return;
     }
 
-    renderPlayer(data);
+    renderPlayer(statusData);
     renderHistory(history);
   } catch (error) {
-    profileCard.hidden = true;
-    historyPanel.hidden = true;
+    statusPill.className = 'status-pill unknown';
+    statusPill.textContent = 'Ошибка';
     showMessage(error.message || 'Не удалось загрузить данные мониторинга.');
   }
 }
 
+enterButton.addEventListener('click', async () => {
+  entryScreen.classList.add('is-hidden');
+  document.body.classList.add('profile-entered');
+
+  if (latestBioConfig?.music?.autoplay && musicAudio.src) {
+    try {
+      await musicAudio.play();
+    } catch {
+      // Воспроизведение останется доступно по кнопке плеера.
+    }
+  }
+});
+
+musicToggle.addEventListener('click', async () => {
+  if (!musicAudio.src) return;
+
+  if (musicAudio.paused) {
+    try {
+      await musicAudio.play();
+    } catch {
+      return;
+    }
+  } else {
+    musicAudio.pause();
+  }
+  setMusicButtonState();
+});
+
+musicAudio.addEventListener('play', setMusicButtonState);
+musicAudio.addEventListener('pause', setMusicButtonState);
+musicAudio.addEventListener('loadedmetadata', () => {
+  musicTime.textContent = `0:00 / ${formatClock(musicAudio.duration)}`;
+});
+musicAudio.addEventListener('timeupdate', () => {
+  const duration = musicAudio.duration;
+  const current = musicAudio.currentTime;
+  musicProgress.value = Number.isFinite(duration) && duration > 0
+    ? String((current / duration) * 100)
+    : '0';
+  musicTime.textContent = `${formatClock(current)} / ${formatClock(duration)}`;
+});
+musicAudio.addEventListener('ended', setMusicButtonState);
+musicProgress.addEventListener('input', () => {
+  if (!Number.isFinite(musicAudio.duration) || musicAudio.duration <= 0) return;
+  musicAudio.currentTime = (Number(musicProgress.value) / 100) * musicAudio.duration;
+});
+
 loadData();
-window.setInterval(loadData, 60_000);
+window.setInterval(loadData, 15_000);
