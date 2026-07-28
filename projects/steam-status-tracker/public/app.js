@@ -9,6 +9,10 @@ const lastLogoff = document.querySelector('#last-logoff');
 const lastChecked = document.querySelector('#last-checked');
 const historyPanel = document.querySelector('#history-panel');
 const historyList = document.querySelector('#history-list');
+const csrepLink = document.querySelector('#csrep-link');
+const csrepMessage = document.querySelector('#csrep-message');
+const csrepMetrics = document.querySelector('#csrep-metrics');
+const csrepUpdated = document.querySelector('#csrep-updated');
 
 const statusNames = {
   offline: 'Не в сети',
@@ -32,6 +36,15 @@ function formatDate(value, fallback = 'Нет данных') {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(date);
+}
+
+function formatNumber(value, maximumFractionDigits = 2) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value !== 'number') return String(value);
+
+  return new Intl.NumberFormat('ru-RU', {
+    maximumFractionDigits
+  }).format(value);
 }
 
 function showMessage(message) {
@@ -60,8 +73,83 @@ function renderPlayer(data) {
 
   const checkedAt = new Date(data.checkedAt).getTime();
   if (Number.isFinite(checkedAt) && Date.now() - checkedAt > 20 * 60 * 1000) {
-    showMessage('Данные давно не обновлялись. Проверьте последний запуск workflow в разделе Actions.');
+    showMessage('Данные Steam давно не обновлялись. Проверьте последний запуск workflow в разделе Actions.');
   }
+}
+
+function createMetricCard(labelText, valueText) {
+  const card = document.createElement('article');
+  card.className = 'detail-card';
+
+  const label = document.createElement('p');
+  label.className = 'detail-label';
+  label.textContent = labelText;
+
+  const value = document.createElement('p');
+  value.className = 'detail-value';
+  value.textContent = valueText;
+
+  card.append(label, value);
+  return card;
+}
+
+function renderCsrep(data) {
+  csrepLink.href = data?.profileUrl || 'https://csrep.gg/player/76561199524001992';
+  csrepMetrics.replaceChildren();
+
+  if (!data?.available || !data?.stats) {
+    csrepMetrics.hidden = true;
+    csrepMessage.textContent = data?.error
+      ? `CSRep пока не отдал статистику автоматически. Профиль можно открыть по кнопке выше. ${data.error}`
+      : 'Статистика CSRep ещё не проверялась.';
+    csrepUpdated.textContent = data?.lastAttemptAt
+      ? `Последняя попытка: ${formatDate(data.lastAttemptAt)}`
+      : '';
+    return;
+  }
+
+  const stats = data.stats;
+  const metrics = stats.metrics || {};
+  const account = stats.account || {};
+  const items = [
+    ['Trust Rating', formatNumber(stats.trustRating, 1), '%'],
+    ['Обнаруженные аномалии', formatNumber(stats.anomaliesDetected, 1), '%'],
+    ['Stats Based Analysis', formatNumber(stats.statsBasedAnalysis, 1), '%'],
+    ['Проанализировано игр', formatNumber(stats.gamesAnalyzed, 0), ''],
+    ['K/D', formatNumber(metrics.kd), ''],
+    ['ADR', formatNumber(metrics.adr), ''],
+    ['HLTV Rating 2.0', formatNumber(metrics.hltvRating), ''],
+    ['Reaction Time', formatNumber(metrics.reactionMs, 0), ' мс'],
+    ['Time to Damage', formatNumber(metrics.timeToDamageMs, 0), ' мс'],
+    ['Точность прицеливания', formatNumber(metrics.aimAccuracy, 1), '%'],
+    ['Точность в голову', formatNumber(metrics.headAccuracy, 1), '%'],
+    ['KAST', formatNumber(metrics.kast, 1), '%'],
+    ['Положение прицела', formatNumber(metrics.crosshairPlacementDeg), '°'],
+    ['Preaim', formatNumber(metrics.preaimDeg), '°'],
+    ['Убийства прострелом', formatNumber(metrics.wallbangKillPercent, 1), '%'],
+    ['Убийства через дым', formatNumber(metrics.smokeKillPercent, 1), '%'],
+    ['Возраст аккаунта', account.age || null, ''],
+    ['Часы в CS2', account.cs2Hours || null, ''],
+    ['Уровень Steam', account.steamLevel || null, ''],
+    ['Стоимость инвентаря', account.inventoryValue || null, ''],
+    ['Коллекционные предметы', account.collectibles || null, '']
+  ];
+
+  for (const [label, value, suffix] of items) {
+    if (value === null || value === undefined || value === '') continue;
+    csrepMetrics.append(createMetricCard(label, `${value}${suffix}`));
+  }
+
+  csrepMetrics.hidden = csrepMetrics.childElementCount === 0;
+  csrepMessage.textContent = data.fresh
+    ? 'Показатели получены непосредственно с публичной страницы CSRep.'
+    : 'Показаны последние успешно полученные показатели. Новая проверка CSRep временно не удалась.';
+
+  const checked = data.checkedAt ? `Данные: ${formatDate(data.checkedAt)}` : '';
+  const attempted = data.lastAttemptAt && data.lastAttemptAt !== data.checkedAt
+    ? ` · последняя попытка: ${formatDate(data.lastAttemptAt)}`
+    : '';
+  csrepUpdated.textContent = `${checked}${attempted}`;
 }
 
 function renderHistory(history) {
@@ -75,20 +163,9 @@ function renderHistory(history) {
   const latestEntries = history.slice(-12).reverse();
 
   for (const entry of latestEntries) {
-    const card = document.createElement('article');
-    card.className = 'detail-card';
-
-    const label = document.createElement('p');
-    label.className = 'detail-label';
-    label.textContent = formatDate(entry.startedAt);
-
-    const value = document.createElement('p');
-    value.className = 'detail-value';
     const status = statusNames[entry.status] || statusNames.unknown;
-    value.textContent = entry.gameName ? `${status}: ${entry.gameName}` : status;
-
-    card.append(label, value);
-    historyList.append(card);
+    const value = entry.gameName ? `${status}: ${entry.gameName}` : status;
+    historyList.append(createMetricCard(formatDate(entry.startedAt), value));
   }
 
   historyPanel.hidden = false;
@@ -99,22 +176,26 @@ async function loadData() {
 
   try {
     const cacheBreaker = Date.now();
-    const [statusResponse, historyResponse] = await Promise.all([
+    const [statusResponse, historyResponse, csrepResponse] = await Promise.all([
       fetch(`./data/status.json?v=${cacheBreaker}`, { cache: 'no-store' }),
-      fetch(`./data/history.json?v=${cacheBreaker}`, { cache: 'no-store' })
+      fetch(`./data/history.json?v=${cacheBreaker}`, { cache: 'no-store' }),
+      fetch(`./data/csrep.json?v=${cacheBreaker}`, { cache: 'no-store' })
     ]);
 
     if (!statusResponse.ok) {
-      throw new Error(`Не удалось загрузить статус: HTTP ${statusResponse.status}`);
+      throw new Error(`Не удалось загрузить статус Steam: HTTP ${statusResponse.status}`);
     }
 
     const data = await statusResponse.json();
     const history = historyResponse.ok ? await historyResponse.json() : [];
+    const csrep = csrepResponse.ok ? await csrepResponse.json() : null;
+
+    renderCsrep(csrep);
 
     if (!data.configured || !data.player) {
       profileCard.hidden = true;
       historyPanel.hidden = true;
-      showMessage(data.message || 'Мониторинг ещё не настроен в GitHub Actions.');
+      showMessage(data.message || 'Мониторинг Steam ещё не настроен в GitHub Actions.');
       return;
     }
 
