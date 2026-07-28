@@ -1,12 +1,11 @@
 {
   "name": "steam-status-tracker",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A lightweight web application for checking public Steam profile status.",
+  "description": "A static Steam status monitor powered by GitHub Pages and GitHub Actions.",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --env-file=.env --watch server.js"
+    "update": "node scripts/update-steam-status.mjs"
   },
   "engines": {
     "node": ">=20"
