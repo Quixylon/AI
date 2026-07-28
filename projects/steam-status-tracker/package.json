@@ -5,11 +5,7 @@
   "type": "module",
   "description": "A static Steam and CSRep monitor powered by GitHub Pages and GitHub Actions.",
   "scripts": {
-    "update": "node scripts/update-steam-status.mjs",
-    "update:csrep": "node scripts/update-csrep-stats.mjs"
-  },
-  "dependencies": {
-    "playwright": "1.55.0"
+    "update": "node scripts/update-steam-status.mjs"
   },
   "engines": {
     "node": ">=20"
