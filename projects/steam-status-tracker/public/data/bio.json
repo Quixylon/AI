@@ -2,29 +2,27 @@
   "displayName": "Quixylon",
   "handle": "@quixylon",
   "descriptions": [
-    "Steam, CS2 и всё важное — в одном месте"
+    "Steam, CS2, соцсети и всё важное — в одном месте"
   ],
   "links": [
     {
-      "label": "guns.lol",
-      "url": "https://guns.lol/quixylon",
-      "icon": "GL"
+      "label": "Telegram",
+      "url": "https://t.me/quixylon",
+      "kind": "telegram",
+      "hint": "t.me/quixylon"
     },
     {
-      "label": "Steam",
-      "url": "https://steamcommunity.com/id/quixylon/",
-      "icon": "ST"
+      "label": "Roblox",
+      "url": "https://roblox.com/users/1295717297/profile",
+      "kind": "roblox",
+      "hint": "Профиль Quixylon"
     },
     {
-      "label": "CSRep",
-      "url": "https://csrep.gg/player/76561199524001992",
-      "icon": "CS"
-    },
-    {
-      "label": "GitHub",
-      "url": "https://github.com/Quixylon/AI",
-      "icon": "GH"
+      "label": "TikTok",
+      "url": "https://tiktok.com/@quixylon",
+      "kind": "tiktok",
+      "hint": "@quixylon"
     }
   ],
-  "spotifyUrl": ""
+  "spotifyUrl": "https://open.spotify.com/track/5QTnnDxfcdQzYndjxegNex"
 }
