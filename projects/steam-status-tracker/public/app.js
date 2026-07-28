@@ -12,12 +12,15 @@ let pixelRatio = 1;
 let particles = [];
 let ripples = [];
 let lastFrame = performance.now();
+let motionStages = [];
 
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
   active: false,
-  down: false
+  down: false,
+  lastX: null,
+  lastY: null
 };
 
 const tilt = {
@@ -29,6 +32,16 @@ const tilt = {
   targetY: 0,
   targetShiftX: 0,
   targetShiftY: 0
+};
+
+const motion = {
+  x: 0,
+  y: 0,
+  targetX: 0,
+  targetY: 0,
+  lastScrollY: window.scrollY,
+  lastTouchX: null,
+  lastTouchY: null
 };
 
 const iconMarkup = {
@@ -61,6 +74,19 @@ const iconMarkup = {
     </svg>`
 };
 
+function clamp(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function addMotionImpulse(deltaX, deltaY, strength = 1) {
+  motion.targetX = clamp(motion.targetX + deltaX * strength, -7, 7);
+  motion.targetY = clamp(motion.targetY + deltaY * strength, -7, 7);
+}
+
+function refreshMotionStages() {
+  motionStages = [...document.querySelectorAll('.link-stage, .action-stage')];
+}
+
 function createParticle(index, count) {
   const aspect = Math.max(0.5, width / Math.max(height, 1));
   const columns = Math.max(7, Math.ceil(Math.sqrt(count * aspect)));
@@ -83,10 +109,12 @@ function createParticle(index, count) {
     renderX: homeX,
     renderY: homeY,
     depth,
-    radius: 0.75 + depth * 1.55,
-    alpha: 0.25 + depth * 0.46,
+    radius: 0.8 + depth * 1.65,
+    alpha: 0.3 + depth * 0.52,
     phase: Math.random() * Math.PI * 2,
-    maxOffset: 28 + depth * 34
+    attractAngle: Math.random() * Math.PI * 2,
+    attractRadius: 13 + Math.random() * 28,
+    maxOffset: 46 + depth * 52
   };
 }
 
@@ -100,19 +128,25 @@ function resizeCanvas() {
   canvas.style.height = `${height}px`;
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-  const count = Math.min(145, Math.max(reducedMotion ? 58 : 88, Math.round((width * height) / 9000)));
+  const count = Math.min(155, Math.max(reducedMotion ? 62 : 96, Math.round((width * height) / 8500)));
   particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
 }
 
 function addRipple(x, y) {
-  ripples.push({ x, y, radius: 8, alpha: 0.5, speed: 1.8 });
-  ripples.push({ x, y, radius: 18, alpha: 0.2, speed: 1.15 });
+  ripples.push({ x, y, radius: 8, alpha: 0.58, speed: 1.9 });
+  ripples.push({ x, y, radius: 19, alpha: 0.24, speed: 1.2 });
 }
 
 function setPointer(clientX, clientY) {
   pointer.x = clientX;
   pointer.y = clientY;
   pointer.active = true;
+
+  if (pointer.lastX !== null && pointer.lastY !== null) {
+    addMotionImpulse(clientX - pointer.lastX, clientY - pointer.lastY, 0.045);
+  }
+  pointer.lastX = clientX;
+  pointer.lastY = clientY;
 
   if (coarsePointer) return;
 
@@ -131,6 +165,10 @@ function setPointer(clientX, clientY) {
 function releasePointer() {
   pointer.down = false;
   pointer.active = false;
+  pointer.lastX = null;
+  pointer.lastY = null;
+  motion.lastTouchX = null;
+  motion.lastTouchY = null;
   tilt.targetX = 0;
   tilt.targetY = 0;
   tilt.targetShiftX = 0;
@@ -159,9 +197,28 @@ function animateCard(timestamp = 0) {
   window.requestAnimationFrame(animateCard);
 }
 
+function animateButtonMotion() {
+  motion.targetX *= 0.9;
+  motion.targetY *= 0.9;
+  motion.x += (motion.targetX - motion.x) * 0.13;
+  motion.y += (motion.targetY - motion.y) * 0.13;
+
+  motionStages.forEach((stage, index) => {
+    const direction = index % 2 === 0 ? 1 : -1;
+    const depth = 0.48 + (index % 4) * 0.08;
+    const x = motion.x * depth * direction;
+    const y = motion.y * depth;
+    const rotateX = clamp(-y * 0.12, -0.75, 0.75);
+    const rotateY = clamp(x * 0.12, -0.75, 0.75);
+    stage.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+  });
+
+  window.requestAnimationFrame(animateButtonMotion);
+}
+
 function updateParticles(delta, timestamp) {
-  const spring = pointer.down ? 0.025 : 0.052;
-  const damping = pointer.down ? 0.9 : 0.84;
+  const spring = pointer.down ? 0.018 : 0.058;
+  const damping = pointer.down ? 0.92 : 0.82;
 
   for (const particle of particles) {
     particle.phase += (0.005 + particle.depth * 0.003) * delta;
@@ -169,24 +226,30 @@ function updateParticles(delta, timestamp) {
     particle.velocityY += (particle.homeY - particle.y) * spring * delta;
 
     if (pointer.down) {
-      const deltaX = pointer.x - particle.x;
-      const deltaY = pointer.y - particle.y;
-      const distance = Math.hypot(deltaX, deltaY) || 1;
-      const influence = 150 + particle.depth * 60;
+      const originDistance = Math.hypot(pointer.x - particle.homeX, pointer.y - particle.homeY);
+      const influence = 225 + particle.depth * 95;
 
-      if (distance < influence) {
-        const pull = (1 - distance / influence) * 0.045 * particle.depth;
-        particle.velocityX += (deltaX / distance) * pull * delta;
-        particle.velocityY += (deltaY / distance) * pull * delta;
+      if (originDistance < influence) {
+        const orbit = particle.attractRadius * (0.8 + particle.depth * 0.55);
+        const driftAngle = particle.attractAngle + timestamp * 0.00018 * (particle.depth + 0.4);
+        const targetX = pointer.x + Math.cos(driftAngle) * orbit;
+        const targetY = pointer.y + Math.sin(driftAngle) * orbit;
+        const deltaX = targetX - particle.x;
+        const deltaY = targetY - particle.y;
+        const distance = Math.hypot(deltaX, deltaY) || 1;
+        const strength = (1 - originDistance / influence) * 0.115 * (0.65 + particle.depth * 0.55);
+
+        particle.velocityX += (deltaX / distance) * strength * delta;
+        particle.velocityY += (deltaY / distance) * strength * delta;
       }
     } else if (pointer.active && !coarsePointer) {
       const deltaX = particle.x - pointer.x;
       const deltaY = particle.y - pointer.y;
       const distance = Math.hypot(deltaX, deltaY) || 1;
-      const influence = 90 + particle.depth * 45;
+      const influence = 105 + particle.depth * 55;
 
       if (distance < influence) {
-        const push = (1 - distance / influence) * 0.01 * particle.depth;
+        const push = (1 - distance / influence) * 0.012 * particle.depth;
         particle.velocityX += (deltaX / distance) * push * delta;
         particle.velocityY += (deltaY / distance) * push * delta;
       }
@@ -204,18 +267,18 @@ function updateParticles(delta, timestamp) {
       const scale = particle.maxOffset / offset;
       particle.x = particle.homeX + offsetX * scale;
       particle.y = particle.homeY + offsetY * scale;
-      particle.velocityX *= 0.35;
-      particle.velocityY *= 0.35;
+      particle.velocityX *= 0.42;
+      particle.velocityY *= 0.42;
     }
 
-    particle.renderX = particle.x + Math.cos(timestamp * 0.00042 + particle.phase) * particle.depth * 1.4;
-    particle.renderY = particle.y + Math.sin(timestamp * 0.00036 + particle.phase) * particle.depth * 1.2;
+    particle.renderX = particle.x + Math.cos(timestamp * 0.00042 + particle.phase) * particle.depth * 1.6;
+    particle.renderY = particle.y + Math.sin(timestamp * 0.00036 + particle.phase) * particle.depth * 1.35;
   }
 }
 
 function drawWeb() {
   context.shadowBlur = 0;
-  const threshold = Math.min(122, Math.max(86, Math.min(width, height) * 0.115));
+  const threshold = Math.min(152, Math.max(108, Math.min(width, height) * 0.145));
 
   for (let firstIndex = 0; firstIndex < particles.length; firstIndex += 1) {
     const first = particles[firstIndex];
@@ -225,9 +288,9 @@ function drawWeb() {
       if (distance >= threshold) continue;
 
       const depth = Math.min(first.depth, second.depth);
-      const alpha = (1 - distance / threshold) * 0.11 * depth;
-      context.strokeStyle = `rgba(157, 149, 255, ${alpha})`;
-      context.lineWidth = 0.42 + depth * 0.28;
+      const alpha = (1 - distance / threshold) * 0.22 * depth;
+      context.strokeStyle = `rgba(166, 157, 255, ${alpha})`;
+      context.lineWidth = 0.55 + depth * 0.42;
       context.beginPath();
       context.moveTo(first.renderX, first.renderY);
       context.lineTo(second.renderX, second.renderY);
@@ -239,13 +302,13 @@ function drawWeb() {
 
   const nearby = particles
     .map((particle) => ({ particle, distance: Math.hypot(particle.renderX - pointer.x, particle.renderY - pointer.y) }))
-    .filter((item) => item.distance < 180)
+    .filter((item) => item.distance < 245)
     .sort((a, b) => a.distance - b.distance)
-    .slice(0, 5);
+    .slice(0, 9);
 
   for (const { particle, distance } of nearby) {
-    context.strokeStyle = `rgba(190, 181, 255, ${(1 - distance / 180) * 0.16})`;
-    context.lineWidth = 0.65;
+    context.strokeStyle = `rgba(207, 199, 255, ${(1 - distance / 245) * 0.34})`;
+    context.lineWidth = 0.8;
     context.beginPath();
     context.moveTo(particle.renderX, particle.renderY);
     context.lineTo(pointer.x, pointer.y);
@@ -262,8 +325,8 @@ function drawBackground(timestamp = 0) {
   const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00014) * 0.08);
   const focusY = pointer.active ? pointer.y : height * (0.43 + Math.cos(timestamp * 0.00012) * 0.06);
   const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.58);
-  glow.addColorStop(0, 'rgba(135, 109, 255, 0.16)');
-  glow.addColorStop(0.38, 'rgba(44, 132, 213, 0.065)');
+  glow.addColorStop(0, pointer.down ? 'rgba(151, 126, 255, 0.24)' : 'rgba(135, 109, 255, 0.17)');
+  glow.addColorStop(0.38, 'rgba(44, 132, 213, 0.075)');
   glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   context.fillStyle = glow;
   context.fillRect(0, 0, width, height);
@@ -273,9 +336,9 @@ function drawBackground(timestamp = 0) {
   for (const particle of particles) {
     const pulse = 1 + Math.sin(timestamp * 0.0013 + particle.phase) * 0.08;
     context.beginPath();
-    context.fillStyle = `rgba(220, 225, 255, ${particle.alpha})`;
-    context.shadowColor = `rgba(151, 141, 255, ${particle.alpha * 0.42})`;
-    context.shadowBlur = 3 + particle.depth * 4;
+    context.fillStyle = `rgba(225, 229, 255, ${particle.alpha})`;
+    context.shadowColor = `rgba(157, 147, 255, ${particle.alpha * 0.5})`;
+    context.shadowBlur = 4 + particle.depth * 5;
     context.arc(particle.renderX, particle.renderY, particle.radius * pulse, 0, Math.PI * 2);
     context.fill();
   }
@@ -285,8 +348,8 @@ function drawBackground(timestamp = 0) {
   for (const ripple of ripples) {
     ripple.radius += ripple.speed * delta;
     ripple.alpha *= Math.pow(0.95, delta);
-    context.strokeStyle = `rgba(187, 178, 255, ${ripple.alpha})`;
-    context.lineWidth = 1;
+    context.strokeStyle = `rgba(198, 188, 255, ${ripple.alpha})`;
+    context.lineWidth = 1.05;
     context.beginPath();
     context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
     context.stroke();
@@ -344,6 +407,8 @@ function renderLinks(links) {
     stage.append(anchor);
     container.append(stage);
   }
+
+  refreshMotionStages();
 }
 
 async function fetchJson(path, fallback = null) {
@@ -412,20 +477,94 @@ async function loadProfile() {
   else if (player) $('#profile-status').textContent = 'Steam: в сети';
 }
 
-window.addEventListener('pointermove', (event) => setPointer(event.clientX, event.clientY), { passive: true });
+window.addEventListener('pointermove', (event) => {
+  if (event.pointerType === 'touch') return;
+  setPointer(event.clientX, event.clientY);
+}, { passive: true });
+
 window.addEventListener('pointerdown', (event) => {
+  if (event.pointerType === 'touch') return;
   pointer.down = true;
   setPointer(event.clientX, event.clientY);
   addRipple(event.clientX, event.clientY);
 }, { passive: true });
-window.addEventListener('pointerup', releasePointer, { passive: true });
+
+window.addEventListener('pointerup', (event) => {
+  if (event.pointerType === 'touch') return;
+  releasePointer();
+}, { passive: true });
 window.addEventListener('pointercancel', releasePointer, { passive: true });
 window.addEventListener('pointerleave', releasePointer, { passive: true });
-window.addEventListener('resize', resizeCanvas, { passive: true });
+
+window.addEventListener('touchstart', (event) => {
+  const touch = event.touches?.[0];
+  if (!touch) return;
+  pointer.down = true;
+  pointer.active = true;
+  pointer.x = touch.clientX;
+  pointer.y = touch.clientY;
+  motion.lastTouchX = touch.clientX;
+  motion.lastTouchY = touch.clientY;
+  addRipple(touch.clientX, touch.clientY);
+}, { passive: true });
+
+window.addEventListener('touchmove', (event) => {
+  const touch = event.touches?.[0];
+  if (!touch) return;
+
+  if (motion.lastTouchX !== null && motion.lastTouchY !== null) {
+    addMotionImpulse(touch.clientX - motion.lastTouchX, touch.clientY - motion.lastTouchY, 0.1);
+  }
+
+  motion.lastTouchX = touch.clientX;
+  motion.lastTouchY = touch.clientY;
+  pointer.down = true;
+  pointer.active = true;
+  pointer.x = touch.clientX;
+  pointer.y = touch.clientY;
+}, { passive: true });
+
+window.addEventListener('touchend', (event) => {
+  if (event.touches?.length) {
+    const touch = event.touches[0];
+    pointer.x = touch.clientX;
+    pointer.y = touch.clientY;
+    return;
+  }
+  releasePointer();
+}, { passive: true });
+window.addEventListener('touchcancel', releasePointer, { passive: true });
+
+window.addEventListener('scroll', () => {
+  const currentScrollY = window.scrollY;
+  const delta = currentScrollY - motion.lastScrollY;
+  motion.lastScrollY = currentScrollY;
+  addMotionImpulse(0, clamp(-delta * 0.09, -4.5, 4.5), 1);
+}, { passive: true });
+
+window.addEventListener('deviceorientation', (event) => {
+  if (!Number.isFinite(event.gamma) || !Number.isFinite(event.beta)) return;
+  const horizontal = clamp(event.gamma / 45, -1, 1) * 1.7;
+  const vertical = clamp((event.beta - 45) / 55, -1, 1) * 1.35;
+  motion.targetX = motion.targetX * 0.7 + horizontal * 0.3;
+  motion.targetY = motion.targetY * 0.7 + vertical * 0.3;
+}, { passive: true });
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  addMotionImpulse(0, 1.5, 1);
+}, { passive: true });
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => addMotionImpulse(0, 1.2, 1), { passive: true });
+  window.visualViewport.addEventListener('scroll', () => addMotionImpulse(0, -1, 1), { passive: true });
+}
 
 resizeCanvas();
+refreshMotionStages();
 drawBackground();
 animateCard();
+animateButtonMotion();
 loadProfile();
 updateDiscordPresence();
 window.setInterval(updateDiscordPresence, 60_000);
