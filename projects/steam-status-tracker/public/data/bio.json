@@ -1,45 +1,37 @@
 {
   "displayName": "Qu’lon",
   "handle": "@quixylon",
-  "descriptions": [
-    "Steam, CS2, соцсети и всё важное — в одном месте"
-  ],
+  "description": "Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.",
   "links": [
     {
       "label": "Telegram",
       "url": "https://t.me/quixylon",
-      "kind": "telegram",
-      "hint": "t.me/quixylon"
+      "kind": "telegram"
     },
     {
       "label": "Roblox",
       "url": "https://roblox.com/users/1295717297/profile",
-      "kind": "roblox",
-      "hint": "Профиль Roblox"
+      "kind": "roblox"
     },
     {
       "label": "TikTok",
       "url": "https://tiktok.com/@quixylon",
-      "kind": "tiktok",
-      "hint": "@quixylon"
+      "kind": "tiktok"
     },
     {
       "label": "Steam",
       "url": "https://steamcommunity.com/id/quixylon/",
-      "kind": "steam",
-      "hint": "Steam-профиль"
+      "kind": "steam"
     },
     {
       "label": "CSRep",
       "url": "https://csrep.gg/player/76561199524001992",
-      "kind": "csrep",
-      "hint": "Статистика CS2"
+      "kind": "csrep"
     },
     {
       "label": "GitHub",
       "url": "https://github.com/Quixylon/AI",
-      "kind": "github",
-      "hint": "Quixylon/AI"
+      "kind": "github"
     }
   ]
 }
