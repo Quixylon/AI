@@ -61,7 +61,7 @@ async function resolveSteamId(apiKey) {
   const response = await fetch(endpoint, {
     signal: AbortSignal.timeout(15_000),
     headers: {
-      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.2'
+      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.3'
     }
   });
 
@@ -96,6 +96,7 @@ if (!apiKey) {
   await writeFile(statusPath, `${JSON.stringify(placeholder, null, 2)}\n`);
   await writeFile(historyPath, `${JSON.stringify(Array.isArray(history) ? history : [], null, 2)}\n`);
   await setOutput('persist', String(previousStatus?.configured === true));
+  await setOutput('notify', 'false');
   console.log('Steam monitoring is not configured yet.');
   process.exit(0);
 }
@@ -108,7 +109,7 @@ endpoint.searchParams.set('steamids', steamId);
 const response = await fetch(endpoint, {
   signal: AbortSignal.timeout(15_000),
   headers: {
-    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.2'
+    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.3'
   }
 });
 
@@ -171,5 +172,6 @@ const trimmedHistory = nextHistory.slice(-500);
 await writeFile(statusPath, `${JSON.stringify(newStatus, null, 2)}\n`);
 await writeFile(historyPath, `${JSON.stringify(trimmedHistory, null, 2)}\n`);
 await setOutput('persist', String(profileChanged || presenceChanged));
+await setOutput('notify', String(presenceChanged));
 
 console.log(`Updated ${player.name}: ${player.status}${player.gameName ? ` — ${player.gameName}` : ''}`);
