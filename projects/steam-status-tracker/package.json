@@ -1,11 +1,15 @@
 {
   "name": "steam-status-tracker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
-  "description": "A static Steam status monitor powered by GitHub Pages and GitHub Actions.",
+  "description": "A static Steam and CSRep monitor powered by GitHub Pages and GitHub Actions.",
   "scripts": {
-    "update": "node scripts/update-steam-status.mjs"
+    "update": "node scripts/update-steam-status.mjs",
+    "update:csrep": "node scripts/update-csrep-stats.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.55.0"
   },
   "engines": {
     "node": ">=20"
