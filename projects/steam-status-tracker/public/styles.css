@@ -357,6 +357,66 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+.history-help {
+  margin-top: -12px;
+}
+
+.history-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.history-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 176px;
+}
+
+.history-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  content: "";
+  background: var(--offline);
+  opacity: 0.8;
+}
+
+.history-card.online::before,
+.history-card.in-game::before {
+  background: var(--online);
+}
+
+.history-card.away::before,
+.history-card.busy::before,
+.history-card.snooze::before {
+  background: var(--warning);
+}
+
+.history-card.active {
+  border-color: rgba(94, 230, 168, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(94, 230, 168, 0.06);
+}
+
+.history-value {
+  margin-bottom: 14px;
+  font-size: 1.06rem;
+}
+
+.history-meta,
+.history-duration {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.history-duration {
+  margin-top: 8px;
+  color: #c7ccd6;
+  font-weight: 750;
+}
+
 footer {
   display: flex;
   justify-content: space-between;
@@ -402,7 +462,8 @@ footer {
     margin-left: 100px;
   }
 
-  .details-grid {
+  .details-grid,
+  .history-grid {
     grid-template-columns: 1fr;
   }
 }
