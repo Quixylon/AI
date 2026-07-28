@@ -6,12 +6,7 @@ on:
       - main
     paths:
       - .github/workflows/steam-status-pages.yml
-      - projects/steam-status-tracker/public/index.html
-      - projects/steam-status-tracker/public/app.js
-      - projects/steam-status-tracker/public/styles.css
-      - projects/steam-status-tracker/public/csrep.css
-      - projects/steam-status-tracker/public/data/bio.json
-      - projects/steam-status-tracker/public/.nojekyll
+      - projects/steam-status-tracker/public/**
       - projects/steam-status-tracker/scripts/**
   schedule:
     - cron: '*/5 * * * *'
@@ -91,7 +86,7 @@ jobs:
             '',
             `Проверено: ${checkedAt} МСК`,
             '',
-            `[Открыть Steam-профиль](${player.profileUrl}) · [Открыть мониторинг](https://quixylon.github.io/AI/)`
+            `[Открыть Steam-профиль](${player.profileUrl}) · [Открыть трекер](https://quixylon.github.io/AI/tracker/)`
           ].join('\n');
 
           writeFileSync('/tmp/steam-notification.md', body);
