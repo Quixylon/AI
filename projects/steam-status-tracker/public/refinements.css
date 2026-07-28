@@ -1,0 +1,112 @@
+/* Final interaction refinements for the public profile card. */
+
+*,
+*::before,
+*::after {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.identity h1 {
+  line-height: 1.02;
+  letter-spacing: -0.018em;
+}
+
+.description-word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(7px);
+  animation: description-word-in 500ms cubic-bezier(.2,.8,.2,1) forwards;
+  animation-delay: calc(170ms + var(--word-index) * 45ms);
+}
+
+@keyframes description-word-in {
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.profile-link {
+  animation-name: floating-link-depth;
+  animation-duration: 5.6s;
+}
+
+.floating-action {
+  animation-name: floating-action-depth;
+  animation-duration: 6.1s;
+}
+
+@keyframes floating-link-depth {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 18px) rotateX(.15deg);
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, .13),
+      inset 0 1px 0 rgba(255, 255, 255, .045);
+  }
+
+  50% {
+    transform: translate3d(0, -5px, 32px) rotateX(-.18deg);
+    box-shadow:
+      0 18px 34px rgba(0, 0, 0, .2),
+      0 0 22px rgba(153, 136, 255, .055),
+      inset 0 1px 0 rgba(255, 255, 255, .06);
+  }
+}
+
+@keyframes floating-action-depth {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 22px);
+  }
+
+  50% {
+    transform: translate3d(0, -4px, 38px);
+  }
+}
+
+.profile-link:active,
+.floating-action:active {
+  animation-play-state: paused;
+  transform: translate3d(0, 0, 14px) scale(.985);
+}
+
+.link-steam .link-icon .steam-logo {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (pointer: coarse) {
+  .profile-card {
+    transform: none !important;
+  }
+
+  .profile-link,
+  .floating-action {
+    animation-duration: 5.2s;
+  }
+}
+
+@media (max-width: 470px) {
+  .identity h1 {
+    letter-spacing: -0.01em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .description-word {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    animation: none;
+  }
+}
