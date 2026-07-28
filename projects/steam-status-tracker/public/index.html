@@ -4,20 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#07080c" />
-    <meta name="description" content="Персональная страница Quixylon: описание, ссылки, музыка и Steam Tracker." />
+    <meta name="description" content="Персональная страница Quixylon: ссылки, музыка, Discord и Steam Tracker." />
     <title>Quixylon</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <canvas id="interactive-background" aria-hidden="true"></canvas>
+    <div class="aurora aurora-one" aria-hidden="true"></div>
+    <div class="aurora aurora-two" aria-hidden="true"></div>
     <div class="noise" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
 
     <main class="landing-shell">
       <section id="profile-card" class="profile-card" aria-labelledby="profile-name">
         <div class="profile-glow" aria-hidden="true"></div>
+        <div class="card-shine" aria-hidden="true"></div>
 
-        <header class="profile-header">
+        <header class="profile-header depth-layer depth-high">
           <div class="avatar-wrap">
             <img id="profile-avatar" class="profile-avatar" src="" alt="" />
             <span class="avatar-ring" aria-hidden="true"></span>
@@ -30,45 +33,88 @@
           </div>
         </header>
 
-        <p id="profile-description" class="description">
+        <p id="profile-description" class="description depth-layer">
           Steam, CS2 и всё важное — в одном месте.
         </p>
 
-        <nav id="profile-links" class="profile-links" aria-label="Ссылки Quixylon"></nav>
+        <nav id="profile-links" class="profile-links depth-layer" aria-label="Ссылки Quixylon"></nav>
 
-        <a class="tracker-button" href="./tracker/">
-          <span class="tracker-icon" aria-hidden="true">⌁</span>
+        <a class="guns-card depth-layer" href="https://guns.lol/quixylon" target="_blank" rel="noreferrer">
+          <span class="guns-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <circle cx="6" cy="12" r="2.3"></circle>
+              <circle cx="18" cy="6" r="2.3"></circle>
+              <circle cx="18" cy="18" r="2.3"></circle>
+              <path d="M8.1 10.9 15.8 7M8.1 13.1l7.7 3.9"></path>
+            </svg>
+          </span>
+          <span class="guns-copy">
+            <strong>guns.lol/quixylon</strong>
+            <small>Отдельная bio-карточка · показывает мой онлайн в Discord</small>
+          </span>
+          <span class="card-arrow" aria-hidden="true">↗</span>
+        </a>
+
+        <a class="tracker-button depth-layer" href="./tracker/">
+          <span class="tracker-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path>
+            </svg>
+          </span>
           <span class="tracker-copy">
             <strong>Открыть Steam Tracker</strong>
             <small>Статус, игры и история сессий</small>
           </span>
-          <span class="tracker-arrow" aria-hidden="true">→</span>
+          <span class="card-arrow" aria-hidden="true">→</span>
         </a>
 
-        <section id="spotify-section" class="spotify-section" hidden aria-label="Музыка Spotify">
+        <section id="spotify-section" class="spotify-section depth-layer" hidden aria-label="Музыка Spotify">
           <div class="section-caption">
-            <span>Сейчас в профиле</span>
-            <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span>Музыка профиля</span>
+            <a id="spotify-open" href="#" target="_blank" rel="noreferrer">Открыть в Spotify ↗</a>
           </div>
-          <iframe
-            id="spotify-player"
-            title="Spotify player"
-            src=""
-            width="100%"
-            height="152"
-            frameborder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
-          ></iframe>
+
+          <div class="music-player">
+            <div id="spotify-art" class="music-art" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M7 9.2c3.8-1.1 8-.6 10.8 1M7.7 12.4c3.1-.8 6.7-.4 9.2.8M8.4 15.3c2.5-.5 5.2-.2 7.4.7"></path>
+              </svg>
+            </div>
+
+            <div class="music-main">
+              <div class="music-meta">
+                <div>
+                  <p id="spotify-title" class="music-title">Spotify</p>
+                  <p id="spotify-subtitle" class="music-subtitle">Загрузка трека…</p>
+                </div>
+                <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              </div>
+
+              <div class="music-controls">
+                <button id="spotify-toggle" class="music-toggle" type="button" aria-label="Воспроизвести" disabled>
+                  <svg class="play-icon" viewBox="0 0 24 24" role="img"><path d="m9 7 8 5-8 5Z"></path></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" role="img"><path d="M8 7v10M16 7v10"></path></svg>
+                </button>
+                <input id="spotify-progress" class="music-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Позиция трека" disabled />
+                <span id="spotify-time" class="music-time">0:00 / 0:00</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="spotify-embed" class="spotify-embed" aria-label="Официальный плеер Spotify"></div>
         </section>
 
-        <footer class="profile-footer">
+        <footer class="profile-footer depth-layer">
           <span id="profile-status">GitHub Pages</span>
-          <a href="https://guns.lol/quixylon" target="_blank" rel="noreferrer">guns.lol/quixylon ↗</a>
+          <span class="footer-separator">•</span>
+          <span>Discord-онлайн через guns.lol</span>
+          <span class="footer-separator">•</span>
+          <span id="view-count">Просмотры: …</span>
         </footer>
       </section>
 
-      <p class="interaction-hint">Двигайте курсором · на телефоне касайтесь фона</p>
+      <p class="interaction-hint">Двигайте курсором · на телефоне касайтесь и ведите пальцем</p>
     </main>
 
     <script type="module" src="./app.js"></script>
