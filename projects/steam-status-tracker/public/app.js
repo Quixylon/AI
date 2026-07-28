@@ -16,7 +16,15 @@ let lastFrame = performance.now();
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
-  active: false
+  active: false,
+  down: false
+};
+
+const attraction = {
+  x: window.innerWidth / 2,
+  y: window.innerHeight / 2,
+  active: false,
+  endsAt: 0
 };
 
 const tilt = {
@@ -89,19 +97,12 @@ function resizeCanvas() {
   particles = Array.from({ length: count }, createParticle);
 }
 
-function rippleAt(x, y) {
-  ripples.push({ x, y, radius: 7, alpha: 0.75, speed: 2.4 });
-  ripples.push({ x, y, radius: 16, alpha: 0.34, speed: 1.6 });
-
-  for (const particle of particles) {
-    const deltaX = particle.x - x;
-    const deltaY = particle.y - y;
-    const distance = Math.hypot(deltaX, deltaY) || 1;
-    if (distance > 210) continue;
-    const force = (1 - distance / 210) * 0.8 * particle.depth;
-    particle.velocityX += (deltaX / distance) * force;
-    particle.velocityY += (deltaY / distance) * force;
-  }
+function gatherAt(x, y) {
+  attraction.x = x;
+  attraction.y = y;
+  attraction.active = true;
+  attraction.endsAt = performance.now() + 1350;
+  ripples.push({ x, y, radius: 9, alpha: 0.5, speed: 1.25 });
 }
 
 function setPointer(clientX, clientY) {
@@ -109,22 +110,31 @@ function setPointer(clientX, clientY) {
   pointer.y = clientY;
   pointer.active = true;
 
+  if (pointer.down) {
+    attraction.x = clientX;
+    attraction.y = clientY;
+    attraction.active = true;
+    attraction.endsAt = performance.now() + 850;
+  }
+
   const bounds = card.getBoundingClientRect();
   const normalizedX = Math.min(1, Math.max(0, (clientX - bounds.left) / Math.max(bounds.width, 1)));
   const normalizedY = Math.min(1, Math.max(0, (clientY - bounds.top) / Math.max(bounds.height, 1)));
-  const maxX = coarsePointer ? 2.1 : 3.2;
-  const maxY = coarsePointer ? 2.6 : 4.2;
+  const maxX = coarsePointer ? 1.1 : 2.4;
+  const maxY = coarsePointer ? 1.4 : 3.1;
 
   tilt.targetX = (normalizedY - 0.5) * -maxX * 2;
   tilt.targetY = (normalizedX - 0.5) * maxY * 2;
-  tilt.targetShiftX = (normalizedX - 0.5) * (coarsePointer ? 3 : 5);
-  tilt.targetShiftY = (normalizedY - 0.5) * (coarsePointer ? 2 : 4);
+  tilt.targetShiftX = (normalizedX - 0.5) * (coarsePointer ? 1.5 : 3.5);
+  tilt.targetShiftY = (normalizedY - 0.5) * (coarsePointer ? 1 : 2.5);
   card.style.setProperty('--shine-x', `${normalizedX * 100}%`);
   card.style.setProperty('--shine-y', `${normalizedY * 100}%`);
 }
 
 function releasePointer() {
+  pointer.down = false;
   pointer.active = false;
+  attraction.endsAt = Math.max(attraction.endsAt, performance.now() + 500);
   tilt.targetX = 0;
   tilt.targetY = 0;
   tilt.targetShiftX = 0;
@@ -132,11 +142,11 @@ function releasePointer() {
 }
 
 function animateCard(timestamp = 0) {
-  const easing = 0.095;
+  const easing = 0.09;
   if (!pointer.active) {
-    tilt.targetX = Math.sin(timestamp * 0.00035) * 0.35;
-    tilt.targetY = Math.cos(timestamp * 0.00029) * 0.55;
-    tilt.targetShiftY = Math.sin(timestamp * 0.0004) * -0.8;
+    tilt.targetX = Math.sin(timestamp * 0.00035) * 0.25;
+    tilt.targetY = Math.cos(timestamp * 0.00029) * 0.38;
+    tilt.targetShiftY = Math.sin(timestamp * 0.0004) * -0.45;
   }
 
   tilt.x += (tilt.targetX - tilt.x) * easing;
@@ -152,31 +162,63 @@ function drawBackground(timestamp = 0) {
   lastFrame = timestamp;
   context.clearRect(0, 0, width, height);
 
-  const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00016) * 0.1);
-  const focusY = pointer.active ? pointer.y : height * (0.42 + Math.cos(timestamp * 0.00013) * 0.07);
+  if (attraction.active && timestamp >= attraction.endsAt) {
+    attraction.active = false;
+  }
+
+  const focusX = attraction.active
+    ? attraction.x
+    : pointer.active
+      ? pointer.x
+      : width * (0.5 + Math.sin(timestamp * 0.00016) * 0.1);
+  const focusY = attraction.active
+    ? attraction.y
+    : pointer.active
+      ? pointer.y
+      : height * (0.42 + Math.cos(timestamp * 0.00013) * 0.07);
   const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.6);
-  glow.addColorStop(0, 'rgba(135, 109, 255, 0.21)');
+  glow.addColorStop(0, attraction.active ? 'rgba(151, 126, 255, 0.25)' : 'rgba(135, 109, 255, 0.21)');
   glow.addColorStop(0.35, 'rgba(44, 132, 213, 0.09)');
   glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   context.fillStyle = glow;
   context.fillRect(0, 0, width, height);
 
+  const attractionStrength = attraction.active
+    ? Math.min(1, Math.max(0, (attraction.endsAt - timestamp) / 900))
+    : 0;
+
   for (const particle of particles) {
     particle.phase += (0.008 + particle.depth * 0.006) * delta;
-    if (pointer.active) {
+
+    if (attraction.active) {
+      const deltaX = attraction.x - particle.x;
+      const deltaY = attraction.y - particle.y;
+      const distance = Math.hypot(deltaX, deltaY) || 1;
+      const targetRadius = 28 + particle.depth * 18;
+      const radialError = distance - targetRadius;
+      const normalizedDistance = Math.min(1, distance / Math.max(width, height));
+      const pull = radialError * 0.00042 * (0.75 + particle.depth * 0.55) * attractionStrength;
+      const softLimit = 0.022 * (1 - normalizedDistance * 0.45);
+      const force = Math.max(-softLimit, Math.min(softLimit, pull));
+      const tangent = 0.0016 * particle.depth * attractionStrength;
+
+      particle.velocityX += ((deltaX / distance) * force - (deltaY / distance) * tangent) * delta;
+      particle.velocityY += ((deltaY / distance) * force + (deltaX / distance) * tangent) * delta;
+    } else if (pointer.active) {
       const deltaX = particle.x - pointer.x;
       const deltaY = particle.y - pointer.y;
       const distance = Math.hypot(deltaX, deltaY) || 1;
-      const influence = 130 + particle.depth * 100;
+      const influence = 105 + particle.depth * 75;
       if (distance < influence) {
-        const force = ((influence - distance) / influence) * 0.055 * particle.depth;
+        const force = ((influence - distance) / influence) * 0.018 * particle.depth;
         particle.velocityX += (deltaX / distance) * force;
         particle.velocityY += (deltaY / distance) * force;
       }
     }
 
-    particle.velocityX *= 0.992;
-    particle.velocityY *= 0.992;
+    const damping = attraction.active ? 0.987 : 0.992;
+    particle.velocityX *= damping;
+    particle.velocityY *= damping;
     particle.x += (particle.velocityX + Math.cos(particle.phase) * 0.035 * particle.depth) * delta;
     particle.y += (particle.velocityY + Math.sin(particle.phase * 0.8) * 0.032 * particle.depth) * delta;
     if (particle.x < -20) particle.x = width + 20;
@@ -216,9 +258,9 @@ function drawBackground(timestamp = 0) {
   ripples = ripples.filter((ripple) => ripple.alpha > 0.012);
   for (const ripple of ripples) {
     ripple.radius += ripple.speed * delta;
-    ripple.alpha *= Math.pow(0.95, delta);
+    ripple.alpha *= Math.pow(0.955, delta);
     context.strokeStyle = `rgba(187, 178, 255, ${ripple.alpha})`;
-    context.lineWidth = 1.25;
+    context.lineWidth = 1.15;
     context.beginPath();
     context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
     context.stroke();
@@ -245,6 +287,15 @@ function renderLinks(links) {
   container.replaceChildren();
   for (const [index, item] of (Array.isArray(links) ? links : []).entries()) {
     if (!item?.url || !item?.label) continue;
+
+    const stage = document.createElement('div');
+    stage.className = 'link-stage';
+    stage.style.setProperty('--float-delay', `${index * -0.47}s`);
+
+    const platform = document.createElement('span');
+    platform.className = 'button-platform';
+    platform.setAttribute('aria-hidden', 'true');
+
     const anchor = document.createElement('a');
     anchor.className = `profile-link link-${item.kind || 'generic'}`;
     anchor.href = item.url;
@@ -263,7 +314,8 @@ function renderLinks(links) {
     arrow.className = 'link-arrow';
     arrow.textContent = '↗';
     anchor.append(icon, label, arrow);
-    container.append(anchor);
+    stage.append(platform, anchor);
+    container.append(stage);
   }
 }
 
@@ -359,8 +411,9 @@ async function loadProfile() {
 
 window.addEventListener('pointermove', (event) => setPointer(event.clientX, event.clientY), { passive: true });
 window.addEventListener('pointerdown', (event) => {
+  pointer.down = true;
   setPointer(event.clientX, event.clientY);
-  rippleAt(event.clientX, event.clientY);
+  gatherAt(event.clientX, event.clientY);
 }, { passive: true });
 window.addEventListener('pointerup', releasePointer, { passive: true });
 window.addEventListener('pointercancel', releasePointer, { passive: true });
