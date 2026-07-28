@@ -3,6 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const canvas = $('#interactive-background');
 const context = canvas.getContext('2d', { alpha: true });
 const card = $('#profile-card');
+const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let width = 0;
@@ -11,7 +12,6 @@ let pixelRatio = 1;
 let particles = [];
 let ripples = [];
 let lastFrame = performance.now();
-let pointerResetTimer = 0;
 
 const pointer = {
   x: window.innerWidth / 2,
@@ -45,9 +45,10 @@ const iconMarkup = {
     </svg>`,
   steam: `
     <svg class="steam-logo" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="16.8" cy="7.2" r="3.5"></circle>
-      <circle cx="7.2" cy="16.4" r="2.7"></circle>
-      <path d="m9.6 15.1 4.7-4.6M4.7 15.4 2 14.3M9.4 17.5l3.2 1.3"></path>
+      <circle cx="15.7" cy="8.2" r="3.8"></circle>
+      <circle cx="15.7" cy="8.2" r="1.7"></circle>
+      <circle cx="7.1" cy="16.5" r="2.8"></circle>
+      <path d="m9.5 15.1 3.5-2.6-1.4-1.5M4.8 15.4l-2.4-1"></path>
     </svg>`,
   csrep: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -60,18 +61,17 @@ const iconMarkup = {
 };
 
 function createParticle() {
-  const depth = Math.random() * 0.85 + 0.15;
+  const depth = Math.random() * 0.86 + 0.14;
   const angle = Math.random() * Math.PI * 2;
-  const speed = 0.08 + depth * 0.24;
-
+  const speed = 0.1 + depth * 0.3;
   return {
     x: Math.random() * width,
     y: Math.random() * height,
     depth,
-    radius: 0.65 + depth * 1.7,
+    radius: 0.65 + depth * 1.75,
     velocityX: Math.cos(angle) * speed,
     velocityY: Math.sin(angle) * speed,
-    alpha: 0.24 + depth * 0.48,
+    alpha: 0.22 + depth * 0.48,
     phase: Math.random() * Math.PI * 2
   };
 }
@@ -80,28 +80,25 @@ function resizeCanvas() {
   pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
   width = window.innerWidth;
   height = window.innerHeight;
-
   canvas.width = Math.round(width * pixelRatio);
   canvas.height = Math.round(height * pixelRatio);
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
-  const requestedCount = Math.round((width * height) / 9200);
-  const particleCount = Math.min(150, Math.max(reducedMotion ? 58 : 82, requestedCount));
-  particles = Array.from({ length: particleCount }, createParticle);
+  const count = Math.min(160, Math.max(reducedMotion ? 64 : 92, Math.round((width * height) / 8200)));
+  particles = Array.from({ length: count }, createParticle);
 }
 
-function createTouchWave(x, y) {
-  ripples.push({ x, y, radius: 8, alpha: 0.72, speed: 2.4 });
+function rippleAt(x, y) {
+  ripples.push({ x, y, radius: 7, alpha: 0.75, speed: 2.4 });
+  ripples.push({ x, y, radius: 16, alpha: 0.34, speed: 1.6 });
 
   for (const particle of particles) {
     const deltaX = particle.x - x;
     const deltaY = particle.y - y;
     const distance = Math.hypot(deltaX, deltaY) || 1;
-    if (distance > 170) continue;
-
-    const force = ((170 - distance) / 170) * 0.55;
+    if (distance > 210) continue;
+    const force = (1 - distance / 210) * 0.8 * particle.depth;
     particle.velocityX += (deltaX / distance) * force;
     particle.velocityY += (deltaY / distance) * force;
   }
@@ -112,23 +109,21 @@ function setPointer(clientX, clientY) {
   pointer.y = clientY;
   pointer.active = true;
 
-  const cardBounds = card.getBoundingClientRect();
-  const normalizedX = Math.min(1, Math.max(0, (clientX - cardBounds.left) / Math.max(cardBounds.width, 1)));
-  const normalizedY = Math.min(1, Math.max(0, (clientY - cardBounds.top) / Math.max(cardBounds.height, 1)));
+  const bounds = card.getBoundingClientRect();
+  const normalizedX = Math.min(1, Math.max(0, (clientX - bounds.left) / Math.max(bounds.width, 1)));
+  const normalizedY = Math.min(1, Math.max(0, (clientY - bounds.top) / Math.max(bounds.height, 1)));
+  const maxX = coarsePointer ? 2.1 : 3.2;
+  const maxY = coarsePointer ? 2.6 : 4.2;
 
-  tilt.targetX = (normalizedY - 0.5) * -5.5;
-  tilt.targetY = (normalizedX - 0.5) * 7;
-  tilt.targetShiftX = (normalizedX - 0.5) * 4;
-  tilt.targetShiftY = (normalizedY - 0.5) * 3;
-
+  tilt.targetX = (normalizedY - 0.5) * -maxX * 2;
+  tilt.targetY = (normalizedX - 0.5) * maxY * 2;
+  tilt.targetShiftX = (normalizedX - 0.5) * (coarsePointer ? 3 : 5);
+  tilt.targetShiftY = (normalizedY - 0.5) * (coarsePointer ? 2 : 4);
   card.style.setProperty('--shine-x', `${normalizedX * 100}%`);
   card.style.setProperty('--shine-y', `${normalizedY * 100}%`);
-
-  window.clearTimeout(pointerResetTimer);
-  pointerResetTimer = window.setTimeout(resetPointer, 1200);
 }
 
-function resetPointer() {
+function releasePointer() {
   pointer.active = false;
   tilt.targetX = 0;
   tilt.targetY = 0;
@@ -137,26 +132,18 @@ function resetPointer() {
 }
 
 function animateCard(timestamp = 0) {
-  const easing = 0.09;
-
+  const easing = 0.095;
   if (!pointer.active) {
-    tilt.targetX = Math.sin(timestamp * 0.0003) * 0.45;
-    tilt.targetY = Math.cos(timestamp * 0.00026) * 0.65;
-    tilt.targetShiftY = Math.sin(timestamp * 0.00034) * -0.8;
+    tilt.targetX = Math.sin(timestamp * 0.00035) * 0.35;
+    tilt.targetY = Math.cos(timestamp * 0.00029) * 0.55;
+    tilt.targetShiftY = Math.sin(timestamp * 0.0004) * -0.8;
   }
 
   tilt.x += (tilt.targetX - tilt.x) * easing;
   tilt.y += (tilt.targetY - tilt.y) * easing;
   tilt.shiftX += (tilt.targetShiftX - tilt.shiftX) * easing;
   tilt.shiftY += (tilt.targetShiftY - tilt.shiftY) * easing;
-
-  card.style.transform = [
-    'perspective(1250px)',
-    `translate3d(${tilt.shiftX}px, ${tilt.shiftY}px, 0)`,
-    `rotateX(${tilt.x}deg)`,
-    `rotateY(${tilt.y}deg)`
-  ].join(' ');
-
+  card.style.transform = `perspective(1250px) translate3d(${tilt.shiftX}px, ${tilt.shiftY}px, 0) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`;
   window.requestAnimationFrame(animateCard);
 }
 
@@ -165,72 +152,59 @@ function drawBackground(timestamp = 0) {
   lastFrame = timestamp;
   context.clearRect(0, 0, width, height);
 
-  const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00015) * 0.1);
+  const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00016) * 0.1);
   const focusY = pointer.active ? pointer.y : height * (0.42 + Math.cos(timestamp * 0.00013) * 0.07);
-  const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.62);
-  glow.addColorStop(0, 'rgba(139, 112, 255, 0.2)');
-  glow.addColorStop(0.35, 'rgba(43, 139, 220, 0.09)');
+  const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.6);
+  glow.addColorStop(0, 'rgba(135, 109, 255, 0.21)');
+  glow.addColorStop(0.35, 'rgba(44, 132, 213, 0.09)');
   glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   context.fillStyle = glow;
   context.fillRect(0, 0, width, height);
 
   for (const particle of particles) {
-    particle.phase += (0.007 + particle.depth * 0.005) * delta;
-
+    particle.phase += (0.008 + particle.depth * 0.006) * delta;
     if (pointer.active) {
       const deltaX = particle.x - pointer.x;
       const deltaY = particle.y - pointer.y;
       const distance = Math.hypot(deltaX, deltaY) || 1;
-      const influence = 110 + particle.depth * 85;
-
+      const influence = 130 + particle.depth * 100;
       if (distance < influence) {
-        const force = ((influence - distance) / influence) * 0.035 * particle.depth;
+        const force = ((influence - distance) / influence) * 0.055 * particle.depth;
         particle.velocityX += (deltaX / distance) * force;
         particle.velocityY += (deltaY / distance) * force;
       }
     }
 
-    particle.velocityX *= 0.994;
-    particle.velocityY *= 0.994;
-    particle.x += (particle.velocityX + Math.cos(particle.phase) * 0.025 * particle.depth) * delta;
-    particle.y += (particle.velocityY + Math.sin(particle.phase * 0.84) * 0.022 * particle.depth) * delta;
+    particle.velocityX *= 0.992;
+    particle.velocityY *= 0.992;
+    particle.x += (particle.velocityX + Math.cos(particle.phase) * 0.035 * particle.depth) * delta;
+    particle.y += (particle.velocityY + Math.sin(particle.phase * 0.8) * 0.032 * particle.depth) * delta;
+    if (particle.x < -20) particle.x = width + 20;
+    if (particle.x > width + 20) particle.x = -20;
+    if (particle.y < -20) particle.y = height + 20;
+    if (particle.y > height + 20) particle.y = -20;
 
-    if (particle.x < -18) particle.x = width + 18;
-    if (particle.x > width + 18) particle.x = -18;
-    if (particle.y < -18) particle.y = height + 18;
-    if (particle.y > height + 18) particle.y = -18;
-
-    const parallaxX = ((focusX / Math.max(width, 1)) - 0.5) * particle.depth * 12;
-    const parallaxY = ((focusY / Math.max(height, 1)) - 0.5) * particle.depth * 9;
-    const pulse = 1 + Math.sin(timestamp * 0.0014 + particle.phase) * 0.1;
-
+    const parallaxX = ((focusX / Math.max(width, 1)) - 0.5) * particle.depth * 15;
+    const parallaxY = ((focusY / Math.max(height, 1)) - 0.5) * particle.depth * 11;
+    const pulse = 1 + Math.sin(timestamp * 0.0016 + particle.phase) * 0.09;
     context.beginPath();
     context.fillStyle = `rgba(220, 225, 255, ${particle.alpha})`;
-    context.shadowColor = `rgba(151, 140, 255, ${particle.alpha * 0.52})`;
-    context.shadowBlur = 4 + particle.depth * 5;
-    context.arc(
-      particle.x + parallaxX,
-      particle.y + parallaxY,
-      particle.radius * pulse,
-      0,
-      Math.PI * 2
-    );
+    context.shadowColor = `rgba(151, 141, 255, ${particle.alpha * 0.55})`;
+    context.shadowBlur = 5 + particle.depth * 6;
+    context.arc(particle.x + parallaxX, particle.y + parallaxY, particle.radius * pulse, 0, Math.PI * 2);
     context.fill();
   }
 
   context.shadowBlur = 0;
-  const connectionLimit = Math.min(particles.length, 105);
+  const connectionLimit = Math.min(particles.length, 115);
   for (let firstIndex = 0; firstIndex < connectionLimit; firstIndex += 1) {
     const first = particles[firstIndex];
-
     for (let secondIndex = firstIndex + 1; secondIndex < connectionLimit; secondIndex += 1) {
       const second = particles[secondIndex];
       const distance = Math.hypot(first.x - second.x, first.y - second.y);
-      const threshold = 72 + Math.min(first.depth, second.depth) * 50;
+      const threshold = 72 + Math.min(first.depth, second.depth) * 54;
       if (distance >= threshold) continue;
-
-      const alpha = (1 - distance / threshold) * 0.1 * Math.min(first.depth, second.depth);
-      context.strokeStyle = `rgba(151, 143, 255, ${alpha})`;
+      context.strokeStyle = `rgba(151, 143, 255, ${(1 - distance / threshold) * 0.12 * Math.min(first.depth, second.depth)})`;
       context.lineWidth = 0.55;
       context.beginPath();
       context.moveTo(first.x, first.y);
@@ -239,46 +213,55 @@ function drawBackground(timestamp = 0) {
     }
   }
 
-  ripples = ripples.filter((ripple) => ripple.alpha > 0.014);
+  ripples = ripples.filter((ripple) => ripple.alpha > 0.012);
   for (const ripple of ripples) {
     ripple.radius += ripple.speed * delta;
     ripple.alpha *= Math.pow(0.95, delta);
-    context.strokeStyle = `rgba(187, 176, 255, ${ripple.alpha})`;
-    context.lineWidth = 1.2;
+    context.strokeStyle = `rgba(187, 178, 255, ${ripple.alpha})`;
+    context.lineWidth = 1.25;
     context.beginPath();
     context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
     context.stroke();
   }
-
   window.requestAnimationFrame(drawBackground);
+}
+
+function renderDescription(text) {
+  const description = $('#profile-description');
+  const fullText = String(text || 'Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.').trim();
+  description.replaceChildren();
+  description.setAttribute('aria-label', fullText);
+  fullText.split(/\s+/).forEach((word, index) => {
+    const span = document.createElement('span');
+    span.className = 'description-word';
+    span.style.setProperty('--word-index', String(index));
+    span.textContent = word;
+    description.append(span, document.createTextNode(' '));
+  });
 }
 
 function renderLinks(links) {
   const container = $('#profile-links');
   container.replaceChildren();
-
   for (const [index, item] of (Array.isArray(links) ? links : []).entries()) {
     if (!item?.url || !item?.label) continue;
-
     const anchor = document.createElement('a');
     anchor.className = `profile-link link-${item.kind || 'generic'}`;
     anchor.href = item.url;
     anchor.target = '_blank';
     anchor.rel = 'noreferrer';
-    anchor.style.setProperty('--float-delay', `${index * -0.55}s`);
+    anchor.style.setProperty('--float-delay', `${index * -0.47}s`);
+    anchor.style.setProperty('--float-height', `${3 + (index % 3)}px`);
 
     const icon = document.createElement('span');
     icon.className = 'link-icon';
-    icon.innerHTML = iconMarkup[item.kind] || `<span>${String(item.label).slice(0, 2).toUpperCase()}</span>`;
-
+    icon.innerHTML = iconMarkup[item.kind] || `<span>${String(item.icon || item.label).slice(0, 2).toUpperCase()}</span>`;
     const label = document.createElement('strong');
     label.className = 'link-label';
     label.textContent = item.label;
-
     const arrow = document.createElement('span');
     arrow.className = 'link-arrow';
     arrow.textContent = '↗';
-
     anchor.append(icon, label, arrow);
     container.append(anchor);
   }
@@ -295,105 +278,73 @@ async function fetchJson(path, fallback = null) {
 
 function setDiscordPresence(status, label) {
   const dot = $('#guns-dot');
-  const gunsCard = $('#guns-card');
+  const link = $('#guns-card');
   dot.className = `presence-dot ${status}`;
-  gunsCard.title = `Discord: ${label}`;
-  gunsCard.setAttribute('aria-label', `guns.lol — Discord: ${label}`);
+  link.setAttribute('aria-label', `guns.lol — Discord: ${label}`);
+  link.title = `Discord: ${label}`;
 }
 
 function parseDiscordPresence(text) {
   const normalized = String(text || '').toLowerCase();
-  const patterns = [
-    { status: 'dnd', label: 'Не беспокоить', expression: /\b(do not disturb|dnd)\b/ },
-    { status: 'idle', label: 'Неактивен', expression: /\bidle\b/ },
-    { status: 'offline', label: 'Не в сети', expression: /\boffline\b/ },
-    { status: 'online', label: 'В сети', expression: /\bonline\b/ }
-  ];
-
-  return patterns.find((item) => item.expression.test(normalized)) || null;
+  return [
+    { status: 'dnd', label: 'не беспокоить', expression: /\b(do not disturb|dnd)\b/ },
+    { status: 'idle', label: 'неактивен', expression: /\bidle\b/ },
+    { status: 'offline', label: 'не в сети', expression: /\boffline\b/ },
+    { status: 'online', label: 'в сети', expression: /\bonline\b/ }
+  ].find((item) => item.expression.test(normalized)) || null;
 }
 
 async function updateDiscordPresence() {
-  const sources = [
-    'https://r.jina.ai/http://guns.lol/quixylon',
-    'https://guns.lol/quixylon'
-  ];
-
-  for (const source of sources) {
+  for (const source of ['https://r.jina.ai/http://guns.lol/quixylon', 'https://guns.lol/quixylon']) {
     try {
-      const response = await fetch(source, { cache: 'no-store' });
+      const response = await fetch(source, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
       if (!response.ok) continue;
-
       const result = parseDiscordPresence(await response.text());
       if (result) {
         setDiscordPresence(result.status, result.label);
         return;
       }
     } catch {
-      // Пробуем следующий публичный источник.
+      // Пробуем следующий источник.
     }
   }
-
   setDiscordPresence('unknown', 'статус недоступен');
 }
 
 function readCounterValue(payload) {
-  const candidates = [
-    payload?.value,
-    payload?.count,
-    payload?.data?.value,
-    payload?.data?.count,
-    payload?.result?.value,
-    payload?.result?.count
-  ];
-
-  return candidates.find((value) => Number.isFinite(Number(value)));
+  return [payload?.value, payload?.count, payload?.data?.value, payload?.data?.count, payload?.result?.value, payload?.result?.count]
+    .find((value) => Number.isFinite(Number(value)));
 }
 
 async function updateViewCounter() {
   const display = $('#view-count');
   const baseEndpoint = 'https://api.counterapi.dev/v1/quixylon-ai/profile-card-views';
   const today = new Date().toISOString().slice(0, 10);
-  let lastCountedDay = '';
-
+  let previousDay = '';
   try {
-    lastCountedDay = window.localStorage.getItem('quixylon-profile-view-day') || '';
+    previousDay = localStorage.getItem('quixylon-profile-view-day') || '';
   } catch {
-    // Счётчик всё равно попробует загрузиться.
+    // localStorage может быть отключён.
   }
 
-  const shouldIncrement = lastCountedDay !== today;
-  const endpoint = shouldIncrement ? `${baseEndpoint}/up` : baseEndpoint;
-
+  const increment = previousDay !== today;
   try {
-    const response = await fetch(endpoint, { cache: 'no-store' });
+    const response = await fetch(increment ? `${baseEndpoint}/up` : baseEndpoint, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const value = readCounterValue(await response.json());
     if (value === undefined) throw new Error('Counter value missing');
-
     display.textContent = `Просмотры: ${new Intl.NumberFormat('ru-RU').format(Number(value))}`;
-
-    if (shouldIncrement) {
-      try {
-        window.localStorage.setItem('quixylon-profile-view-day', today);
-      } catch {
-        // localStorage может быть отключён.
-      }
-    }
+    if (increment) localStorage.setItem('quixylon-profile-view-day', today);
   } catch {
     display.textContent = 'Просмотры: —';
   }
 }
 
 async function loadProfile() {
-  const [bio, status] = await Promise.all([
-    fetchJson('./data/bio.json', {}),
-    fetchJson('./data/status.json')
-  ]);
-
+  const [bio, status] = await Promise.all([fetchJson('./data/bio.json', {}), fetchJson('./data/status.json')]);
   $('#profile-name').textContent = bio.displayName || 'Qu’lon';
   $('#profile-handle').textContent = bio.handle || '@quixylon';
-  $('#profile-description').textContent = bio.description || 'Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.';
+  renderDescription(bio.description);
   renderLinks(bio.links);
 
   const player = status?.player;
@@ -401,27 +352,19 @@ async function loadProfile() {
     $('#profile-avatar').src = bio.avatarUrl || player.avatar;
     $('#profile-avatar').alt = 'Аватар Qu’lon';
   }
-
-  if (player?.gameName) {
-    $('#profile-status').textContent = `Steam: ${player.gameName}`;
-  } else if (player?.status === 'offline') {
-    $('#profile-status').textContent = 'Steam: не в сети';
-  } else if (player) {
-    $('#profile-status').textContent = 'Steam: в сети';
-  }
+  if (player?.gameName) $('#profile-status').textContent = `Steam: ${player.gameName}`;
+  else if (player?.status === 'offline') $('#profile-status').textContent = 'Steam: не в сети';
+  else if (player) $('#profile-status').textContent = 'Steam: в сети';
 }
 
-window.addEventListener('pointermove', (event) => {
-  setPointer(event.clientX, event.clientY);
-}, { passive: true });
-
+window.addEventListener('pointermove', (event) => setPointer(event.clientX, event.clientY), { passive: true });
 window.addEventListener('pointerdown', (event) => {
   setPointer(event.clientX, event.clientY);
-  createTouchWave(event.clientX, event.clientY);
+  rippleAt(event.clientX, event.clientY);
 }, { passive: true });
-
-window.addEventListener('pointerleave', resetPointer, { passive: true });
-window.addEventListener('pointercancel', resetPointer, { passive: true });
+window.addEventListener('pointerup', releasePointer, { passive: true });
+window.addEventListener('pointercancel', releasePointer, { passive: true });
+window.addEventListener('pointerleave', releasePointer, { passive: true });
 window.addEventListener('resize', resizeCanvas, { passive: true });
 
 resizeCanvas();
