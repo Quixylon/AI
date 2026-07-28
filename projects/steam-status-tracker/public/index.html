@@ -7,7 +7,7 @@
     <meta name="description" content="Персональная страница Qu’lon: цифровые следы, ссылки и Steam Tracker." />
     <title>Qu’lon</title>
     <link rel="stylesheet" href="./styles.css?v=8" />
-    <link rel="stylesheet" href="./refinements.css?v=2" />
+    <link rel="stylesheet" href="./refinements.css?v=3" />
   </head>
   <body>
     <canvas id="interactive-background" aria-hidden="true"></canvas>
@@ -45,26 +45,31 @@
 
         <nav id="profile-links" class="profile-links depth-layer" aria-label="Ссылки Qu’lon"></nav>
 
-        <div class="action-stage depth-layer">
-          <span class="button-platform" aria-hidden="true"></span>
-          <a id="guns-card" class="guns-card floating-action" href="https://guns.lol/quixylon" target="_blank" rel="noreferrer">
-            <span id="guns-dot" class="presence-dot unknown" aria-hidden="true"></span>
-            <strong>guns.lol</strong>
-            <span class="card-arrow" aria-hidden="true">↗</span>
-          </a>
-        </div>
+        <div class="action-deck depth-layer">
+          <span class="deck-floor" aria-hidden="true"></span>
+          <span class="deck-edge" aria-hidden="true"></span>
 
-        <div class="action-stage depth-layer">
-          <span class="button-platform" aria-hidden="true"></span>
-          <a class="tracker-button floating-action" href="./tracker/">
-            <span class="tracker-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img">
-                <path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path>
-              </svg>
-            </span>
-            <strong>Steam Tracker</strong>
-            <span class="card-arrow" aria-hidden="true">→</span>
-          </a>
+          <div class="action-stage">
+            <span class="button-platform" aria-hidden="true"></span>
+            <a id="guns-card" class="guns-card floating-action" href="https://guns.lol/quixylon" target="_blank" rel="noreferrer">
+              <span id="guns-dot" class="presence-dot unknown" aria-hidden="true"></span>
+              <strong>guns.lol</strong>
+              <span class="card-arrow" aria-hidden="true">↗</span>
+            </a>
+          </div>
+
+          <div class="action-stage">
+            <span class="button-platform" aria-hidden="true"></span>
+            <a class="tracker-button floating-action" href="./tracker/">
+              <span class="tracker-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img">
+                  <path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path>
+                </svg>
+              </span>
+              <strong>Steam Tracker</strong>
+              <span class="card-arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
         </div>
 
         <footer class="profile-footer depth-layer">
@@ -75,6 +80,6 @@
       </section>
     </main>
 
-    <script type="module" src="./app.js?v=10"></script>
+    <script type="module" src="./app.js?v=11"></script>
   </body>
 </html>
