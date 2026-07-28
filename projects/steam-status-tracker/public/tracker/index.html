@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080a0f" />
+    <meta name="description" content="Steam и CS2 трекер Quixylon: статус, игры и история сессий." />
+    <title>Quixylon Tracker</title>
+    <link rel="stylesheet" href="./tracker.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <main class="shell">
+      <header class="hero">
+        <a class="back-link" href="../">← Назад к профилю</a>
+        <p class="eyebrow">QUIXYLON TRACKER</p>
+        <h1>Steam & CS2</h1>
+        <p class="intro">Статус, текущая игра, уведомления и история игровых сессий.</p>
+      </header>
+
+      <section id="message-panel" class="message-panel" hidden aria-live="polite"></section>
+
+      <section id="profile-card" class="profile-card" hidden aria-live="polite">
+        <div class="profile-top">
+          <img id="profile-avatar" class="avatar" src="" alt="" />
+          <div class="identity">
+            <p class="section-label">STEAM PROFILE</p>
+            <h2 id="profile-name">Загрузка</h2>
+            <a id="profile-link" href="#" target="_blank" rel="noreferrer">Открыть профиль Steam</a>
+          </div>
+          <span id="status-pill" class="status-pill">Неизвестно</span>
+        </div>
+
+        <div class="details-grid">
+          <article class="detail-card">
+            <p class="detail-label">Текущая активность</p>
+            <p id="current-game" class="detail-value">Загрузка</p>
+          </article>
+          <article class="detail-card">
+            <p class="detail-label">Последний выход</p>
+            <p id="last-logoff" class="detail-value">Нет данных</p>
+          </article>
+          <article class="detail-card">
+            <p class="detail-label">Последняя проверка GitHub</p>
+            <p id="last-checked" class="detail-value">Ожидание</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="csrep-panel" class="panel section-panel" aria-labelledby="csrep-title">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">CS2 · CSREP.GG</p>
+            <h2 id="csrep-title">Игровая статистика</h2>
+          </div>
+          <a id="csrep-link" class="external-link" href="https://csrep.gg/player/76561199524001992" target="_blank" rel="noreferrer">Открыть CSRep</a>
+        </div>
+        <p id="csrep-message" class="help-text" aria-live="polite">Загрузка информации CSRep.</p>
+        <div id="csrep-metrics" class="details-grid" hidden></div>
+        <p id="csrep-updated" class="data-timestamp"></p>
+      </section>
+
+      <section id="history-panel" class="panel section-panel" hidden aria-labelledby="history-title">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">ИСТОРИЯ STEAM</p>
+            <h2 id="history-title">Статусы и игровые сессии</h2>
+          </div>
+        </div>
+        <p class="help-text history-help">Входы, выходы, смены статуса, игры, начало, окончание и длительность сессий.</p>
+        <div id="history-list" class="history-list"></div>
+      </section>
+
+      <footer>
+        <span>GitHub Pages + GitHub Actions</span>
+        <span>Обновление Steam примерно раз в 5 минут</span>
+      </footer>
+    </main>
+
+    <script type="module" src="./tracker.js"></script>
+  </body>
+</html>
