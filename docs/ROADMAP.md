@@ -6,18 +6,19 @@
 - [x] Add repository overview
 - [x] Add secret-safe `.gitignore`
 - [x] Define project folder conventions
-- [ ] Add the first working application
+- [x] Add the first application scaffold
 
 ## Phase 2 — Steam Status Tracker MVP
 
-- [ ] Create the web interface
-- [ ] Accept a Steam profile URL or Steam ID
-- [ ] Read public profile status through the Steam Web API
-- [ ] Show online, offline, away, and in-game states
-- [ ] Show the current game when available
+- [x] Create the web interface
+- [x] Accept a 17-digit SteamID64
+- [ ] Accept Steam profile URLs and resolve them automatically
+- [x] Read public profile status through the Steam Web API
+- [x] Show online, offline, away, and in-game states
+- [x] Show the current game when available
 - [ ] Store status changes in a database
 - [ ] Display recent activity history
-- [ ] Add clear error messages for private or unavailable profiles
+- [x] Add clear error messages for private or unavailable profiles
 
 ## Phase 3 — Notifications and deployment
 
