@@ -1,4 +1,4 @@
-/* Clean interaction and depth refinements for the public profile card. */
+/* Interaction and depth refinements for the public profile card. */
 
 *,
 *::before,
@@ -31,22 +31,24 @@
 }
 
 .profile-links {
-  position: relative;
   display: grid;
   align-items: stretch;
-  gap: 16px 12px;
+  gap: 15px 12px;
   margin-top: 27px;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: none;
   box-shadow: none;
-  isolation: visible;
   perspective: none;
 }
 
 .profile-links::before,
 .profile-links::after,
+.link-stage::before,
+.link-stage::after,
+.action-stage::before,
+.action-stage::after,
 .button-platform,
 .deck-floor,
 .deck-edge,
@@ -58,45 +60,9 @@
 .action-stage {
   position: relative;
   min-width: 0;
-  padding: 0 0 8px;
-  isolation: isolate;
+  padding: 0;
   transform-style: preserve-3d;
-}
-
-.link-stage::before,
-.action-stage::before {
-  position: absolute;
-  z-index: 0;
-  right: 10%;
-  bottom: 1px;
-  left: 10%;
-  height: 9px;
-  border: 1px solid rgba(159, 146, 238, .14);
-  border-radius: 0 0 15px 15px;
-  background: linear-gradient(180deg, rgba(78, 67, 129, .5), rgba(8, 9, 15, .92));
-  box-shadow:
-    0 8px 15px rgba(0, 0, 0, .34),
-    0 0 13px rgba(120, 103, 220, .07),
-    inset 0 1px 0 rgba(255, 255, 255, .035);
-  transform: perspective(500px) rotateX(-18deg);
-  transform-origin: top center;
-  content: "";
-  pointer-events: none;
-}
-
-.link-stage::after,
-.action-stage::after {
-  position: absolute;
-  z-index: -1;
-  right: 14%;
-  bottom: -2px;
-  left: 14%;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, .34);
-  filter: blur(7px);
-  content: "";
-  pointer-events: none;
+  will-change: transform;
 }
 
 .profile-link,
@@ -104,62 +70,74 @@
   position: relative;
   z-index: 2;
   transform-style: preserve-3d;
-  will-change: transform;
+  will-change: transform, box-shadow;
 }
 
 .profile-link {
   height: 100%;
   min-height: 66px;
-  animation: float-link-clean 5.8s var(--float-delay, 0s) ease-in-out infinite;
+  animation: float-link 5.9s var(--float-delay, 0s) ease-in-out infinite;
 }
 
-@keyframes float-link-clean {
+@keyframes float-link {
   0%,
   100% {
     transform: translate3d(0, 0, 8px);
     box-shadow:
-      0 10px 22px rgba(0, 0, 0, .12),
-      inset 0 1px 0 rgba(255, 255, 255, .045);
+      0 17px 35px rgba(0, 0, 0, .34),
+      0 5px 12px rgba(0, 0, 0, .22),
+      0 0 0 1px rgba(145, 128, 255, .025),
+      inset 0 1px 0 rgba(255, 255, 255, .05);
   }
 
   50% {
-    transform: translate3d(0, -3px, 14px);
+    transform: translate3d(0, -5px, 18px);
     box-shadow:
-      0 15px 28px rgba(0, 0, 0, .18),
-      0 0 17px rgba(153, 136, 255, .045),
-      inset 0 1px 0 rgba(255, 255, 255, .055);
+      0 25px 49px rgba(0, 0, 0, .42),
+      0 8px 17px rgba(0, 0, 0, .26),
+      0 0 24px rgba(143, 123, 255, .07),
+      inset 0 1px 0 rgba(255, 255, 255, .065);
   }
 }
 
 .action-stage {
-  margin-top: 13px;
+  margin-top: 14px;
 }
 
 .action-stage + .action-stage {
-  margin-top: 4px;
+  margin-top: 5px;
 }
 
 .floating-action {
   margin-top: 0 !important;
-  animation: float-action-clean 6.2s ease-in-out infinite;
+  animation: float-action 6.25s ease-in-out infinite;
 }
 
 .action-stage:nth-of-type(1) .floating-action {
-  animation-delay: -1.4s;
+  animation-delay: -1.5s;
 }
 
 .action-stage:nth-of-type(2) .floating-action {
-  animation-delay: -3.2s;
+  animation-delay: -3.35s;
 }
 
-@keyframes float-action-clean {
+@keyframes float-action {
   0%,
   100% {
     transform: translate3d(0, 0, 10px);
+    box-shadow:
+      0 18px 38px rgba(0, 0, 0, .36),
+      0 6px 13px rgba(0, 0, 0, .22),
+      inset 0 1px 0 rgba(255, 255, 255, .055);
   }
 
   50% {
-    transform: translate3d(0, -3px, 17px);
+    transform: translate3d(0, -5px, 20px);
+    box-shadow:
+      0 27px 54px rgba(0, 0, 0, .44),
+      0 9px 19px rgba(0, 0, 0, .27),
+      0 0 27px rgba(136, 116, 255, .075),
+      inset 0 1px 0 rgba(255, 255, 255, .07);
   }
 }
 
@@ -168,19 +146,21 @@
 .floating-action:hover,
 .floating-action:focus-visible {
   animation-play-state: paused;
-  transform: translate3d(0, -3px, 18px) scale(1.008);
+  transform: translate3d(0, -4px, 21px) scale(1.01);
+  box-shadow:
+    0 27px 55px rgba(0, 0, 0, .46),
+    0 9px 19px rgba(0, 0, 0, .28),
+    0 0 29px rgba(143, 123, 255, .09),
+    inset 0 1px 0 rgba(255, 255, 255, .075);
 }
 
 .profile-link:active,
 .floating-action:active {
   animation-play-state: paused;
-  transform: translate3d(0, 1px, 5px) scale(.988);
-}
-
-.link-stage:has(.profile-link:active)::before,
-.action-stage:has(.floating-action:active)::before {
-  filter: brightness(1.12);
-  transform: perspective(500px) rotateX(-18deg) translateY(1px);
+  transform: translate3d(0, 1px, 5px) scale(.987);
+  box-shadow:
+    0 9px 18px rgba(0, 0, 0, .28),
+    inset 0 1px 0 rgba(255, 255, 255, .04);
 }
 
 .link-steam .link-icon .steam-logo {
@@ -215,25 +195,13 @@
 
   .profile-link,
   .floating-action {
-    animation-duration: 6.5s;
+    animation-duration: 6.15s;
   }
 }
 
 @media (max-width: 720px) {
   .profile-links {
     gap: 14px;
-  }
-
-  .link-stage,
-  .action-stage {
-    padding-bottom: 7px;
-  }
-
-  .link-stage::before,
-  .action-stage::before {
-    right: 12%;
-    left: 12%;
-    height: 8px;
   }
 }
 
