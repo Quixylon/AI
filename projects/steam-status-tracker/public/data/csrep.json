@@ -6,7 +6,7 @@
   "profileUrl": "https://csrep.gg/player/76561199524001992",
   "steamId": "76561199524001992",
   "checkedAt": null,
-  "lastAttemptAt": null,
-  "error": "Статистика CSRep ещё не проверялась GitHub Actions.",
+  "lastAttemptAt": "2026-07-28T21:04:08.563Z",
+  "error": "CSRep не загрузил блок статистики. Заголовок страницы: Just a moment....",
   "stats": null
 }
