@@ -53,9 +53,7 @@ async function resolveSteamId(apiKey) {
   const directId = process.env.STEAM_ID64?.trim();
   if (/^\d{17}$/.test(directId || '')) return directId;
 
-  const vanity = process.env.STEAM_VANITY?.trim();
-  if (!vanity) return null;
-
+  const vanity = process.env.STEAM_VANITY?.trim() || 'quixylon';
   const endpoint = new URL('https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/');
   endpoint.searchParams.set('key', apiKey);
   endpoint.searchParams.set('vanityurl', vanity);
@@ -63,7 +61,7 @@ async function resolveSteamId(apiKey) {
   const response = await fetch(endpoint, {
     signal: AbortSignal.timeout(15_000),
     headers: {
-      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.1'
+      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.2'
     }
   });
 
@@ -103,10 +101,6 @@ if (!apiKey) {
 }
 
 const steamId = await resolveSteamId(apiKey);
-if (!steamId) {
-  throw new Error('Set STEAM_ID64 or STEAM_VANITY in the workflow.');
-}
-
 const endpoint = new URL('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/');
 endpoint.searchParams.set('key', apiKey);
 endpoint.searchParams.set('steamids', steamId);
@@ -114,7 +108,7 @@ endpoint.searchParams.set('steamids', steamId);
 const response = await fetch(endpoint, {
   signal: AbortSignal.timeout(15_000),
   headers: {
-    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.1'
+    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.2'
   }
 });
 
