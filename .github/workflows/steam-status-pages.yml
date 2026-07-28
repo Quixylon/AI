@@ -9,6 +9,7 @@ on:
       - projects/steam-status-tracker/public/index.html
       - projects/steam-status-tracker/public/app.js
       - projects/steam-status-tracker/public/styles.css
+      - projects/steam-status-tracker/public/csrep.css
       - projects/steam-status-tracker/public/.nojekyll
       - projects/steam-status-tracker/scripts/**
   schedule:
@@ -22,8 +23,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: steam-status-pages
-  cancel-in-progress: true
+  group: status-pages-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
