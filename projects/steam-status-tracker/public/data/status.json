@@ -1,6 +1,15 @@
 {
-  "configured": false,
-  "message": "Добавьте STEAM_API_KEY в GitHub Secrets и STEAM_ID64 в GitHub Variables, затем запустите workflow вручную.",
-  "checkedAt": null,
-  "player": null
+  "configured": true,
+  "checkedAt": "2026-07-28T20:11:12.437Z",
+  "player": {
+    "steamId": "76561199524001992",
+    "name": "Тинькоф Платинум",
+    "profileUrl": "https://steamcommunity.com/id/quixylon/",
+    "avatar": "https://avatars.steamstatic.com/3e14bcc51a0e52bd128a8259ca3b4d24e698ce31_full.jpg",
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "lastLogoff": "2026-07-28T18:32:28.000Z"
+  }
 }
