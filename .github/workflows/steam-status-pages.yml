@@ -42,7 +42,7 @@ jobs:
         id: steam
         env:
           STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
-          STEAM_ID64: ${{ vars.STEAM_ID64 }}
+          STEAM_VANITY: quixylon
         run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
 
       - name: Save meaningful status changes
