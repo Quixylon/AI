@@ -47,7 +47,7 @@ jobs:
         run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
 
       - name: Send GitHub Mobile notification
-        if: steps.steam.outputs.notify == 'true'
+        if: steps.steam.outputs.notify == 'true' || (github.event_name == 'push' && github.event.head_commit.message == 'chore: test GitHub Mobile notification')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
