@@ -20,13 +20,6 @@ const pointer = {
   down: false
 };
 
-const attraction = {
-  x: window.innerWidth / 2,
-  y: window.innerHeight / 2,
-  active: false,
-  endsAt: 0
-};
-
 const tilt = {
   x: 0,
   y: 0,
@@ -53,10 +46,10 @@ const iconMarkup = {
     </svg>`,
   steam: `
     <svg class="steam-logo" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="15.7" cy="8.2" r="3.8"></circle>
-      <circle cx="15.7" cy="8.2" r="1.7"></circle>
-      <circle cx="7.1" cy="16.5" r="2.8"></circle>
-      <path d="m9.5 15.1 3.5-2.6-1.4-1.5M4.8 15.4l-2.4-1"></path>
+      <circle cx="15.8" cy="8.2" r="3.8"></circle>
+      <circle cx="15.8" cy="8.2" r="1.65"></circle>
+      <circle cx="7.1" cy="16.4" r="2.75"></circle>
+      <path d="m9.55 15.05 3.45-2.58-1.35-1.48M4.72 15.35 2.2 14.3"></path>
     </svg>`,
   csrep: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -68,19 +61,30 @@ const iconMarkup = {
     </svg>`
 };
 
-function createParticle() {
+function createParticle(index, count) {
+  const aspect = Math.max(0.5, width / Math.max(height, 1));
+  const columns = Math.max(6, Math.ceil(Math.sqrt(count * aspect)));
+  const rows = Math.ceil(count / columns);
+  const column = index % columns;
+  const row = Math.floor(index / columns);
+  const cellWidth = width / columns;
+  const cellHeight = height / rows;
   const depth = Math.random() * 0.86 + 0.14;
-  const angle = Math.random() * Math.PI * 2;
-  const speed = 0.1 + depth * 0.3;
+  const homeX = (column + 0.5) * cellWidth + (Math.random() - 0.5) * cellWidth * 0.58;
+  const homeY = (row + 0.5) * cellHeight + (Math.random() - 0.5) * cellHeight * 0.58;
+
   return {
-    x: Math.random() * width,
-    y: Math.random() * height,
+    x: homeX,
+    y: homeY,
+    homeX,
+    homeY,
+    velocityX: 0,
+    velocityY: 0,
     depth,
-    radius: 0.65 + depth * 1.75,
-    velocityX: Math.cos(angle) * speed,
-    velocityY: Math.sin(angle) * speed,
-    alpha: 0.22 + depth * 0.48,
-    phase: Math.random() * Math.PI * 2
+    radius: 0.7 + depth * 1.7,
+    alpha: 0.25 + depth * 0.5,
+    phase: Math.random() * Math.PI * 2,
+    maxOffset: 38 + depth * 42
   };
 }
 
@@ -93,16 +97,14 @@ function resizeCanvas() {
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-  const count = Math.min(160, Math.max(reducedMotion ? 64 : 92, Math.round((width * height) / 8200)));
-  particles = Array.from({ length: count }, createParticle);
+
+  const count = Math.min(155, Math.max(reducedMotion ? 62 : 94, Math.round((width * height) / 8400)));
+  particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
 }
 
-function gatherAt(x, y) {
-  attraction.x = x;
-  attraction.y = y;
-  attraction.active = true;
-  attraction.endsAt = performance.now() + 1350;
-  ripples.push({ x, y, radius: 9, alpha: 0.5, speed: 1.25 });
+function addRipple(x, y) {
+  ripples.push({ x, y, radius: 8, alpha: 0.62, speed: 2.1 });
+  ripples.push({ x, y, radius: 18, alpha: 0.26, speed: 1.35 });
 }
 
 function setPointer(clientX, clientY) {
@@ -110,23 +112,16 @@ function setPointer(clientX, clientY) {
   pointer.y = clientY;
   pointer.active = true;
 
-  if (pointer.down) {
-    attraction.x = clientX;
-    attraction.y = clientY;
-    attraction.active = true;
-    attraction.endsAt = performance.now() + 850;
-  }
-
   const bounds = card.getBoundingClientRect();
   const normalizedX = Math.min(1, Math.max(0, (clientX - bounds.left) / Math.max(bounds.width, 1)));
   const normalizedY = Math.min(1, Math.max(0, (clientY - bounds.top) / Math.max(bounds.height, 1)));
-  const maxX = coarsePointer ? 1.1 : 2.4;
-  const maxY = coarsePointer ? 1.4 : 3.1;
+  const maxX = coarsePointer ? 0.65 : 1.45;
+  const maxY = coarsePointer ? 0.85 : 1.9;
 
   tilt.targetX = (normalizedY - 0.5) * -maxX * 2;
   tilt.targetY = (normalizedX - 0.5) * maxY * 2;
-  tilt.targetShiftX = (normalizedX - 0.5) * (coarsePointer ? 1.5 : 3.5);
-  tilt.targetShiftY = (normalizedY - 0.5) * (coarsePointer ? 1 : 2.5);
+  tilt.targetShiftX = (normalizedX - 0.5) * (coarsePointer ? 1 : 2.4);
+  tilt.targetShiftY = (normalizedY - 0.5) * (coarsePointer ? 0.7 : 1.8);
   card.style.setProperty('--shine-x', `${normalizedX * 100}%`);
   card.style.setProperty('--shine-y', `${normalizedY * 100}%`);
 }
@@ -134,7 +129,6 @@ function setPointer(clientX, clientY) {
 function releasePointer() {
   pointer.down = false;
   pointer.active = false;
-  attraction.endsAt = Math.max(attraction.endsAt, performance.now() + 500);
   tilt.targetX = 0;
   tilt.targetY = 0;
   tilt.targetShiftX = 0;
@@ -142,19 +136,114 @@ function releasePointer() {
 }
 
 function animateCard(timestamp = 0) {
-  const easing = 0.09;
+  const easing = 0.085;
   if (!pointer.active) {
-    tilt.targetX = Math.sin(timestamp * 0.00035) * 0.25;
-    tilt.targetY = Math.cos(timestamp * 0.00029) * 0.38;
-    tilt.targetShiftY = Math.sin(timestamp * 0.0004) * -0.45;
+    tilt.targetX = Math.sin(timestamp * 0.0003) * 0.18;
+    tilt.targetY = Math.cos(timestamp * 0.00026) * 0.26;
+    tilt.targetShiftY = Math.sin(timestamp * 0.00035) * -0.28;
   }
 
   tilt.x += (tilt.targetX - tilt.x) * easing;
   tilt.y += (tilt.targetY - tilt.y) * easing;
   tilt.shiftX += (tilt.targetShiftX - tilt.shiftX) * easing;
   tilt.shiftY += (tilt.targetShiftY - tilt.shiftY) * easing;
-  card.style.transform = `perspective(1250px) translate3d(${tilt.shiftX}px, ${tilt.shiftY}px, 0) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`;
+  card.style.transform = `perspective(1300px) translate3d(${tilt.shiftX}px, ${tilt.shiftY}px, 0) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`;
   window.requestAnimationFrame(animateCard);
+}
+
+function updateParticles(delta, timestamp) {
+  const springStrength = pointer.down ? 0.018 : 0.045;
+  const damping = pointer.down ? 0.91 : 0.86;
+
+  for (const particle of particles) {
+    particle.phase += (0.006 + particle.depth * 0.004) * delta;
+
+    particle.velocityX += (particle.homeX - particle.x) * springStrength * delta;
+    particle.velocityY += (particle.homeY - particle.y) * springStrength * delta;
+
+    if (pointer.down) {
+      const deltaX = pointer.x - particle.x;
+      const deltaY = pointer.y - particle.y;
+      const distance = Math.hypot(deltaX, deltaY) || 1;
+      const influence = 185 + particle.depth * 85;
+
+      if (distance < influence) {
+        const pull = (1 - distance / influence) * 0.095 * particle.depth;
+        const swirl = (1 - distance / influence) * 0.009 * particle.depth;
+        particle.velocityX += ((deltaX / distance) * pull - (deltaY / distance) * swirl) * delta;
+        particle.velocityY += ((deltaY / distance) * pull + (deltaX / distance) * swirl) * delta;
+      }
+    } else if (pointer.active && !coarsePointer) {
+      const deltaX = particle.x - pointer.x;
+      const deltaY = particle.y - pointer.y;
+      const distance = Math.hypot(deltaX, deltaY) || 1;
+      const influence = 95 + particle.depth * 55;
+      if (distance < influence) {
+        const force = (1 - distance / influence) * 0.014 * particle.depth;
+        particle.velocityX += (deltaX / distance) * force * delta;
+        particle.velocityY += (deltaY / distance) * force * delta;
+      }
+    }
+
+    particle.velocityX *= Math.pow(damping, delta);
+    particle.velocityY *= Math.pow(damping, delta);
+    particle.x += particle.velocityX * delta;
+    particle.y += particle.velocityY * delta;
+
+    const offsetX = particle.x - particle.homeX;
+    const offsetY = particle.y - particle.homeY;
+    const offset = Math.hypot(offsetX, offsetY) || 1;
+    if (offset > particle.maxOffset) {
+      const scale = particle.maxOffset / offset;
+      particle.x = particle.homeX + offsetX * scale;
+      particle.y = particle.homeY + offsetY * scale;
+      particle.velocityX *= 0.48;
+      particle.velocityY *= 0.48;
+    }
+
+    particle.renderX = particle.x + Math.cos(timestamp * 0.00045 + particle.phase) * particle.depth * 1.8;
+    particle.renderY = particle.y + Math.sin(timestamp * 0.00039 + particle.phase) * particle.depth * 1.5;
+  }
+}
+
+function drawWeb() {
+  context.shadowBlur = 0;
+  const threshold = Math.min(138, Math.max(92, Math.min(width, height) * 0.13));
+
+  for (let firstIndex = 0; firstIndex < particles.length; firstIndex += 1) {
+    const first = particles[firstIndex];
+    for (let secondIndex = firstIndex + 1; secondIndex < particles.length; secondIndex += 1) {
+      const second = particles[secondIndex];
+      const distance = Math.hypot(first.renderX - second.renderX, first.renderY - second.renderY);
+      if (distance >= threshold) continue;
+
+      const depth = Math.min(first.depth, second.depth);
+      const alpha = (1 - distance / threshold) * 0.16 * depth;
+      context.strokeStyle = `rgba(157, 149, 255, ${alpha})`;
+      context.lineWidth = 0.45 + depth * 0.4;
+      context.beginPath();
+      context.moveTo(first.renderX, first.renderY);
+      context.lineTo(second.renderX, second.renderY);
+      context.stroke();
+    }
+  }
+
+  if (pointer.down) {
+    const nearby = particles
+      .map((particle) => ({ particle, distance: Math.hypot(particle.renderX - pointer.x, particle.renderY - pointer.y) }))
+      .filter((item) => item.distance < 230)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 8);
+
+    for (const { particle, distance } of nearby) {
+      context.strokeStyle = `rgba(190, 181, 255, ${(1 - distance / 230) * 0.22})`;
+      context.lineWidth = 0.75;
+      context.beginPath();
+      context.moveTo(particle.renderX, particle.renderY);
+      context.lineTo(pointer.x, pointer.y);
+      context.stroke();
+    }
+  }
 }
 
 function drawBackground(timestamp = 0) {
@@ -162,109 +251,40 @@ function drawBackground(timestamp = 0) {
   lastFrame = timestamp;
   context.clearRect(0, 0, width, height);
 
-  if (attraction.active && timestamp >= attraction.endsAt) {
-    attraction.active = false;
-  }
-
-  const focusX = attraction.active
-    ? attraction.x
-    : pointer.active
-      ? pointer.x
-      : width * (0.5 + Math.sin(timestamp * 0.00016) * 0.1);
-  const focusY = attraction.active
-    ? attraction.y
-    : pointer.active
-      ? pointer.y
-      : height * (0.42 + Math.cos(timestamp * 0.00013) * 0.07);
+  const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00015) * 0.1);
+  const focusY = pointer.active ? pointer.y : height * (0.42 + Math.cos(timestamp * 0.00012) * 0.07);
   const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.6);
-  glow.addColorStop(0, attraction.active ? 'rgba(151, 126, 255, 0.25)' : 'rgba(135, 109, 255, 0.21)');
-  glow.addColorStop(0.35, 'rgba(44, 132, 213, 0.09)');
+  glow.addColorStop(0, pointer.down ? 'rgba(151, 126, 255, 0.24)' : 'rgba(135, 109, 255, 0.19)');
+  glow.addColorStop(0.36, 'rgba(44, 132, 213, 0.08)');
   glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   context.fillStyle = glow;
   context.fillRect(0, 0, width, height);
 
-  const attractionStrength = attraction.active
-    ? Math.min(1, Math.max(0, (attraction.endsAt - timestamp) / 900))
-    : 0;
+  updateParticles(delta, timestamp);
+  drawWeb();
 
   for (const particle of particles) {
-    particle.phase += (0.008 + particle.depth * 0.006) * delta;
-
-    if (attraction.active) {
-      const deltaX = attraction.x - particle.x;
-      const deltaY = attraction.y - particle.y;
-      const distance = Math.hypot(deltaX, deltaY) || 1;
-      const targetRadius = 28 + particle.depth * 18;
-      const radialError = distance - targetRadius;
-      const normalizedDistance = Math.min(1, distance / Math.max(width, height));
-      const pull = radialError * 0.00042 * (0.75 + particle.depth * 0.55) * attractionStrength;
-      const softLimit = 0.022 * (1 - normalizedDistance * 0.45);
-      const force = Math.max(-softLimit, Math.min(softLimit, pull));
-      const tangent = 0.0016 * particle.depth * attractionStrength;
-
-      particle.velocityX += ((deltaX / distance) * force - (deltaY / distance) * tangent) * delta;
-      particle.velocityY += ((deltaY / distance) * force + (deltaX / distance) * tangent) * delta;
-    } else if (pointer.active) {
-      const deltaX = particle.x - pointer.x;
-      const deltaY = particle.y - pointer.y;
-      const distance = Math.hypot(deltaX, deltaY) || 1;
-      const influence = 105 + particle.depth * 75;
-      if (distance < influence) {
-        const force = ((influence - distance) / influence) * 0.018 * particle.depth;
-        particle.velocityX += (deltaX / distance) * force;
-        particle.velocityY += (deltaY / distance) * force;
-      }
-    }
-
-    const damping = attraction.active ? 0.987 : 0.992;
-    particle.velocityX *= damping;
-    particle.velocityY *= damping;
-    particle.x += (particle.velocityX + Math.cos(particle.phase) * 0.035 * particle.depth) * delta;
-    particle.y += (particle.velocityY + Math.sin(particle.phase * 0.8) * 0.032 * particle.depth) * delta;
-    if (particle.x < -20) particle.x = width + 20;
-    if (particle.x > width + 20) particle.x = -20;
-    if (particle.y < -20) particle.y = height + 20;
-    if (particle.y > height + 20) particle.y = -20;
-
-    const parallaxX = ((focusX / Math.max(width, 1)) - 0.5) * particle.depth * 15;
-    const parallaxY = ((focusY / Math.max(height, 1)) - 0.5) * particle.depth * 11;
-    const pulse = 1 + Math.sin(timestamp * 0.0016 + particle.phase) * 0.09;
+    const pulse = 1 + Math.sin(timestamp * 0.0014 + particle.phase) * 0.08;
     context.beginPath();
-    context.fillStyle = `rgba(220, 225, 255, ${particle.alpha})`;
-    context.shadowColor = `rgba(151, 141, 255, ${particle.alpha * 0.55})`;
-    context.shadowBlur = 5 + particle.depth * 6;
-    context.arc(particle.x + parallaxX, particle.y + parallaxY, particle.radius * pulse, 0, Math.PI * 2);
+    context.fillStyle = `rgba(222, 226, 255, ${particle.alpha})`;
+    context.shadowColor = `rgba(151, 141, 255, ${particle.alpha * 0.52})`;
+    context.shadowBlur = 4 + particle.depth * 5;
+    context.arc(particle.renderX, particle.renderY, particle.radius * pulse, 0, Math.PI * 2);
     context.fill();
   }
 
   context.shadowBlur = 0;
-  const connectionLimit = Math.min(particles.length, 115);
-  for (let firstIndex = 0; firstIndex < connectionLimit; firstIndex += 1) {
-    const first = particles[firstIndex];
-    for (let secondIndex = firstIndex + 1; secondIndex < connectionLimit; secondIndex += 1) {
-      const second = particles[secondIndex];
-      const distance = Math.hypot(first.x - second.x, first.y - second.y);
-      const threshold = 72 + Math.min(first.depth, second.depth) * 54;
-      if (distance >= threshold) continue;
-      context.strokeStyle = `rgba(151, 143, 255, ${(1 - distance / threshold) * 0.12 * Math.min(first.depth, second.depth)})`;
-      context.lineWidth = 0.55;
-      context.beginPath();
-      context.moveTo(first.x, first.y);
-      context.lineTo(second.x, second.y);
-      context.stroke();
-    }
-  }
-
   ripples = ripples.filter((ripple) => ripple.alpha > 0.012);
   for (const ripple of ripples) {
     ripple.radius += ripple.speed * delta;
-    ripple.alpha *= Math.pow(0.955, delta);
+    ripple.alpha *= Math.pow(0.95, delta);
     context.strokeStyle = `rgba(187, 178, 255, ${ripple.alpha})`;
-    context.lineWidth = 1.15;
+    context.lineWidth = 1.1;
     context.beginPath();
     context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
     context.stroke();
   }
+
   window.requestAnimationFrame(drawBackground);
 }
 
@@ -285,6 +305,7 @@ function renderDescription(text) {
 function renderLinks(links) {
   const container = $('#profile-links');
   container.replaceChildren();
+
   for (const [index, item] of (Array.isArray(links) ? links : []).entries()) {
     if (!item?.url || !item?.label) continue;
 
@@ -302,17 +323,19 @@ function renderLinks(links) {
     anchor.target = '_blank';
     anchor.rel = 'noreferrer';
     anchor.style.setProperty('--float-delay', `${index * -0.47}s`);
-    anchor.style.setProperty('--float-height', `${3 + (index % 3)}px`);
 
     const icon = document.createElement('span');
     icon.className = 'link-icon';
     icon.innerHTML = iconMarkup[item.kind] || `<span>${String(item.icon || item.label).slice(0, 2).toUpperCase()}</span>`;
+
     const label = document.createElement('strong');
     label.className = 'link-label';
     label.textContent = item.label;
+
     const arrow = document.createElement('span');
     arrow.className = 'link-arrow';
     arrow.textContent = '↗';
+
     anchor.append(icon, label, arrow);
     stage.append(platform, anchor);
     container.append(stage);
@@ -373,6 +396,7 @@ async function updateViewCounter() {
   const baseEndpoint = 'https://api.counterapi.dev/v1/quixylon-ai/profile-card-views';
   const today = new Date().toISOString().slice(0, 10);
   let previousDay = '';
+
   try {
     previousDay = localStorage.getItem('quixylon-profile-view-day') || '';
   } catch {
@@ -393,7 +417,11 @@ async function updateViewCounter() {
 }
 
 async function loadProfile() {
-  const [bio, status] = await Promise.all([fetchJson('./data/bio.json', {}), fetchJson('./data/status.json')]);
+  const [bio, status] = await Promise.all([
+    fetchJson('./data/bio.json', {}),
+    fetchJson('./data/status.json')
+  ]);
+
   $('#profile-name').textContent = bio.displayName || 'Qu’lon';
   $('#profile-handle').textContent = bio.handle || '@quixylon';
   renderDescription(bio.description);
@@ -413,7 +441,7 @@ window.addEventListener('pointermove', (event) => setPointer(event.clientX, even
 window.addEventListener('pointerdown', (event) => {
   pointer.down = true;
   setPointer(event.clientX, event.clientY);
-  gatherAt(event.clientX, event.clientY);
+  addRipple(event.clientX, event.clientY);
 }, { passive: true });
 window.addEventListener('pointerup', releasePointer, { passive: true });
 window.addEventListener('pointercancel', releasePointer, { passive: true });
