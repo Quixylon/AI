@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pages: write
   id-token: write
 
@@ -44,6 +45,56 @@ jobs:
           STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
           STEAM_VANITY: quixylon
         run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
+
+      - name: Send GitHub Mobile notification
+        if: steps.steam.outputs.notify == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'NODE'
+          const { readFileSync, writeFileSync } = require('node:fs');
+          const data = JSON.parse(readFileSync('projects/steam-status-tracker/public/data/status.json', 'utf8'));
+          const player = data.player;
+          const statusNames = {
+            offline: 'не в сети',
+            online: 'в сети',
+            busy: 'занят',
+            away: 'отошёл',
+            snooze: 'спит',
+            'looking-to-trade': 'ищет обмен',
+            'looking-to-play': 'ищет игру',
+            'in-game': 'в игре',
+            unknown: 'неизвестный статус'
+          };
+
+          let headline;
+          if (player.gameName) {
+            headline = `🎮 ${player.name} запустил игру: **${player.gameName}**`;
+          } else if (player.status === 'offline') {
+            headline = `⚫ ${player.name} вышел из сети`;
+          } else {
+            headline = `🟢 ${player.name}: **${statusNames[player.status] || statusNames.unknown}**`;
+          }
+
+          const checkedAt = new Intl.DateTimeFormat('ru-RU', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: 'Europe/Moscow'
+          }).format(new Date(data.checkedAt));
+
+          const body = [
+            '@Quixylon',
+            '',
+            `## ${headline}`,
+            '',
+            `Проверено: ${checkedAt} МСК`,
+            '',
+            `[Открыть Steam-профиль](${player.profileUrl}) · [Открыть мониторинг](https://quixylon.github.io/AI/)`
+          ].join('\n');
+
+          writeFileSync('/tmp/steam-notification.md', body);
+          NODE
+          gh issue comment 1 --repo "$GITHUB_REPOSITORY" --body-file /tmp/steam-notification.md
 
       - name: Save meaningful status changes
         if: steps.steam.outputs.persist == 'true'
