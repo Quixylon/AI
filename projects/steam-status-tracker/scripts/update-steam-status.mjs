@@ -49,6 +49,19 @@ function comparablePlayer(player) {
   };
 }
 
+function closeActiveHistoryEntry(history, endedAt) {
+  const activeEntry = history.at(-1);
+  if (!activeEntry || activeEntry.endedAt) return;
+
+  activeEntry.endedAt = endedAt;
+  const startedAtMs = new Date(activeEntry.startedAt).getTime();
+  const endedAtMs = new Date(endedAt).getTime();
+
+  if (Number.isFinite(startedAtMs) && Number.isFinite(endedAtMs)) {
+    activeEntry.durationSeconds = Math.max(0, Math.round((endedAtMs - startedAtMs) / 1000));
+  }
+}
+
 async function resolveSteamId(apiKey) {
   const directId = process.env.STEAM_ID64?.trim();
   if (/^\d{17}$/.test(directId || '')) return directId;
@@ -61,7 +74,7 @@ async function resolveSteamId(apiKey) {
   const response = await fetch(endpoint, {
     signal: AbortSignal.timeout(15_000),
     headers: {
-      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.3'
+      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.4'
     }
   });
 
@@ -109,7 +122,7 @@ endpoint.searchParams.set('steamids', steamId);
 const response = await fetch(endpoint, {
   signal: AbortSignal.timeout(15_000),
   headers: {
-    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.3'
+    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.4'
   }
 });
 
@@ -157,14 +170,20 @@ const presenceChanged =
 const profileChanged =
   JSON.stringify(comparablePlayer(previousPlayer)) !== JSON.stringify(comparablePlayer(player));
 
-const nextHistory = Array.isArray(history) ? history : [];
+const nextHistory = Array.isArray(history)
+  ? history.filter((entry) => entry && entry.startedAt).map((entry) => ({ ...entry }))
+  : [];
+
 if (presenceChanged) {
+  closeActiveHistoryEntry(nextHistory, checkedAt);
   nextHistory.push({
     status: player.status,
     personaState: player.personaState,
     gameName: player.gameName,
     gameId: player.gameId,
-    startedAt: checkedAt
+    startedAt: checkedAt,
+    endedAt: null,
+    durationSeconds: null
   });
 }
 
