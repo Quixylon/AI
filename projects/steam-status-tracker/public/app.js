@@ -11,12 +11,12 @@ let pixelRatio = 1;
 let particles = [];
 let ripples = [];
 let lastFrame = performance.now();
+let pointerResetTimer = 0;
 
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
-  active: false,
-  pressed: false
+  active: false
 };
 
 const tilt = {
@@ -44,8 +44,10 @@ const iconMarkup = {
       <path d="M14.3 3v11.1a4.7 4.7 0 1 1-4-4.6v2.8a1.9 1.9 0 1 0 1.2 1.8V3h2.8Zm0 0c.4 2.3 1.8 3.8 4.1 4.2V10a7.7 7.7 0 0 1-4.1-1.4V3Z"></path>
     </svg>`,
   steam: `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 2a10 10 0 0 0-9.7 7.6l5.3 2.2a3.6 3.6 0 0 1 2.2-1.1l2.4-3.5a4.7 4.7 0 1 1 4.1 7 4.7 4.7 0 0 1-3.5-1.6l-3.4.1a3.6 3.6 0 0 1-6.2 2.5l-1.5-.6A10 10 0 1 0 12 2Zm-5 15.8a2.2 2.2 0 0 0 1.2-4.2L5.7 12.5 7 17.8Zm9.3-5.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Zm0-1.4a1.7 1.7 0 1 1 0-3.4 1.7 1.7 0 0 1 0 3.4Z"></path>
+    <svg class="steam-logo" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="16.8" cy="7.2" r="3.5"></circle>
+      <circle cx="7.2" cy="16.4" r="2.7"></circle>
+      <path d="m9.6 15.1 4.7-4.6M4.7 15.4 2 14.3M9.4 17.5l3.2 1.3"></path>
     </svg>`,
   csrep: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -57,19 +59,19 @@ const iconMarkup = {
     </svg>`
 };
 
-function createParticle(x = Math.random() * width, y = Math.random() * height) {
-  const depth = Math.random() * 0.9 + 0.1;
+function createParticle() {
+  const depth = Math.random() * 0.85 + 0.15;
   const angle = Math.random() * Math.PI * 2;
-  const speed = 0.12 + depth * 0.38;
+  const speed = 0.08 + depth * 0.24;
 
   return {
-    x,
-    y,
+    x: Math.random() * width,
+    y: Math.random() * height,
     depth,
-    radius: 0.8 + depth * 2.1,
+    radius: 0.65 + depth * 1.7,
     velocityX: Math.cos(angle) * speed,
     velocityY: Math.sin(angle) * speed,
-    alpha: 0.3 + depth * 0.58,
+    alpha: 0.24 + depth * 0.48,
     phase: Math.random() * Math.PI * 2
   };
 }
@@ -85,63 +87,62 @@ function resizeCanvas() {
   canvas.style.height = `${height}px`;
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-  const baseCount = Math.round((width * height) / 7200);
-  const particleCount = Math.min(190, Math.max(reducedMotion ? 72 : 105, baseCount));
-  particles = Array.from({ length: particleCount }, () => createParticle());
+  const requestedCount = Math.round((width * height) / 9200);
+  const particleCount = Math.min(150, Math.max(reducedMotion ? 58 : 82, requestedCount));
+  particles = Array.from({ length: particleCount }, createParticle);
 }
 
-function burst(x, y) {
-  ripples.push({ x, y, radius: 5, alpha: 0.92, speed: 3.4 });
-  ripples.push({ x, y, radius: 12, alpha: 0.5, speed: 2.1 });
+function createTouchWave(x, y) {
+  ripples.push({ x, y, radius: 8, alpha: 0.72, speed: 2.4 });
 
-  for (let index = 0; index < 24; index += 1) {
-    const particle = particles[Math.floor(Math.random() * particles.length)];
-    if (!particle) break;
+  for (const particle of particles) {
+    const deltaX = particle.x - x;
+    const deltaY = particle.y - y;
+    const distance = Math.hypot(deltaX, deltaY) || 1;
+    if (distance > 170) continue;
 
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 2.8 + 0.7;
-    particle.x = x;
-    particle.y = y;
-    particle.velocityX = Math.cos(angle) * speed;
-    particle.velocityY = Math.sin(angle) * speed;
+    const force = ((170 - distance) / 170) * 0.55;
+    particle.velocityX += (deltaX / distance) * force;
+    particle.velocityY += (deltaY / distance) * force;
   }
 }
 
-function setPointer(clientX, clientY, active = true) {
+function setPointer(clientX, clientY) {
   pointer.x = clientX;
   pointer.y = clientY;
-  pointer.active = active;
+  pointer.active = true;
 
-  const normalizedX = Math.min(1, Math.max(0, clientX / Math.max(width, 1)));
-  const normalizedY = Math.min(1, Math.max(0, clientY / Math.max(height, 1)));
+  const cardBounds = card.getBoundingClientRect();
+  const normalizedX = Math.min(1, Math.max(0, (clientX - cardBounds.left) / Math.max(cardBounds.width, 1)));
+  const normalizedY = Math.min(1, Math.max(0, (clientY - cardBounds.top) / Math.max(cardBounds.height, 1)));
 
-  tilt.targetX = (normalizedY - 0.5) * -18;
-  tilt.targetY = (normalizedX - 0.5) * 22;
-  tilt.targetShiftX = (normalizedX - 0.5) * 13;
-  tilt.targetShiftY = (normalizedY - 0.5) * 10;
+  tilt.targetX = (normalizedY - 0.5) * -5.5;
+  tilt.targetY = (normalizedX - 0.5) * 7;
+  tilt.targetShiftX = (normalizedX - 0.5) * 4;
+  tilt.targetShiftY = (normalizedY - 0.5) * 3;
 
   card.style.setProperty('--shine-x', `${normalizedX * 100}%`);
   card.style.setProperty('--shine-y', `${normalizedY * 100}%`);
+
+  window.clearTimeout(pointerResetTimer);
+  pointerResetTimer = window.setTimeout(resetPointer, 1200);
 }
 
-function resetTiltSoon() {
-  window.setTimeout(() => {
-    pointer.active = false;
-    pointer.pressed = false;
-    tilt.targetX = 0;
-    tilt.targetY = 0;
-    tilt.targetShiftX = 0;
-    tilt.targetShiftY = 0;
-  }, 180);
+function resetPointer() {
+  pointer.active = false;
+  tilt.targetX = 0;
+  tilt.targetY = 0;
+  tilt.targetShiftX = 0;
+  tilt.targetShiftY = 0;
 }
 
 function animateCard(timestamp = 0) {
-  const easing = 0.115;
+  const easing = 0.09;
 
   if (!pointer.active) {
-    tilt.targetX = Math.sin(timestamp * 0.00038) * 1.5;
-    tilt.targetY = Math.cos(timestamp * 0.00031) * 2.1;
-    tilt.targetShiftY = Math.sin(timestamp * 0.00045) * -2.2;
+    tilt.targetX = Math.sin(timestamp * 0.0003) * 0.45;
+    tilt.targetY = Math.cos(timestamp * 0.00026) * 0.65;
+    tilt.targetShiftY = Math.sin(timestamp * 0.00034) * -0.8;
   }
 
   tilt.x += (tilt.targetX - tilt.x) * easing;
@@ -150,7 +151,7 @@ function animateCard(timestamp = 0) {
   tilt.shiftY += (tilt.targetShiftY - tilt.shiftY) * easing;
 
   card.style.transform = [
-    'perspective(1050px)',
+    'perspective(1250px)',
     `translate3d(${tilt.shiftX}px, ${tilt.shiftY}px, 0)`,
     `rotateX(${tilt.x}deg)`,
     `rotateY(${tilt.y}deg)`
@@ -160,74 +161,77 @@ function animateCard(timestamp = 0) {
 }
 
 function drawBackground(timestamp = 0) {
-  const delta = Math.min(2.2, Math.max(0.35, (timestamp - lastFrame) / 16.67));
+  const delta = Math.min(2, Math.max(0.4, (timestamp - lastFrame) / 16.67));
   lastFrame = timestamp;
   context.clearRect(0, 0, width, height);
 
-  const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00018) * 0.12);
-  const focusY = pointer.active ? pointer.y : height * (0.42 + Math.cos(timestamp * 0.00015) * 0.09);
+  const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00015) * 0.1);
+  const focusY = pointer.active ? pointer.y : height * (0.42 + Math.cos(timestamp * 0.00013) * 0.07);
   const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.62);
-  glow.addColorStop(0, 'rgba(139, 112, 255, 0.28)');
-  glow.addColorStop(0.34, 'rgba(43, 139, 220, 0.13)');
+  glow.addColorStop(0, 'rgba(139, 112, 255, 0.2)');
+  glow.addColorStop(0.35, 'rgba(43, 139, 220, 0.09)');
   glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   context.fillStyle = glow;
   context.fillRect(0, 0, width, height);
 
   for (const particle of particles) {
-    particle.phase += (0.01 + particle.depth * 0.008) * delta;
+    particle.phase += (0.007 + particle.depth * 0.005) * delta;
 
     if (pointer.active) {
       const deltaX = particle.x - pointer.x;
       const deltaY = particle.y - pointer.y;
       const distance = Math.hypot(deltaX, deltaY) || 1;
-      const influence = 145 + particle.depth * 120;
+      const influence = 110 + particle.depth * 85;
 
       if (distance < influence) {
-        const direction = pointer.pressed ? -1 : 1;
-        const force = ((influence - distance) / influence) * 0.12 * particle.depth * direction;
+        const force = ((influence - distance) / influence) * 0.035 * particle.depth;
         particle.velocityX += (deltaX / distance) * force;
         particle.velocityY += (deltaY / distance) * force;
       }
     }
 
-    particle.velocityX *= 0.988;
-    particle.velocityY *= 0.988;
-    particle.x += (particle.velocityX + Math.cos(particle.phase) * 0.055 * particle.depth) * delta;
-    particle.y += (particle.velocityY + Math.sin(particle.phase * 0.82) * 0.05 * particle.depth) * delta;
+    particle.velocityX *= 0.994;
+    particle.velocityY *= 0.994;
+    particle.x += (particle.velocityX + Math.cos(particle.phase) * 0.025 * particle.depth) * delta;
+    particle.y += (particle.velocityY + Math.sin(particle.phase * 0.84) * 0.022 * particle.depth) * delta;
 
-    if (particle.x < -24) particle.x = width + 24;
-    if (particle.x > width + 24) particle.x = -24;
-    if (particle.y < -24) particle.y = height + 24;
-    if (particle.y > height + 24) particle.y = -24;
+    if (particle.x < -18) particle.x = width + 18;
+    if (particle.x > width + 18) particle.x = -18;
+    if (particle.y < -18) particle.y = height + 18;
+    if (particle.y > height + 18) particle.y = -18;
 
-    const parallaxX = ((focusX / Math.max(width, 1)) - 0.5) * particle.depth * 22;
-    const parallaxY = ((focusY / Math.max(height, 1)) - 0.5) * particle.depth * 17;
-    const drawX = particle.x + parallaxX;
-    const drawY = particle.y + parallaxY;
-    const pulse = 1 + Math.sin(timestamp * 0.0018 + particle.phase) * 0.14;
+    const parallaxX = ((focusX / Math.max(width, 1)) - 0.5) * particle.depth * 12;
+    const parallaxY = ((focusY / Math.max(height, 1)) - 0.5) * particle.depth * 9;
+    const pulse = 1 + Math.sin(timestamp * 0.0014 + particle.phase) * 0.1;
 
     context.beginPath();
-    context.fillStyle = `rgba(222, 226, 255, ${particle.alpha})`;
-    context.shadowColor = `rgba(155, 145, 255, ${particle.alpha * 0.72})`;
-    context.shadowBlur = 7 + particle.depth * 8;
-    context.arc(drawX, drawY, particle.radius * pulse, 0, Math.PI * 2);
+    context.fillStyle = `rgba(220, 225, 255, ${particle.alpha})`;
+    context.shadowColor = `rgba(151, 140, 255, ${particle.alpha * 0.52})`;
+    context.shadowBlur = 4 + particle.depth * 5;
+    context.arc(
+      particle.x + parallaxX,
+      particle.y + parallaxY,
+      particle.radius * pulse,
+      0,
+      Math.PI * 2
+    );
     context.fill();
   }
 
   context.shadowBlur = 0;
-  const connectionLimit = Math.min(particles.length, 135);
+  const connectionLimit = Math.min(particles.length, 105);
   for (let firstIndex = 0; firstIndex < connectionLimit; firstIndex += 1) {
     const first = particles[firstIndex];
 
     for (let secondIndex = firstIndex + 1; secondIndex < connectionLimit; secondIndex += 1) {
       const second = particles[secondIndex];
       const distance = Math.hypot(first.x - second.x, first.y - second.y);
-      const threshold = 82 + Math.min(first.depth, second.depth) * 68;
+      const threshold = 72 + Math.min(first.depth, second.depth) * 50;
       if (distance >= threshold) continue;
 
-      const alpha = (1 - distance / threshold) * 0.18 * Math.min(first.depth, second.depth);
-      context.strokeStyle = `rgba(155, 148, 255, ${alpha})`;
-      context.lineWidth = 0.55 + Math.min(first.depth, second.depth) * 0.65;
+      const alpha = (1 - distance / threshold) * 0.1 * Math.min(first.depth, second.depth);
+      context.strokeStyle = `rgba(151, 143, 255, ${alpha})`;
+      context.lineWidth = 0.55;
       context.beginPath();
       context.moveTo(first.x, first.y);
       context.lineTo(second.x, second.y);
@@ -239,8 +243,8 @@ function drawBackground(timestamp = 0) {
   for (const ripple of ripples) {
     ripple.radius += ripple.speed * delta;
     ripple.alpha *= Math.pow(0.95, delta);
-    context.strokeStyle = `rgba(188, 178, 255, ${ripple.alpha})`;
-    context.lineWidth = 1.5;
+    context.strokeStyle = `rgba(187, 176, 255, ${ripple.alpha})`;
+    context.lineWidth = 1.2;
     context.beginPath();
     context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
     context.stroke();
@@ -253,7 +257,7 @@ function renderLinks(links) {
   const container = $('#profile-links');
   container.replaceChildren();
 
-  for (const item of Array.isArray(links) ? links : []) {
+  for (const [index, item] of (Array.isArray(links) ? links : []).entries()) {
     if (!item?.url || !item?.label) continue;
 
     const anchor = document.createElement('a');
@@ -261,26 +265,21 @@ function renderLinks(links) {
     anchor.href = item.url;
     anchor.target = '_blank';
     anchor.rel = 'noreferrer';
+    anchor.style.setProperty('--float-delay', `${index * -0.55}s`);
 
     const icon = document.createElement('span');
     icon.className = 'link-icon';
-    icon.innerHTML = iconMarkup[item.kind] || `<span>${String(item.icon || item.label).slice(0, 2).toUpperCase()}</span>`;
-
-    const copy = document.createElement('span');
-    copy.className = 'link-copy';
+    icon.innerHTML = iconMarkup[item.kind] || `<span>${String(item.label).slice(0, 2).toUpperCase()}</span>`;
 
     const label = document.createElement('strong');
+    label.className = 'link-label';
     label.textContent = item.label;
-
-    const hint = document.createElement('small');
-    hint.textContent = item.hint || item.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
     const arrow = document.createElement('span');
     arrow.className = 'link-arrow';
     arrow.textContent = '↗';
 
-    copy.append(label, hint);
-    anchor.append(icon, copy, arrow);
+    anchor.append(icon, label, arrow);
     container.append(anchor);
   }
 }
@@ -296,9 +295,10 @@ async function fetchJson(path, fallback = null) {
 
 function setDiscordPresence(status, label) {
   const dot = $('#guns-dot');
-  const text = $('#guns-presence');
+  const gunsCard = $('#guns-card');
   dot.className = `presence-dot ${status}`;
-  text.textContent = label;
+  gunsCard.title = `Discord: ${label}`;
+  gunsCard.setAttribute('aria-label', `guns.lol — Discord: ${label}`);
 }
 
 function parseDiscordPresence(text) {
@@ -321,10 +321,7 @@ async function updateDiscordPresence() {
 
   for (const source of sources) {
     try {
-      const response = await fetch(source, {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(9000)
-      });
+      const response = await fetch(source, { cache: 'no-store' });
       if (!response.ok) continue;
 
       const result = parseDiscordPresence(await response.text());
@@ -337,7 +334,7 @@ async function updateDiscordPresence() {
     }
   }
 
-  setDiscordPresence('unknown', 'Открыть статус');
+  setDiscordPresence('unknown', 'статус недоступен');
 }
 
 function readCounterValue(payload) {
@@ -362,7 +359,7 @@ async function updateViewCounter() {
   try {
     lastCountedDay = window.localStorage.getItem('quixylon-profile-view-day') || '';
   } catch {
-    // В приватном режиме счётчик всё равно попробует загрузиться.
+    // Счётчик всё равно попробует загрузиться.
   }
 
   const shouldIncrement = lastCountedDay !== today;
@@ -371,8 +368,7 @@ async function updateViewCounter() {
   try {
     const response = await fetch(endpoint, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
-    const value = readCounterValue(payload);
+    const value = readCounterValue(await response.json());
     if (value === undefined) throw new Error('Counter value missing');
 
     display.textContent = `Просмотры: ${new Intl.NumberFormat('ru-RU').format(Number(value))}`;
@@ -397,14 +393,7 @@ async function loadProfile() {
 
   $('#profile-name').textContent = bio.displayName || 'Qu’lon';
   $('#profile-handle').textContent = bio.handle || '@quixylon';
-
-  const descriptions = Array.isArray(bio.descriptions)
-    ? bio.descriptions.filter(Boolean)
-    : [];
-  $('#profile-description').textContent = descriptions.length
-    ? descriptions.join(' · ')
-    : bio.description || 'Steam, CS2, соцсети и всё важное — в одном месте.';
-
+  $('#profile-description').textContent = bio.description || 'Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.';
   renderLinks(bio.links);
 
   const player = status?.player;
@@ -428,29 +417,12 @@ window.addEventListener('pointermove', (event) => {
 
 window.addEventListener('pointerdown', (event) => {
   setPointer(event.clientX, event.clientY);
-  pointer.pressed = true;
-  burst(event.clientX, event.clientY);
+  createTouchWave(event.clientX, event.clientY);
 }, { passive: true });
 
-window.addEventListener('pointerup', resetTiltSoon, { passive: true });
-window.addEventListener('pointercancel', resetTiltSoon, { passive: true });
+window.addEventListener('pointerleave', resetPointer, { passive: true });
+window.addEventListener('pointercancel', resetPointer, { passive: true });
 window.addEventListener('resize', resizeCanvas, { passive: true });
-
-window.addEventListener('touchstart', (event) => {
-  const touch = event.touches?.[0];
-  if (!touch) return;
-  setPointer(touch.clientX, touch.clientY);
-  pointer.pressed = true;
-  burst(touch.clientX, touch.clientY);
-}, { passive: true });
-
-window.addEventListener('touchmove', (event) => {
-  const touch = event.touches?.[0];
-  if (!touch) return;
-  setPointer(touch.clientX, touch.clientY);
-}, { passive: true });
-
-window.addEventListener('touchend', resetTiltSoon, { passive: true });
 
 resizeCanvas();
 drawBackground();
