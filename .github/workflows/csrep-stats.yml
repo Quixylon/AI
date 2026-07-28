@@ -1,0 +1,82 @@
+name: CSRep Statistics
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/csrep-stats.yml
+      - projects/steam-status-tracker/package.json
+      - projects/steam-status-tracker/scripts/update-csrep-stats.mjs
+      - projects/steam-status-tracker/public/csrep.css
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: status-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install scraper dependencies
+        working-directory: projects/steam-status-tracker
+        run: npm install --no-package-lock --no-audit --no-fund
+
+      - name: Install Chromium
+        working-directory: projects/steam-status-tracker
+        run: npx playwright install --with-deps chromium
+
+      - name: Read CSRep statistics
+        id: csrep
+        working-directory: projects/steam-status-tracker
+        env:
+          CSREP_PROFILE_URL: https://csrep.gg/player/76561199524001992
+        run: npm run update:csrep
+
+      - name: Save CSRep result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add projects/steam-status-tracker/public/data/csrep.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update CSRep statistics [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: projects/steam-status-tracker/public
+
+  deploy:
+    needs: collect
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
