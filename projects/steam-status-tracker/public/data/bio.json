@@ -1,5 +1,5 @@
 {
-  "displayName": "Quixylon",
+  "displayName": "Qu’lon",
   "handle": "@quixylon",
   "descriptions": [
     "Steam, CS2, соцсети и всё важное — в одном месте"
@@ -15,14 +15,31 @@
       "label": "Roblox",
       "url": "https://roblox.com/users/1295717297/profile",
       "kind": "roblox",
-      "hint": "Профиль Quixylon"
+      "hint": "Профиль Roblox"
     },
     {
       "label": "TikTok",
       "url": "https://tiktok.com/@quixylon",
       "kind": "tiktok",
       "hint": "@quixylon"
+    },
+    {
+      "label": "Steam",
+      "url": "https://steamcommunity.com/id/quixylon/",
+      "kind": "steam",
+      "hint": "Steam-профиль"
+    },
+    {
+      "label": "CSRep",
+      "url": "https://csrep.gg/player/76561199524001992",
+      "kind": "csrep",
+      "hint": "Статистика CS2"
+    },
+    {
+      "label": "GitHub",
+      "url": "https://github.com/Quixylon/AI",
+      "kind": "github",
+      "hint": "Quixylon/AI"
     }
-  ],
-  "spotifyUrl": "https://open.spotify.com/track/5QTnnDxfcdQzYndjxegNex"
+  ]
 }
