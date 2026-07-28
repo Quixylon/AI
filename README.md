@@ -10,7 +10,7 @@ This repository is the central workspace for projects built with artificial inte
 
 | Project | Description | Status |
 | --- | --- | --- |
-| Steam Status Tracker | A web application for monitoring a public Steam profile, current game, online status, activity history, and notifications. | Planned |
+| [Steam Status Tracker](projects/steam-status-tracker) | A web application for checking a public Steam profile, current game, online status, and recent activity. | In development |
 
 ## Repository structure
 
@@ -35,7 +35,7 @@ API keys, passwords, tokens, database credentials, and `.env` files must never b
 
 ## Current goal
 
-Build the first complete project: **Steam Status Tracker**.
+Complete and deploy **Steam Status Tracker**, then add persistent activity history and notifications.
 
 ---
 
