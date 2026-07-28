@@ -47,6 +47,31 @@ function formatNumber(value, maximumFractionDigits = 2) {
   }).format(value);
 }
 
+function formatDuration(startedAt, endedAt, savedDurationSeconds) {
+  let totalSeconds = Number(savedDurationSeconds);
+
+  if (!Number.isFinite(totalSeconds)) {
+    const start = new Date(startedAt).getTime();
+    const end = endedAt ? new Date(endedAt).getTime() : Date.now();
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return 'Неизвестно';
+    totalSeconds = Math.max(0, Math.round((end - start) / 1000));
+  }
+
+  const minutes = Math.floor(totalSeconds / 60);
+  if (minutes < 1) return 'меньше минуты';
+
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const remainingMinutes = minutes % 60;
+  const parts = [];
+
+  if (days > 0) parts.push(`${days} д`);
+  if (hours > 0) parts.push(`${hours} ч`);
+  if (remainingMinutes > 0 || parts.length === 0) parts.push(`${remainingMinutes} мин`);
+
+  return parts.slice(0, 2).join(' ');
+}
+
 function showMessage(message) {
   messagePanel.textContent = message;
   messagePanel.hidden = false;
@@ -90,6 +115,41 @@ function createMetricCard(labelText, valueText) {
   value.textContent = valueText;
 
   card.append(label, value);
+  return card;
+}
+
+function createHistoryCard(entry) {
+  const card = document.createElement('article');
+  card.className = `detail-card history-card ${entry.status || 'unknown'}`;
+  if (!entry.endedAt) card.classList.add('active');
+
+  const type = document.createElement('p');
+  type.className = 'detail-label';
+  type.textContent = entry.gameName
+    ? 'ИГРОВАЯ СЕССИЯ'
+    : entry.status === 'offline'
+      ? 'НЕ В СЕТИ'
+      : 'СТАТУС STEAM';
+
+  const value = document.createElement('p');
+  value.className = 'detail-value history-value';
+  value.textContent = entry.gameName
+    ? entry.gameName
+    : statusNames[entry.status] || statusNames.unknown;
+
+  const interval = document.createElement('p');
+  interval.className = 'history-meta';
+  interval.textContent = `${formatDate(entry.startedAt)} → ${entry.endedAt ? formatDate(entry.endedAt) : 'сейчас'}`;
+
+  const duration = document.createElement('p');
+  duration.className = 'history-duration';
+  duration.textContent = `${entry.endedAt ? 'Длительность' : 'Идёт'}: ${formatDuration(
+    entry.startedAt,
+    entry.endedAt,
+    entry.durationSeconds
+  )}`;
+
+  card.append(type, value, interval, duration);
   return card;
 }
 
@@ -160,12 +220,9 @@ function renderHistory(history) {
     return;
   }
 
-  const latestEntries = history.slice(-12).reverse();
-
+  const latestEntries = history.slice(-30).reverse();
   for (const entry of latestEntries) {
-    const status = statusNames[entry.status] || statusNames.unknown;
-    const value = entry.gameName ? `${status}: ${entry.gameName}` : status;
-    historyList.append(createMetricCard(formatDate(entry.startedAt), value));
+    historyList.append(createHistoryCard(entry));
   }
 
   historyPanel.hidden = false;
