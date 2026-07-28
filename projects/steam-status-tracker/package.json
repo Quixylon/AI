@@ -5,8 +5,8 @@
   "type": "module",
   "description": "A lightweight web application for checking public Steam profile status.",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --env-file=.env --watch src/server.js"
+    "start": "node server.js",
+    "dev": "node --env-file=.env --watch server.js"
   },
   "engines": {
     "node": ">=20"
