@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#080a0f" />
     <meta
       name="description"
-      content="Check the current public status and game activity of a Steam profile."
+      content="Мониторинг публичного статуса Steam-профиля через GitHub Pages и GitHub Actions."
     />
     <title>Steam Status Tracker — Quixylon AI Lab</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -20,40 +20,21 @@
         <p class="eyebrow">QUIXYLON AI LAB</p>
         <h1>Steam Status Tracker</h1>
         <p class="intro">
-          Check the public online status and current game of any Steam profile using its SteamID64.
+          Бесплатный мониторинг публичного Steam-профиля. GitHub проверяет статус по расписанию и обновляет эту страницу.
         </p>
       </header>
 
-      <section class="lookup-panel" aria-labelledby="lookup-title">
+      <section class="lookup-panel" aria-labelledby="monitor-title">
         <div class="panel-heading">
           <div>
-            <p class="section-label">PROFILE LOOKUP</p>
-            <h2 id="lookup-title">Enter a SteamID64</h2>
+            <p class="section-label">АВТОМАТИЧЕСКИЙ МОНИТОРИНГ</p>
+            <h2 id="monitor-title">Отслеживаемый профиль</h2>
           </div>
-          <span class="live-indicator"><span></span> Live request</span>
+          <span class="live-indicator"><span></span> Обновление примерно раз в 5 минут</span>
         </div>
-
-        <form id="lookup-form" novalidate>
-          <label for="steam-id">SteamID64</label>
-          <div class="input-row">
-            <input
-              id="steam-id"
-              name="steamId"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              maxlength="17"
-              pattern="[0-9]{17}"
-              placeholder="7656119XXXXXXXXXX"
-              aria-describedby="steam-id-help"
-              required
-            />
-            <button id="submit-button" type="submit">Check status</button>
-          </div>
-          <p id="steam-id-help" class="help-text">
-            The profile must be public. Your Steam Web API key stays on the server and is never sent to the browser.
-          </p>
-        </form>
+        <p class="help-text">
+          Данные получает GitHub Actions. Секретный Steam API key не отправляется в браузер и не хранится в коде.
+        </p>
       </section>
 
       <section id="message-panel" class="message-panel" hidden aria-live="polite"></section>
@@ -63,34 +44,44 @@
           <img id="profile-avatar" class="avatar" src="" alt="" />
           <div class="identity">
             <p class="section-label">STEAM PROFILE</p>
-            <h2 id="profile-name">Unknown player</h2>
-            <a id="profile-link" href="#" target="_blank" rel="noreferrer">Open Steam profile</a>
+            <h2 id="profile-name">Неизвестный пользователь</h2>
+            <a id="profile-link" href="#" target="_blank" rel="noreferrer">Открыть профиль Steam</a>
           </div>
-          <span id="status-pill" class="status-pill">Unknown</span>
+          <span id="status-pill" class="status-pill">Неизвестно</span>
         </div>
 
         <div class="details-grid">
           <article class="detail-card">
-            <p class="detail-label">Current activity</p>
-            <p id="current-game" class="detail-value">Not playing</p>
+            <p class="detail-label">Текущая активность</p>
+            <p id="current-game" class="detail-value">Не играет</p>
           </article>
           <article class="detail-card">
-            <p class="detail-label">Last logoff</p>
-            <p id="last-logoff" class="detail-value">Unavailable</p>
+            <p class="detail-label">Последний выход</p>
+            <p id="last-logoff" class="detail-value">Нет данных</p>
           </article>
           <article class="detail-card">
-            <p class="detail-label">Last checked</p>
-            <p id="last-checked" class="detail-value">Just now</p>
+            <p class="detail-label">Последняя проверка GitHub</p>
+            <p id="last-checked" class="detail-value">Ожидание</p>
           </article>
         </div>
       </section>
 
+      <section id="history-panel" class="lookup-panel" hidden aria-labelledby="history-title" style="margin-top: 18px">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">ИСТОРИЯ ИЗМЕНЕНИЙ</p>
+            <h2 id="history-title">Последняя активность</h2>
+          </div>
+        </div>
+        <div id="history-list" class="details-grid"></div>
+      </section>
+
       <footer>
-        <span>Experimental project</span>
-        <span>Built in Quixylon AI Lab</span>
+        <span>GitHub Pages + GitHub Actions</span>
+        <span>Без платного сервера</span>
       </footer>
     </main>
 
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
