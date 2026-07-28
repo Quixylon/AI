@@ -1,0 +1,12 @@
+{
+  "configured": true,
+  "available": false,
+  "fresh": false,
+  "source": "CSRep.gg",
+  "profileUrl": "https://csrep.gg/player/76561199524001992",
+  "steamId": "76561199524001992",
+  "checkedAt": null,
+  "lastAttemptAt": null,
+  "error": "Статистика CSRep ещё не проверялась GitHub Actions.",
+  "stats": null
+}
