@@ -1,4 +1,4 @@
-/* Interaction and depth refinements for the public profile card. */
+/* Clean interaction and depth refinements for the public profile card. */
 
 *,
 *::before,
@@ -10,7 +10,7 @@
 
 .identity h1 {
   line-height: 1.02;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.012em;
 }
 
 .description-word {
@@ -32,285 +32,155 @@
 
 .profile-links {
   position: relative;
+  display: grid;
   align-items: stretch;
-  isolation: isolate;
-  padding: 15px 12px 22px;
-  border: 1px solid rgba(151, 142, 215, .08);
-  border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, .025), rgba(5, 7, 13, .08));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .025),
-    inset 0 -22px 45px rgba(5, 7, 13, .28);
-  perspective: 900px;
+  gap: 16px 12px;
+  margin-top: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  isolation: visible;
+  perspective: none;
 }
 
-.profile-links::before {
-  position: absolute;
-  z-index: -2;
-  right: 5%;
-  bottom: -5px;
-  left: 5%;
-  height: 44px;
-  border: 1px solid rgba(146, 132, 230, .16);
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(103, 91, 165, .16), rgba(7, 9, 16, .88));
-  box-shadow:
-    0 20px 38px rgba(0, 0, 0, .38),
-    0 0 28px rgba(113, 96, 213, .07),
-    inset 0 1px 0 rgba(255, 255, 255, .045);
-  transform: perspective(700px) rotateX(66deg) translateY(21px);
-  transform-origin: center bottom;
-  content: "";
-}
-
-.profile-links::after {
-  position: absolute;
-  z-index: -3;
-  right: 8%;
-  bottom: -13px;
-  left: 8%;
-  height: 18px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, .38);
-  filter: blur(12px);
-  content: "";
+.profile-links::before,
+.profile-links::after,
+.button-platform,
+.deck-floor,
+.deck-edge,
+.action-deck::after {
+  display: none !important;
 }
 
 .link-stage,
 .action-stage {
   position: relative;
   min-width: 0;
-  transform-style: preserve-3d;
+  padding: 0 0 8px;
   isolation: isolate;
+  transform-style: preserve-3d;
 }
 
-.link-stage {
-  min-height: 80px;
-  padding-bottom: 12px;
-}
-
-.button-platform {
+.link-stage::before,
+.action-stage::before {
   position: absolute;
   z-index: 0;
-  right: 8%;
+  right: 10%;
   bottom: 1px;
-  left: 8%;
-  height: 22px;
-  border: 1px solid rgba(151, 142, 215, .18);
-  border-radius: 999px;
-  background:
-    linear-gradient(180deg, rgba(109, 96, 177, .22), rgba(5, 7, 13, .78));
+  left: 10%;
+  height: 9px;
+  border: 1px solid rgba(159, 146, 238, .14);
+  border-radius: 0 0 15px 15px;
+  background: linear-gradient(180deg, rgba(78, 67, 129, .5), rgba(8, 9, 15, .92));
   box-shadow:
-    0 12px 26px rgba(0, 0, 0, .42),
-    0 0 22px rgba(113, 96, 213, .09),
-    inset 0 1px 0 rgba(255, 255, 255, .06);
-  transform: perspective(520px) rotateX(66deg) translateZ(-22px);
-  transform-origin: center bottom;
-  animation: platform-breathe 5.6s var(--float-delay, 0s) ease-in-out infinite;
+    0 8px 15px rgba(0, 0, 0, .34),
+    0 0 13px rgba(120, 103, 220, .07),
+    inset 0 1px 0 rgba(255, 255, 255, .035);
+  transform: perspective(500px) rotateX(-18deg);
+  transform-origin: top center;
+  content: "";
   pointer-events: none;
 }
 
-.button-platform::before,
-.button-platform::after {
+.link-stage::after,
+.action-stage::after {
   position: absolute;
-  right: 8%;
-  left: 8%;
-  border-radius: 999px;
+  z-index: -1;
+  right: 14%;
+  bottom: -2px;
+  left: 14%;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .34);
+  filter: blur(7px);
   content: "";
+  pointer-events: none;
 }
 
-.button-platform::before {
-  top: 4px;
-  height: 8px;
-  border: 1px solid rgba(191, 181, 255, .12);
-  background: linear-gradient(90deg, rgba(155, 139, 255, .08), rgba(255, 255, 255, .055), rgba(91, 150, 255, .06));
-}
-
-.button-platform::after {
-  bottom: -9px;
-  height: 10px;
-  background: linear-gradient(180deg, rgba(57, 51, 96, .48), rgba(4, 5, 10, .82));
-  box-shadow: 0 8px 14px rgba(0, 0, 0, .34);
-}
-
-@keyframes platform-breathe {
-  0%,
-  100% {
-    opacity: .72;
-    filter: brightness(.92);
-  }
-
-  50% {
-    opacity: .98;
-    filter: brightness(1.1);
-  }
+.profile-link,
+.floating-action {
+  position: relative;
+  z-index: 2;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .profile-link {
-  position: relative;
-  z-index: 2;
   height: 100%;
-  animation: floating-link-depth 5.6s var(--float-delay, 0s) ease-in-out infinite;
-  transform-style: preserve-3d;
+  min-height: 66px;
+  animation: float-link-clean 5.8s var(--float-delay, 0s) ease-in-out infinite;
 }
 
-@keyframes floating-link-depth {
+@keyframes float-link-clean {
   0%,
   100% {
-    transform: translate3d(0, 0, 18px);
+    transform: translate3d(0, 0, 8px);
     box-shadow:
-      0 10px 24px rgba(0, 0, 0, .13),
+      0 10px 22px rgba(0, 0, 0, .12),
       inset 0 1px 0 rgba(255, 255, 255, .045);
   }
 
   50% {
-    transform: translate3d(0, -5px, 33px);
+    transform: translate3d(0, -3px, 14px);
     box-shadow:
-      0 20px 36px rgba(0, 0, 0, .24),
-      0 0 24px rgba(153, 136, 255, .065),
-      inset 0 1px 0 rgba(255, 255, 255, .06);
+      0 15px 28px rgba(0, 0, 0, .18),
+      0 0 17px rgba(153, 136, 255, .045),
+      inset 0 1px 0 rgba(255, 255, 255, .055);
   }
 }
 
-.action-deck {
-  position: relative;
-  margin-top: 17px;
-  padding: 17px 13px 23px;
-  border: 1px solid rgba(160, 147, 255, .1);
-  border-radius: 27px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, .028), rgba(7, 9, 16, .18));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .03),
-    inset 0 -30px 48px rgba(5, 7, 13, .34);
-  transform-style: preserve-3d;
-  perspective: 850px;
-  isolation: isolate;
-}
-
-.deck-floor,
-.deck-edge {
-  position: absolute;
-  pointer-events: none;
-}
-
-.deck-floor {
-  z-index: -2;
-  right: 4%;
-  bottom: -3px;
-  left: 4%;
-  height: 58px;
-  border: 1px solid rgba(167, 153, 255, .2);
-  border-radius: 25px;
-  background:
-    linear-gradient(180deg, rgba(104, 91, 177, .24), rgba(6, 8, 15, .9));
-  box-shadow:
-    0 22px 44px rgba(0, 0, 0, .46),
-    0 0 34px rgba(118, 98, 230, .1),
-    inset 0 1px 0 rgba(255, 255, 255, .065);
-  transform: perspective(720px) rotateX(64deg) translateY(29px);
-  transform-origin: center bottom;
-}
-
-.deck-floor::before {
-  position: absolute;
-  top: 11px;
-  right: 7%;
-  left: 7%;
-  height: 12px;
-  border: 1px solid rgba(194, 184, 255, .11);
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(143, 124, 255, .06), rgba(255, 255, 255, .05), rgba(72, 151, 255, .05));
-  content: "";
-}
-
-.deck-edge {
-  z-index: -3;
-  right: 7%;
-  bottom: -15px;
-  left: 7%;
-  height: 24px;
-  border-radius: 0 0 23px 23px;
-  background: linear-gradient(180deg, rgba(55, 48, 94, .7), rgba(3, 4, 8, .95));
-  box-shadow:
-    0 18px 30px rgba(0, 0, 0, .48),
-    inset 0 1px 0 rgba(255, 255, 255, .035);
-  transform: perspective(720px) rotateX(-12deg);
-}
-
-.action-deck::after {
-  position: absolute;
-  z-index: -4;
-  right: 10%;
-  bottom: -23px;
-  left: 10%;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, .48);
-  filter: blur(15px);
-  content: "";
-}
-
 .action-stage {
-  padding-bottom: 12px;
+  margin-top: 13px;
 }
 
 .action-stage + .action-stage {
   margin-top: 4px;
 }
 
-.action-stage .button-platform {
-  right: 5%;
-  left: 5%;
-  height: 27px;
-  border-color: rgba(165, 151, 255, .22);
-  background:
-    linear-gradient(180deg, rgba(117, 99, 215, .25), rgba(5, 7, 13, .82));
-  box-shadow:
-    0 15px 32px rgba(0, 0, 0, .44),
-    0 0 28px rgba(115, 96, 221, .12),
-    inset 0 1px 0 rgba(255, 255, 255, .065);
-}
-
 .floating-action {
-  position: relative;
-  z-index: 2;
   margin-top: 0 !important;
-  animation: floating-action-depth 6.1s ease-in-out infinite;
-  transform-style: preserve-3d;
+  animation: float-action-clean 6.2s ease-in-out infinite;
 }
 
-.action-stage:first-of-type .floating-action {
-  animation-delay: -1.5s;
+.action-stage:nth-of-type(1) .floating-action {
+  animation-delay: -1.4s;
 }
 
-.action-stage:last-of-type .floating-action {
+.action-stage:nth-of-type(2) .floating-action {
   animation-delay: -3.2s;
 }
 
-@keyframes floating-action-depth {
+@keyframes float-action-clean {
   0%,
   100% {
-    transform: translate3d(0, 0, 24px);
+    transform: translate3d(0, 0, 10px);
   }
 
   50% {
-    transform: translate3d(0, -5px, 43px);
+    transform: translate3d(0, -3px, 17px);
   }
+}
+
+.profile-link:hover,
+.profile-link:focus-visible,
+.floating-action:hover,
+.floating-action:focus-visible {
+  animation-play-state: paused;
+  transform: translate3d(0, -3px, 18px) scale(1.008);
 }
 
 .profile-link:active,
 .floating-action:active {
   animation-play-state: paused;
-  transform: translate3d(0, 1px, 14px) scale(.985);
+  transform: translate3d(0, 1px, 5px) scale(.988);
 }
 
-.link-stage:has(.profile-link:active) .button-platform,
-.action-stage:has(.floating-action:active) .button-platform {
-  opacity: 1;
-  filter: brightness(1.2);
+.link-stage:has(.profile-link:active)::before,
+.action-stage:has(.floating-action:active)::before {
+  filter: brightness(1.12);
+  transform: perspective(500px) rotateX(-18deg) translateY(1px);
 }
 
 .link-steam .link-icon .steam-logo {
@@ -318,9 +188,24 @@
   height: 23px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.65;
+  stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.profile-footer {
+  min-height: 29px;
+  flex-wrap: wrap;
+}
+
+.visitor-counter {
+  display: block;
+  width: auto;
+  height: 20px;
+  max-width: 142px;
+  border: 0;
+  border-radius: 6px;
+  opacity: .82;
 }
 
 @media (pointer: coarse) {
@@ -329,39 +214,44 @@
   }
 
   .profile-link,
-  .floating-action,
-  .button-platform {
-    animation-duration: 5.3s;
+  .floating-action {
+    animation-duration: 6.5s;
   }
 }
 
 @media (max-width: 720px) {
   .profile-links {
-    padding: 13px 10px 20px;
+    gap: 14px;
   }
 
-  .action-deck {
-    padding: 15px 10px 21px;
+  .link-stage,
+  .action-stage {
+    padding-bottom: 7px;
+  }
+
+  .link-stage::before,
+  .action-stage::before {
+    right: 12%;
+    left: 12%;
+    height: 8px;
   }
 }
 
 @media (max-width: 470px) {
   .identity h1 {
-    letter-spacing: -0.01em;
+    letter-spacing: -0.004em;
   }
 
-  .link-stage {
-    min-height: 77px;
+  .profile-links {
+    grid-template-columns: 1fr;
   }
 
-  .button-platform {
-    right: 10%;
-    left: 10%;
+  .profile-footer {
+    gap: 7px;
   }
 
-  .action-stage .button-platform {
-    right: 7%;
-    left: 7%;
+  .visitor-counter {
+    height: 19px;
   }
 }
 
@@ -374,8 +264,8 @@
   }
 
   .profile-link,
-  .floating-action,
-  .button-platform {
+  .floating-action {
     animation: none;
+    transform: translate3d(0, 0, 8px);
   }
 }
