@@ -2,11 +2,14 @@
   "displayName": "Quixylon",
   "handle": "@quixylon",
   "descriptions": [
-    "Steam & CS2 activity tracker",
-    "Онлайн, игры и история сессий",
-    "Powered by GitHub Actions"
+    "Steam, CS2 и всё важное — в одном месте"
   ],
   "links": [
+    {
+      "label": "guns.lol",
+      "url": "https://guns.lol/quixylon",
+      "icon": "GL"
+    },
     {
       "label": "Steam",
       "url": "https://steamcommunity.com/id/quixylon/",
@@ -23,11 +26,5 @@
       "icon": "GH"
     }
   ],
-  "music": {
-    "title": "Трек не выбран",
-    "artist": "Пришли аудиофайл или прямую ссылку на него",
-    "audioUrl": "",
-    "coverUrl": "",
-    "autoplay": false
-  }
+  "spotifyUrl": ""
 }
