@@ -30,12 +30,94 @@
   }
 }
 
+.profile-links {
+  align-items: stretch;
+}
+
+.link-stage,
+.action-stage {
+  position: relative;
+  min-width: 0;
+  transform-style: preserve-3d;
+  isolation: isolate;
+}
+
+.link-stage {
+  min-height: 78px;
+  padding-bottom: 10px;
+}
+
+.action-stage {
+  margin-top: 15px;
+  padding-bottom: 11px;
+}
+
+.action-stage + .action-stage {
+  margin-top: 2px;
+}
+
+.button-platform {
+  position: absolute;
+  z-index: -1;
+  right: 8%;
+  bottom: 1px;
+  left: 8%;
+  height: 22px;
+  border: 1px solid rgba(151, 142, 215, .18);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(103, 91, 165, .2), rgba(5, 7, 13, .7)),
+    rgba(7, 9, 16, .72);
+  box-shadow:
+    0 11px 25px rgba(0, 0, 0, .38),
+    0 0 20px rgba(113, 96, 213, .09),
+    inset 0 1px 0 rgba(255, 255, 255, .055);
+  transform: perspective(500px) rotateX(67deg) translateZ(-24px);
+  transform-origin: center bottom;
+  opacity: .86;
+  animation: platform-breathe 5.6s var(--float-delay, 0s) ease-in-out infinite;
+  pointer-events: none;
+}
+
+.action-stage .button-platform {
+  right: 5%;
+  left: 5%;
+  height: 25px;
+  border-color: rgba(163, 150, 255, .2);
+  background:
+    linear-gradient(180deg, rgba(114, 96, 211, .22), rgba(5, 7, 13, .74)),
+    rgba(7, 9, 16, .76);
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, .42),
+    0 0 26px rgba(115, 96, 221, .12),
+    inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+@keyframes platform-breathe {
+  0%,
+  100% {
+    opacity: .72;
+    filter: brightness(.9);
+  }
+
+  50% {
+    opacity: .94;
+    filter: brightness(1.08);
+  }
+}
+
 .profile-link {
+  position: relative;
+  z-index: 2;
+  height: 100%;
   animation-name: floating-link-depth;
   animation-duration: 5.6s;
 }
 
 .floating-action {
+  position: relative;
+  z-index: 2;
+  margin-top: 0 !important;
   animation-name: floating-action-depth;
   animation-duration: 6.1s;
 }
@@ -50,10 +132,10 @@
   }
 
   50% {
-    transform: translate3d(0, -5px, 32px) rotateX(-.18deg);
+    transform: translate3d(0, -6px, 33px) rotateX(-.18deg);
     box-shadow:
-      0 18px 34px rgba(0, 0, 0, .2),
-      0 0 22px rgba(153, 136, 255, .055),
+      0 20px 36px rgba(0, 0, 0, .24),
+      0 0 24px rgba(153, 136, 255, .065),
       inset 0 1px 0 rgba(255, 255, 255, .06);
   }
 }
@@ -65,14 +147,20 @@
   }
 
   50% {
-    transform: translate3d(0, -4px, 38px);
+    transform: translate3d(0, -5px, 40px);
   }
 }
 
 .profile-link:active,
 .floating-action:active {
   animation-play-state: paused;
-  transform: translate3d(0, 0, 14px) scale(.985);
+  transform: translate3d(0, 1px, 14px) scale(.985);
+}
+
+.link-stage:has(.profile-link:active) .button-platform,
+.action-stage:has(.floating-action:active) .button-platform {
+  opacity: 1;
+  filter: brightness(1.18);
 }
 
 .link-steam .link-icon .steam-logo {
@@ -91,7 +179,8 @@
   }
 
   .profile-link,
-  .floating-action {
+  .floating-action,
+  .button-platform {
     animation-duration: 5.2s;
   }
 }
@@ -100,6 +189,15 @@
   .identity h1 {
     letter-spacing: -0.01em;
   }
+
+  .link-stage {
+    min-height: 76px;
+  }
+
+  .button-platform {
+    right: 10%;
+    left: 10%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -107,6 +205,10 @@
     opacity: 1;
     filter: none;
     transform: none;
+    animation: none;
+  }
+
+  .button-platform {
     animation: none;
   }
 }
