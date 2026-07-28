@@ -5,12 +5,12 @@ const context = canvas.getContext('2d', { alpha: true });
 const card = $('#profile-card');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-let viewportWidth = 0;
-let viewportHeight = 0;
+let width = 0;
+let height = 0;
 let pixelRatio = 1;
 let particles = [];
 let ripples = [];
-let animationFrame = 0;
+let lastFrame = performance.now();
 
 const pointer = {
   x: window.innerWidth / 2,
@@ -20,14 +20,14 @@ const pointer = {
 };
 
 const tilt = {
-  rotateX: 0,
-  rotateY: 0,
-  translateX: 0,
-  translateY: 0,
-  targetRotateX: 0,
-  targetRotateY: 0,
-  targetTranslateX: 0,
-  targetTranslateY: 0
+  x: 0,
+  y: 0,
+  shiftX: 0,
+  shiftY: 0,
+  targetX: 0,
+  targetY: 0,
+  targetShiftX: 0,
+  targetShiftY: 0
 };
 
 const iconMarkup = {
@@ -46,60 +46,60 @@ const iconMarkup = {
   steam: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 2a10 10 0 0 0-9.7 7.6l5.3 2.2a3.6 3.6 0 0 1 2.2-1.1l2.4-3.5a4.7 4.7 0 1 1 4.1 7 4.7 4.7 0 0 1-3.5-1.6l-3.4.1a3.6 3.6 0 0 1-6.2 2.5l-1.5-.6A10 10 0 1 0 12 2Zm-5 15.8a2.2 2.2 0 0 0 1.2-4.2L5.7 12.5 7 17.8Zm9.3-5.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Zm0-1.4a1.7 1.7 0 1 1 0-3.4 1.7 1.7 0 0 1 0 3.4Z"></path>
+    </svg>`,
+  csrep: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 2 4 5.3v5.3c0 5.1 3.4 9.7 8 11.4 4.6-1.7 8-6.3 8-11.4V5.3L12 2Zm0 4.1 4.3 1.8v2.7c0 3.2-1.7 6.2-4.3 7.6-2.6-1.4-4.3-4.4-4.3-7.6V7.9L12 6.1Zm-1.2 3v2.1H8.7v1.7h2.1V15h1.7v-2.1h2.1v-1.7h-2.1V9.1h-1.7Z"></path>
+    </svg>`,
+  github: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 0 1.6 1 1.6 1 .9 1.5 2.4 1.1 2.9.8.1-.7.4-1.1.7-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.5 9.5 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.3 4.6-4.6 4.9.4.3.7.9.7 1.8V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"></path>
     </svg>`
 };
 
-let spotifyController = null;
-let spotifyUrl = '';
-let spotifyDuration = 0;
-let spotifyPosition = 0;
-let spotifyPaused = true;
-let spotifyApiRequested = false;
+function createParticle(x = Math.random() * width, y = Math.random() * height) {
+  const depth = Math.random() * 0.9 + 0.1;
+  const angle = Math.random() * Math.PI * 2;
+  const speed = 0.12 + depth * 0.38;
 
-function resizeCanvas() {
-  pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-  viewportWidth = window.innerWidth;
-  viewportHeight = window.innerHeight;
-
-  canvas.width = Math.round(viewportWidth * pixelRatio);
-  canvas.height = Math.round(viewportHeight * pixelRatio);
-  canvas.style.width = `${viewportWidth}px`;
-  canvas.style.height = `${viewportHeight}px`;
-  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
-  const particleCount = reducedMotion
-    ? 34
-    : Math.min(150, Math.max(58, Math.round((viewportWidth * viewportHeight) / 10500)));
-
-  particles = Array.from({ length: particleCount }, () => createParticle());
-}
-
-function createParticle(x = Math.random() * viewportWidth, y = Math.random() * viewportHeight) {
-  const depth = Math.random() * 0.85 + 0.15;
   return {
     x,
     y,
     depth,
-    radius: 0.45 + depth * 1.75,
-    velocityX: (Math.random() - 0.5) * (0.15 + depth * 0.34),
-    velocityY: (Math.random() - 0.5) * (0.15 + depth * 0.34),
-    alpha: 0.12 + depth * 0.48,
+    radius: 0.8 + depth * 2.1,
+    velocityX: Math.cos(angle) * speed,
+    velocityY: Math.sin(angle) * speed,
+    alpha: 0.3 + depth * 0.58,
     phase: Math.random() * Math.PI * 2
   };
 }
 
-function createBurst(x, y) {
-  ripples.push({ x, y, radius: 7, alpha: 0.72, speed: 2.8 });
-  ripples.push({ x, y, radius: 3, alpha: 0.38, speed: 1.7 });
+function resizeCanvas() {
+  pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  width = window.innerWidth;
+  height = window.innerHeight;
 
-  if (reducedMotion) return;
+  canvas.width = Math.round(width * pixelRatio);
+  canvas.height = Math.round(height * pixelRatio);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-  for (let index = 0; index < 16; index += 1) {
+  const baseCount = Math.round((width * height) / 7200);
+  const particleCount = Math.min(190, Math.max(reducedMotion ? 72 : 105, baseCount));
+  particles = Array.from({ length: particleCount }, () => createParticle());
+}
+
+function burst(x, y) {
+  ripples.push({ x, y, radius: 5, alpha: 0.92, speed: 3.4 });
+  ripples.push({ x, y, radius: 12, alpha: 0.5, speed: 2.1 });
+
+  for (let index = 0; index < 24; index += 1) {
     const particle = particles[Math.floor(Math.random() * particles.length)];
     if (!particle) break;
 
     const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 2 + 0.5;
+    const speed = Math.random() * 2.8 + 0.7;
     particle.x = x;
     particle.y = y;
     particle.velocityX = Math.cos(angle) * speed;
@@ -107,132 +107,127 @@ function createBurst(x, y) {
   }
 }
 
-function updatePointer(event) {
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
-  pointer.active = true;
-}
+function setPointer(clientX, clientY, active = true) {
+  pointer.x = clientX;
+  pointer.y = clientY;
+  pointer.active = active;
 
-function updateCardTarget(event) {
-  if (reducedMotion) return;
+  const normalizedX = Math.min(1, Math.max(0, clientX / Math.max(width, 1)));
+  const normalizedY = Math.min(1, Math.max(0, clientY / Math.max(height, 1)));
 
-  const bounds = card.getBoundingClientRect();
-  const normalizedX = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
-  const normalizedY = Math.min(1, Math.max(0, (event.clientY - bounds.top) / bounds.height));
-
-  tilt.targetRotateX = (normalizedY - 0.5) * -11;
-  tilt.targetRotateY = (normalizedX - 0.5) * 14;
-  tilt.targetTranslateX = (normalizedX - 0.5) * 7;
-  tilt.targetTranslateY = (normalizedY - 0.5) * 5;
+  tilt.targetX = (normalizedY - 0.5) * -18;
+  tilt.targetY = (normalizedX - 0.5) * 22;
+  tilt.targetShiftX = (normalizedX - 0.5) * 13;
+  tilt.targetShiftY = (normalizedY - 0.5) * 10;
 
   card.style.setProperty('--shine-x', `${normalizedX * 100}%`);
   card.style.setProperty('--shine-y', `${normalizedY * 100}%`);
 }
 
-function resetCardTarget() {
-  tilt.targetRotateX = 0;
-  tilt.targetRotateY = 0;
-  tilt.targetTranslateX = 0;
-  tilt.targetTranslateY = 0;
+function resetTiltSoon() {
+  window.setTimeout(() => {
+    pointer.active = false;
+    pointer.pressed = false;
+    tilt.targetX = 0;
+    tilt.targetY = 0;
+    tilt.targetShiftX = 0;
+    tilt.targetShiftY = 0;
+  }, 180);
 }
 
-function animateCard() {
-  const easing = 0.105;
-  tilt.rotateX += (tilt.targetRotateX - tilt.rotateX) * easing;
-  tilt.rotateY += (tilt.targetRotateY - tilt.rotateY) * easing;
-  tilt.translateX += (tilt.targetTranslateX - tilt.translateX) * easing;
-  tilt.translateY += (tilt.targetTranslateY - tilt.translateY) * easing;
+function animateCard(timestamp = 0) {
+  const easing = 0.115;
 
-  if (!reducedMotion) {
-    card.style.transform = [
-      'perspective(1150px)',
-      `translate3d(${tilt.translateX}px, ${tilt.translateY}px, 0)`,
-      `rotateX(${tilt.rotateX}deg)`,
-      `rotateY(${tilt.rotateY}deg)`
-    ].join(' ');
+  if (!pointer.active) {
+    tilt.targetX = Math.sin(timestamp * 0.00038) * 1.5;
+    tilt.targetY = Math.cos(timestamp * 0.00031) * 2.1;
+    tilt.targetShiftY = Math.sin(timestamp * 0.00045) * -2.2;
   }
+
+  tilt.x += (tilt.targetX - tilt.x) * easing;
+  tilt.y += (tilt.targetY - tilt.y) * easing;
+  tilt.shiftX += (tilt.targetShiftX - tilt.shiftX) * easing;
+  tilt.shiftY += (tilt.targetShiftY - tilt.shiftY) * easing;
+
+  card.style.transform = [
+    'perspective(1050px)',
+    `translate3d(${tilt.shiftX}px, ${tilt.shiftY}px, 0)`,
+    `rotateX(${tilt.x}deg)`,
+    `rotateY(${tilt.y}deg)`
+  ].join(' ');
 
   window.requestAnimationFrame(animateCard);
 }
 
 function drawBackground(timestamp = 0) {
-  context.clearRect(0, 0, viewportWidth, viewportHeight);
+  const delta = Math.min(2.2, Math.max(0.35, (timestamp - lastFrame) / 16.67));
+  lastFrame = timestamp;
+  context.clearRect(0, 0, width, height);
 
-  const focusX = pointer.active ? pointer.x : viewportWidth * 0.5;
-  const focusY = pointer.active ? pointer.y : viewportHeight * 0.42;
-  const glow = context.createRadialGradient(
-    focusX,
-    focusY,
-    0,
-    focusX,
-    focusY,
-    Math.max(viewportWidth, viewportHeight) * 0.62
-  );
-  glow.addColorStop(0, 'rgba(122, 98, 255, 0.2)');
-  glow.addColorStop(0.34, 'rgba(44, 124, 205, 0.085)');
+  const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00018) * 0.12);
+  const focusY = pointer.active ? pointer.y : height * (0.42 + Math.cos(timestamp * 0.00015) * 0.09);
+  const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.62);
+  glow.addColorStop(0, 'rgba(139, 112, 255, 0.28)');
+  glow.addColorStop(0.34, 'rgba(43, 139, 220, 0.13)');
   glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   context.fillStyle = glow;
-  context.fillRect(0, 0, viewportWidth, viewportHeight);
+  context.fillRect(0, 0, width, height);
 
   for (const particle of particles) {
-    particle.phase += 0.008 + particle.depth * 0.008;
+    particle.phase += (0.01 + particle.depth * 0.008) * delta;
 
-    if (pointer.active && !reducedMotion) {
+    if (pointer.active) {
       const deltaX = particle.x - pointer.x;
       const deltaY = particle.y - pointer.y;
       const distance = Math.hypot(deltaX, deltaY) || 1;
-      const influenceRadius = 115 + particle.depth * 90;
+      const influence = 145 + particle.depth * 120;
 
-      if (distance < influenceRadius) {
+      if (distance < influence) {
         const direction = pointer.pressed ? -1 : 1;
-        const force = ((influenceRadius - distance) / influenceRadius) * 0.065 * particle.depth * direction;
+        const force = ((influence - distance) / influence) * 0.12 * particle.depth * direction;
         particle.velocityX += (deltaX / distance) * force;
         particle.velocityY += (deltaY / distance) * force;
       }
     }
 
-    particle.velocityX *= 0.991;
-    particle.velocityY *= 0.991;
-    particle.x += particle.velocityX + Math.cos(particle.phase) * 0.035 * particle.depth;
-    particle.y += particle.velocityY + Math.sin(particle.phase * 0.8) * 0.03 * particle.depth;
+    particle.velocityX *= 0.988;
+    particle.velocityY *= 0.988;
+    particle.x += (particle.velocityX + Math.cos(particle.phase) * 0.055 * particle.depth) * delta;
+    particle.y += (particle.velocityY + Math.sin(particle.phase * 0.82) * 0.05 * particle.depth) * delta;
 
-    if (particle.x < -18) particle.x = viewportWidth + 18;
-    if (particle.x > viewportWidth + 18) particle.x = -18;
-    if (particle.y < -18) particle.y = viewportHeight + 18;
-    if (particle.y > viewportHeight + 18) particle.y = -18;
+    if (particle.x < -24) particle.x = width + 24;
+    if (particle.x > width + 24) particle.x = -24;
+    if (particle.y < -24) particle.y = height + 24;
+    if (particle.y > height + 24) particle.y = -24;
 
-    const parallaxX = pointer.active
-      ? ((pointer.x / viewportWidth) - 0.5) * particle.depth * 14
-      : 0;
-    const parallaxY = pointer.active
-      ? ((pointer.y / viewportHeight) - 0.5) * particle.depth * 10
-      : 0;
+    const parallaxX = ((focusX / Math.max(width, 1)) - 0.5) * particle.depth * 22;
+    const parallaxY = ((focusY / Math.max(height, 1)) - 0.5) * particle.depth * 17;
+    const drawX = particle.x + parallaxX;
+    const drawY = particle.y + parallaxY;
+    const pulse = 1 + Math.sin(timestamp * 0.0018 + particle.phase) * 0.14;
 
     context.beginPath();
-    context.fillStyle = `rgba(207, 213, 255, ${particle.alpha})`;
-    context.arc(
-      particle.x + parallaxX,
-      particle.y + parallaxY,
-      particle.radius * (1 + Math.sin(timestamp * 0.001 + particle.phase) * 0.08),
-      0,
-      Math.PI * 2
-    );
+    context.fillStyle = `rgba(222, 226, 255, ${particle.alpha})`;
+    context.shadowColor = `rgba(155, 145, 255, ${particle.alpha * 0.72})`;
+    context.shadowBlur = 7 + particle.depth * 8;
+    context.arc(drawX, drawY, particle.radius * pulse, 0, Math.PI * 2);
     context.fill();
   }
 
-  const connectionLimit = Math.min(particles.length, 112);
+  context.shadowBlur = 0;
+  const connectionLimit = Math.min(particles.length, 135);
   for (let firstIndex = 0; firstIndex < connectionLimit; firstIndex += 1) {
     const first = particles[firstIndex];
+
     for (let secondIndex = firstIndex + 1; secondIndex < connectionLimit; secondIndex += 1) {
       const second = particles[secondIndex];
       const distance = Math.hypot(first.x - second.x, first.y - second.y);
-      const threshold = 74 + Math.min(first.depth, second.depth) * 52;
-
+      const threshold = 82 + Math.min(first.depth, second.depth) * 68;
       if (distance >= threshold) continue;
 
-      const alpha = (1 - distance / threshold) * 0.105 * Math.min(first.depth, second.depth);
-      context.strokeStyle = `rgba(147, 139, 255, ${alpha})`;
-      context.lineWidth = 0.55 + Math.min(first.depth, second.depth) * 0.35;
+      const alpha = (1 - distance / threshold) * 0.18 * Math.min(first.depth, second.depth);
+      context.strokeStyle = `rgba(155, 148, 255, ${alpha})`;
+      context.lineWidth = 0.55 + Math.min(first.depth, second.depth) * 0.65;
       context.beginPath();
       context.moveTo(first.x, first.y);
       context.lineTo(second.x, second.y);
@@ -240,127 +235,18 @@ function drawBackground(timestamp = 0) {
     }
   }
 
-  ripples = ripples.filter((ripple) => ripple.alpha > 0.012);
+  ripples = ripples.filter((ripple) => ripple.alpha > 0.014);
   for (const ripple of ripples) {
-    ripple.radius += ripple.speed;
-    ripple.alpha *= 0.954;
-    context.strokeStyle = `rgba(175, 164, 255, ${ripple.alpha})`;
-    context.lineWidth = 1.2;
+    ripple.radius += ripple.speed * delta;
+    ripple.alpha *= Math.pow(0.95, delta);
+    context.strokeStyle = `rgba(188, 178, 255, ${ripple.alpha})`;
+    context.lineWidth = 1.5;
     context.beginPath();
     context.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
     context.stroke();
   }
 
-  animationFrame = window.requestAnimationFrame(drawBackground);
-}
-
-function formatTime(milliseconds) {
-  if (!Number.isFinite(milliseconds) || milliseconds < 0) return '0:00';
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = String(totalSeconds % 60).padStart(2, '0');
-  return `${minutes}:${seconds}`;
-}
-
-function updateSpotifyControls() {
-  const progress = spotifyDuration > 0 ? (spotifyPosition / spotifyDuration) * 100 : 0;
-  $('#spotify-progress').value = String(Math.max(0, Math.min(100, progress)));
-  $('#spotify-time').textContent = `${formatTime(spotifyPosition)} / ${formatTime(spotifyDuration)}`;
-  $('#spotify-toggle').classList.toggle('is-playing', !spotifyPaused);
-  $('#spotify-toggle').setAttribute('aria-label', spotifyPaused ? 'Воспроизвести' : 'Пауза');
-  $('#spotify-section').classList.toggle('is-playing', !spotifyPaused);
-}
-
-function extractSpotifyEntity(url) {
-  try {
-    const parsed = new URL(url);
-    if (!/(^|\.)spotify\.com$/.test(parsed.hostname)) return null;
-    const parts = parsed.pathname.split('/').filter(Boolean);
-    const offset = parts[0]?.startsWith('intl-') ? 1 : 0;
-    const type = parts[offset];
-    const id = parts[offset + 1];
-    if (!['track', 'album', 'playlist', 'artist', 'episode', 'show'].includes(type) || !id) return null;
-    return { type, id, cleanUrl: `https://open.spotify.com/${type}/${id}` };
-  } catch {
-    return null;
-  }
-}
-
-async function loadSpotifyMetadata(url) {
-  try {
-    const endpoint = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
-    const response = await fetch(endpoint, { cache: 'force-cache' });
-    if (!response.ok) return;
-    const data = await response.json();
-
-    if (data.title) $('#spotify-title').textContent = data.title;
-    if (data.provider_name) $('#spotify-subtitle').textContent = data.provider_name;
-    if (data.thumbnail_url) {
-      $('#spotify-art').style.backgroundImage = `linear-gradient(135deg, rgba(8,9,13,.05), rgba(8,9,13,.5)), url("${data.thumbnail_url}")`;
-      $('#spotify-art').classList.add('has-cover');
-    }
-  } catch {
-    // Официальный Spotify Embed всё равно останется доступен.
-  }
-}
-
-function requestSpotifyApi(entity) {
-  if (spotifyApiRequested) return;
-  spotifyApiRequested = true;
-
-  window.onSpotifyIframeApiReady = (IFrameAPI) => {
-    const host = $('#spotify-embed');
-    const options = {
-      uri: `spotify:${entity.type}:${entity.id}`,
-      width: '100%',
-      height: 80,
-      theme: 'dark'
-    };
-
-    IFrameAPI.createController(host, options, (controller) => {
-      spotifyController = controller;
-      $('#spotify-toggle').disabled = false;
-      $('#spotify-progress').disabled = false;
-
-      controller.addListener('ready', () => {
-        $('#spotify-subtitle').textContent = 'Готово к воспроизведению';
-      });
-
-      controller.addListener('playback_started', () => {
-        spotifyPaused = false;
-        updateSpotifyControls();
-      });
-
-      controller.addListener('playback_update', (event) => {
-        spotifyDuration = Number(event?.data?.duration) || spotifyDuration;
-        spotifyPosition = Number(event?.data?.position) || 0;
-        spotifyPaused = Boolean(event?.data?.isPaused);
-        updateSpotifyControls();
-      });
-    });
-  };
-
-  const script = document.createElement('script');
-  script.src = 'https://open.spotify.com/embed/iframe-api/v1';
-  script.async = true;
-  script.onerror = () => {
-    $('#spotify-subtitle').textContent = 'Не удалось загрузить Spotify-плеер';
-  };
-  document.body.append(script);
-}
-
-function initialiseSpotify(url) {
-  const entity = extractSpotifyEntity(url);
-  if (!entity) return;
-
-  spotifyUrl = entity.cleanUrl;
-  $('#spotify-section').hidden = false;
-  $('#spotify-open').href = spotifyUrl;
-  $('#spotify-title').textContent = 'Spotify Track';
-  $('#spotify-subtitle').textContent = 'Загрузка официального плеера…';
-
-  loadSpotifyMetadata(spotifyUrl);
-  requestSpotifyApi(entity);
+  window.requestAnimationFrame(drawBackground);
 }
 
 function renderLinks(links) {
@@ -408,6 +294,52 @@ async function fetchJson(path, fallback = null) {
   }
 }
 
+function setDiscordPresence(status, label) {
+  const dot = $('#guns-dot');
+  const text = $('#guns-presence');
+  dot.className = `presence-dot ${status}`;
+  text.textContent = label;
+}
+
+function parseDiscordPresence(text) {
+  const normalized = String(text || '').toLowerCase();
+  const patterns = [
+    { status: 'dnd', label: 'Не беспокоить', expression: /\b(do not disturb|dnd)\b/ },
+    { status: 'idle', label: 'Неактивен', expression: /\bidle\b/ },
+    { status: 'offline', label: 'Не в сети', expression: /\boffline\b/ },
+    { status: 'online', label: 'В сети', expression: /\bonline\b/ }
+  ];
+
+  return patterns.find((item) => item.expression.test(normalized)) || null;
+}
+
+async function updateDiscordPresence() {
+  const sources = [
+    'https://r.jina.ai/http://guns.lol/quixylon',
+    'https://guns.lol/quixylon'
+  ];
+
+  for (const source of sources) {
+    try {
+      const response = await fetch(source, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(9000)
+      });
+      if (!response.ok) continue;
+
+      const result = parseDiscordPresence(await response.text());
+      if (result) {
+        setDiscordPresence(result.status, result.label);
+        return;
+      }
+    } catch {
+      // Пробуем следующий публичный источник.
+    }
+  }
+
+  setDiscordPresence('unknown', 'Открыть статус');
+}
+
 function readCounterValue(payload) {
   const candidates = [
     payload?.value,
@@ -417,6 +349,7 @@ function readCounterValue(payload) {
     payload?.result?.value,
     payload?.result?.count
   ];
+
   return candidates.find((value) => Number.isFinite(Number(value)));
 }
 
@@ -429,7 +362,7 @@ async function updateViewCounter() {
   try {
     lastCountedDay = window.localStorage.getItem('quixylon-profile-view-day') || '';
   } catch {
-    // В приватном режиме просто используем обычный счётчик просмотров.
+    // В приватном режиме счётчик всё равно попробует загрузиться.
   }
 
   const shouldIncrement = lastCountedDay !== today;
@@ -448,11 +381,11 @@ async function updateViewCounter() {
       try {
         window.localStorage.setItem('quixylon-profile-view-day', today);
       } catch {
-        // Счётчик продолжит работать и без localStorage.
+        // localStorage может быть отключён.
       }
     }
   } catch {
-    display.textContent = 'Просмотры: недоступны';
+    display.textContent = 'Просмотры: —';
   }
 }
 
@@ -462,7 +395,7 @@ async function loadProfile() {
     fetchJson('./data/status.json')
   ]);
 
-  $('#profile-name').textContent = bio.displayName || 'Quixylon';
+  $('#profile-name').textContent = bio.displayName || 'Qu’lon';
   $('#profile-handle').textContent = bio.handle || '@quixylon';
 
   const descriptions = Array.isArray(bio.descriptions)
@@ -470,65 +403,59 @@ async function loadProfile() {
     : [];
   $('#profile-description').textContent = descriptions.length
     ? descriptions.join(' · ')
-    : bio.description || 'Steam, CS2 и всё важное — в одном месте.';
+    : bio.description || 'Steam, CS2, соцсети и всё важное — в одном месте.';
 
   renderLinks(bio.links);
 
   const player = status?.player;
-  if (player) {
+  if (player?.avatar) {
     $('#profile-avatar').src = bio.avatarUrl || player.avatar;
-    $('#profile-avatar').alt = `Аватар ${player.name}`;
-    $('#steam-name').textContent = player.name;
-    $('#profile-status').textContent = player.gameName
-      ? `Сейчас играет: ${player.gameName}`
-      : player.status === 'offline'
-        ? 'Steam: не в сети'
-        : 'Steam: в сети';
-  } else {
-    $('#steam-name').textContent = 'Quixylon';
+    $('#profile-avatar').alt = 'Аватар Qu’lon';
   }
 
-  if (bio.spotifyUrl) initialiseSpotify(bio.spotifyUrl);
+  if (player?.gameName) {
+    $('#profile-status').textContent = `Steam: ${player.gameName}`;
+  } else if (player?.status === 'offline') {
+    $('#profile-status').textContent = 'Steam: не в сети';
+  } else if (player) {
+    $('#profile-status').textContent = 'Steam: в сети';
+  }
 }
 
-window.addEventListener('pointermove', updatePointer, { passive: true });
+window.addEventListener('pointermove', (event) => {
+  setPointer(event.clientX, event.clientY);
+}, { passive: true });
+
 window.addEventListener('pointerdown', (event) => {
-  updatePointer(event);
+  setPointer(event.clientX, event.clientY);
   pointer.pressed = true;
-  createBurst(event.clientX, event.clientY);
+  burst(event.clientX, event.clientY);
 }, { passive: true });
-window.addEventListener('pointerup', () => {
-  pointer.pressed = false;
-}, { passive: true });
-window.addEventListener('pointercancel', () => {
-  pointer.pressed = false;
-}, { passive: true });
+
+window.addEventListener('pointerup', resetTiltSoon, { passive: true });
+window.addEventListener('pointercancel', resetTiltSoon, { passive: true });
 window.addEventListener('resize', resizeCanvas, { passive: true });
 
-card.addEventListener('pointermove', updateCardTarget, { passive: true });
-card.addEventListener('pointerleave', resetCardTarget, { passive: true });
-card.addEventListener('pointercancel', resetCardTarget, { passive: true });
+window.addEventListener('touchstart', (event) => {
+  const touch = event.touches?.[0];
+  if (!touch) return;
+  setPointer(touch.clientX, touch.clientY);
+  pointer.pressed = true;
+  burst(touch.clientX, touch.clientY);
+}, { passive: true });
 
-$('#spotify-toggle').addEventListener('click', () => {
-  if (!spotifyController) return;
-  spotifyController.togglePlay();
-});
+window.addEventListener('touchmove', (event) => {
+  const touch = event.touches?.[0];
+  if (!touch) return;
+  setPointer(touch.clientX, touch.clientY);
+}, { passive: true });
 
-$('#spotify-progress').addEventListener('input', (event) => {
-  if (!spotifyDuration) return;
-  const previewPosition = (Number(event.target.value) / 100) * spotifyDuration;
-  $('#spotify-time').textContent = `${formatTime(previewPosition)} / ${formatTime(spotifyDuration)}`;
-});
-
-$('#spotify-progress').addEventListener('change', (event) => {
-  if (!spotifyController || !spotifyDuration) return;
-  const seconds = Math.round(((Number(event.target.value) / 100) * spotifyDuration) / 1000);
-  spotifyController.seek(seconds);
-});
+window.addEventListener('touchend', resetTiltSoon, { passive: true });
 
 resizeCanvas();
-window.cancelAnimationFrame(animationFrame);
 drawBackground();
 animateCard();
 loadProfile();
+updateDiscordPresence();
 updateViewCounter();
+window.setInterval(updateDiscordPresence, 60_000);
