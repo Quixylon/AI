@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080a0f" />
+    <meta
+      name="description"
+      content="Check the current public status and game activity of a Steam profile."
+    />
+    <title>Steam Status Tracker — Quixylon AI Lab</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">QUIXYLON AI LAB</p>
+        <h1>Steam Status Tracker</h1>
+        <p class="intro">
+          Check the public online status and current game of any Steam profile using its SteamID64.
+        </p>
+      </header>
+
+      <section class="lookup-panel" aria-labelledby="lookup-title">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">PROFILE LOOKUP</p>
+            <h2 id="lookup-title">Enter a SteamID64</h2>
+          </div>
+          <span class="live-indicator"><span></span> Live request</span>
+        </div>
+
+        <form id="lookup-form" novalidate>
+          <label for="steam-id">SteamID64</label>
+          <div class="input-row">
+            <input
+              id="steam-id"
+              name="steamId"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="17"
+              pattern="[0-9]{17}"
+              placeholder="7656119XXXXXXXXXX"
+              aria-describedby="steam-id-help"
+              required
+            />
+            <button id="submit-button" type="submit">Check status</button>
+          </div>
+          <p id="steam-id-help" class="help-text">
+            The profile must be public. Your Steam Web API key stays on the server and is never sent to the browser.
+          </p>
+        </form>
+      </section>
+
+      <section id="message-panel" class="message-panel" hidden aria-live="polite"></section>
+
+      <section id="profile-card" class="profile-card" hidden aria-live="polite">
+        <div class="profile-top">
+          <img id="profile-avatar" class="avatar" src="" alt="" />
+          <div class="identity">
+            <p class="section-label">STEAM PROFILE</p>
+            <h2 id="profile-name">Unknown player</h2>
+            <a id="profile-link" href="#" target="_blank" rel="noreferrer">Open Steam profile</a>
+          </div>
+          <span id="status-pill" class="status-pill">Unknown</span>
+        </div>
+
+        <div class="details-grid">
+          <article class="detail-card">
+            <p class="detail-label">Current activity</p>
+            <p id="current-game" class="detail-value">Not playing</p>
+          </article>
+          <article class="detail-card">
+            <p class="detail-label">Last logoff</p>
+            <p id="last-logoff" class="detail-value">Unavailable</p>
+          </article>
+          <article class="detail-card">
+            <p class="detail-label">Last checked</p>
+            <p id="last-checked" class="detail-value">Just now</p>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        <span>Experimental project</span>
+        <span>Built in Quixylon AI Lab</span>
+      </footer>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
