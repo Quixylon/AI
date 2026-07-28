@@ -49,17 +49,48 @@ function comparablePlayer(player) {
   };
 }
 
+async function resolveSteamId(apiKey) {
+  const directId = process.env.STEAM_ID64?.trim();
+  if (/^\d{17}$/.test(directId || '')) return directId;
+
+  const vanity = process.env.STEAM_VANITY?.trim();
+  if (!vanity) return null;
+
+  const endpoint = new URL('https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/');
+  endpoint.searchParams.set('key', apiKey);
+  endpoint.searchParams.set('vanityurl', vanity);
+
+  const response = await fetch(endpoint, {
+    signal: AbortSignal.timeout(15_000),
+    headers: {
+      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.1'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Steam vanity resolver returned HTTP ${response.status}.`);
+  }
+
+  const payload = await response.json();
+  const resolvedId = payload?.response?.steamid;
+
+  if (!/^\d{17}$/.test(resolvedId || '')) {
+    throw new Error(`Steam vanity URL "${vanity}" could not be resolved.`);
+  }
+
+  return resolvedId;
+}
+
 await mkdir(dataDirectory, { recursive: true });
 
 const apiKey = process.env.STEAM_API_KEY?.trim();
-const steamId = process.env.STEAM_ID64?.trim();
 const previousStatus = await readJson(statusPath, null);
 const history = await readJson(historyPath, []);
 
-if (!apiKey || !/^\d{17}$/.test(steamId || '')) {
+if (!apiKey) {
   const placeholder = {
     configured: false,
-    message: 'Добавьте STEAM_API_KEY в GitHub Secrets и STEAM_ID64 в GitHub Variables, затем запустите workflow вручную.',
+    message: 'Добавьте STEAM_API_KEY в GitHub Secrets, затем запустите workflow вручную.',
     checkedAt: null,
     player: null
   };
@@ -71,6 +102,11 @@ if (!apiKey || !/^\d{17}$/.test(steamId || '')) {
   process.exit(0);
 }
 
+const steamId = await resolveSteamId(apiKey);
+if (!steamId) {
+  throw new Error('Set STEAM_ID64 or STEAM_VANITY in the workflow.');
+}
+
 const endpoint = new URL('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/');
 endpoint.searchParams.set('key', apiKey);
 endpoint.searchParams.set('steamids', steamId);
@@ -78,7 +114,7 @@ endpoint.searchParams.set('steamids', steamId);
 const response = await fetch(endpoint, {
   signal: AbortSignal.timeout(15_000),
   headers: {
-    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.0'
+    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.1'
   }
 });
 
@@ -90,7 +126,7 @@ const payload = await response.json();
 const steamPlayer = payload?.response?.players?.[0];
 
 if (!steamPlayer) {
-  throw new Error('Steam profile was not found. Check STEAM_ID64 and profile visibility.');
+  throw new Error('Steam profile was not found. Check profile visibility.');
 }
 
 const checkedAt = new Date().toISOString();
