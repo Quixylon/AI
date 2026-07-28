@@ -1,0 +1,54 @@
+.section-panel {
+  margin-top: 18px;
+}
+
+.external-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid var(--border-bright);
+  border-radius: 14px;
+  padding: 9px 14px;
+  color: var(--text);
+  background: var(--surface-soft);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.external-link:hover {
+  border-color: rgba(167, 156, 255, 0.62);
+  background: rgba(124, 108, 255, 0.13);
+  transform: translateY(-1px);
+}
+
+.data-timestamp {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+#csrep-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 700px) {
+  .external-link {
+    width: 100%;
+  }
+
+  #csrep-panel .panel-heading {
+    flex-direction: column;
+  }
+
+  #csrep-metrics {
+    grid-template-columns: 1fr;
+  }
+}
