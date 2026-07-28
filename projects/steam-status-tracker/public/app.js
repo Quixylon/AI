@@ -1,6 +1,3 @@
-const form = document.querySelector('#lookup-form');
-const steamIdInput = document.querySelector('#steam-id');
-const submitButton = document.querySelector('#submit-button');
 const messagePanel = document.querySelector('#message-panel');
 const profileCard = document.querySelector('#profile-card');
 const profileAvatar = document.querySelector('#profile-avatar');
@@ -10,27 +7,28 @@ const statusPill = document.querySelector('#status-pill');
 const currentGame = document.querySelector('#current-game');
 const lastLogoff = document.querySelector('#last-logoff');
 const lastChecked = document.querySelector('#last-checked');
+const historyPanel = document.querySelector('#history-panel');
+const historyList = document.querySelector('#history-list');
 
-let refreshTimer = null;
+const statusNames = {
+  offline: 'Не в сети',
+  online: 'В сети',
+  busy: 'Занят',
+  away: 'Отошёл',
+  snooze: 'Спит',
+  'looking-to-trade': 'Ищет обмен',
+  'looking-to-play': 'Ищет игру',
+  'in-game': 'В игре',
+  unknown: 'Неизвестно'
+};
 
-function formatStatus(status) {
-  return status
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function formatDate(value, fallback = 'Unavailable') {
-  if (!value) {
-    return fallback;
-  }
+function formatDate(value, fallback = 'Нет данных') {
+  if (!value) return fallback;
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return fallback;
-  }
+  if (Number.isNaN(date.getTime())) return fallback;
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('ru-RU', {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(date);
@@ -46,85 +44,88 @@ function clearMessage() {
   messagePanel.textContent = '';
 }
 
-function setLoading(isLoading) {
-  submitButton.disabled = isLoading;
-  submitButton.textContent = isLoading ? 'Checking…' : 'Check status';
-  steamIdInput.setAttribute('aria-busy', String(isLoading));
-}
+function renderPlayer(data) {
+  const player = data.player;
 
-function renderPlayer(player) {
   profileAvatar.src = player.avatar;
-  profileAvatar.alt = `${player.name} profile picture`;
+  profileAvatar.alt = `Аватар профиля ${player.name}`;
   profileName.textContent = player.name;
   profileLink.href = player.profileUrl;
   statusPill.className = `status-pill ${player.status}`;
-  statusPill.textContent = formatStatus(player.status);
-  currentGame.textContent = player.gameName || 'Not playing a game';
+  statusPill.textContent = statusNames[player.status] || statusNames.unknown;
+  currentGame.textContent = player.gameName || 'Не играет';
   lastLogoff.textContent = formatDate(player.lastLogoff);
-  lastChecked.textContent = formatDate(player.fetchedAt, 'Just now');
+  lastChecked.textContent = formatDate(data.checkedAt, 'Ещё не проверялось');
   profileCard.hidden = false;
-}
 
-function startAutoRefresh(steamId) {
-  if (refreshTimer) {
-    window.clearInterval(refreshTimer);
+  const checkedAt = new Date(data.checkedAt).getTime();
+  if (Number.isFinite(checkedAt) && Date.now() - checkedAt > 20 * 60 * 1000) {
+    showMessage('Данные давно не обновлялись. Проверьте последний запуск workflow в разделе Actions.');
   }
-
-  refreshTimer = window.setInterval(() => {
-    lookupProfile(steamId, { silent: true });
-  }, 60_000);
 }
 
-async function lookupProfile(steamId, { silent = false } = {}) {
-  if (!/^\d{17}$/.test(steamId)) {
-    showMessage('Enter a valid 17-digit SteamID64.');
-    steamIdInput.focus();
+function renderHistory(history) {
+  historyList.replaceChildren();
+
+  if (!Array.isArray(history) || history.length === 0) {
+    historyPanel.hidden = true;
     return;
   }
 
-  if (!silent) {
-    setLoading(true);
+  const latestEntries = history.slice(-12).reverse();
+
+  for (const entry of latestEntries) {
+    const card = document.createElement('article');
+    card.className = 'detail-card';
+
+    const label = document.createElement('p');
+    label.className = 'detail-label';
+    label.textContent = formatDate(entry.startedAt);
+
+    const value = document.createElement('p');
+    value.className = 'detail-value';
+    const status = statusNames[entry.status] || statusNames.unknown;
+    value.textContent = entry.gameName ? `${status}: ${entry.gameName}` : status;
+
+    card.append(label, value);
+    historyList.append(card);
   }
+
+  historyPanel.hidden = false;
+}
+
+async function loadData() {
   clearMessage();
 
   try {
-    const response = await fetch(`/api/status?steamId=${encodeURIComponent(steamId)}`, {
-      headers: {
-        Accept: 'application/json'
-      }
-    });
+    const cacheBreaker = Date.now();
+    const [statusResponse, historyResponse] = await Promise.all([
+      fetch(`./data/status.json?v=${cacheBreaker}`, { cache: 'no-store' }),
+      fetch(`./data/history.json?v=${cacheBreaker}`, { cache: 'no-store' })
+    ]);
 
-    const payload = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(payload.error || `Request failed with HTTP ${response.status}.`);
+    if (!statusResponse.ok) {
+      throw new Error(`Не удалось загрузить статус: HTTP ${statusResponse.status}`);
     }
 
-    renderPlayer(payload.player);
-    localStorage.setItem('steam-status-tracker:last-id', steamId);
-    startAutoRefresh(steamId);
-  } catch (error) {
-    if (!silent) {
+    const data = await statusResponse.json();
+    const history = historyResponse.ok ? await historyResponse.json() : [];
+
+    if (!data.configured || !data.player) {
       profileCard.hidden = true;
+      historyPanel.hidden = true;
+      showMessage(data.message || 'Мониторинг ещё не настроен в GitHub Actions.');
+      return;
     }
-    showMessage(error.message || 'Unable to check the Steam profile.');
-  } finally {
-    if (!silent) {
-      setLoading(false);
-    }
+
+    renderPlayer(data);
+    renderHistory(history);
+  } catch (error) {
+    profileCard.hidden = true;
+    historyPanel.hidden = true;
+    showMessage(error.message || 'Не удалось загрузить данные мониторинга.');
   }
 }
 
-form.addEventListener('submit', (event) => {
-  event.preventDefault();
-  lookupProfile(steamIdInput.value.trim());
-});
-
-steamIdInput.addEventListener('input', () => {
-  steamIdInput.value = steamIdInput.value.replace(/\D/g, '').slice(0, 17);
-});
-
-const savedSteamId = localStorage.getItem('steam-status-tracker:last-id');
-if (savedSteamId && /^\d{17}$/.test(savedSteamId)) {
-  steamIdInput.value = savedSteamId;
-}
+loadData();
+window.setInterval(loadData, 60_000);
