@@ -3,71 +3,85 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#080a0f" />
+    <meta name="theme-color" content="#08090d" />
     <meta
       name="description"
-      content="Мониторинг публичного Steam-профиля и статистики CS2 через GitHub Pages и GitHub Actions."
+      content="Персональная bio-страница Quixylon со статусом Steam, историей игр и профилем CSRep."
     />
-    <title>Steam & CS2 Tracker — Quixylon AI Lab</title>
+    <title>Quixylon — Steam & CS2</title>
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./csrep.css" />
   </head>
   <body>
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
+    <div id="background-art" class="background-art" aria-hidden="true"></div>
+    <div class="background-shade" aria-hidden="true"></div>
+    <div class="background-grid" aria-hidden="true"></div>
 
-    <main class="shell">
-      <header class="hero">
-        <p class="eyebrow">QUIXYLON AI LAB</p>
-        <h1>Steam & CS2 Tracker</h1>
-        <p class="intro">
-          Бесплатный мониторинг одного публичного Steam-профиля. GitHub проверяет статус, сохраняет историю и обновляет статистику CS2 с CSRep.
-        </p>
-      </header>
+    <div id="entry-screen" class="entry-screen">
+      <button id="enter-button" class="enter-button" type="button">
+        <span class="enter-mark">Q</span>
+        <span class="enter-copy">
+          <strong>Quixylon</strong>
+          <small>Нажмите, чтобы открыть профиль</small>
+        </span>
+      </button>
+    </div>
 
-      <section class="lookup-panel" aria-labelledby="monitor-title">
-        <div class="panel-heading">
-          <div>
-            <p class="section-label">АВТОМАТИЧЕСКИЙ МОНИТОРИНГ</p>
-            <h2 id="monitor-title">Отслеживаемый профиль</h2>
+    <main class="page-shell">
+      <section class="bio-card glass-card" aria-labelledby="bio-name">
+        <div id="bio-cover" class="bio-cover"></div>
+
+        <div class="bio-content">
+          <div class="avatar-row">
+            <img id="profile-avatar" class="profile-avatar" src="" alt="" />
+            <span id="status-pill" class="status-pill">Загрузка</span>
           </div>
-          <span class="live-indicator"><span></span> Steam проверяется примерно раз в 5 минут</span>
+
+          <div class="identity-block">
+            <p id="bio-handle" class="bio-handle">@quixylon</p>
+            <h1 id="bio-name">Quixylon</h1>
+            <p id="profile-steam-name" class="steam-name">Загрузка Steam-профиля…</p>
+            <p class="typewriter-line" aria-live="polite">
+              <span id="bio-description">Steam & CS2 activity tracker</span><span class="typewriter-cursor">|</span>
+            </p>
+          </div>
+
+          <nav id="bio-links" class="bio-links" aria-label="Ссылки профиля"></nav>
+
+          <section class="music-card" aria-label="Музыкальный плеер">
+            <div id="music-cover" class="music-cover"><span>♪</span></div>
+            <div class="music-info">
+              <p id="music-title" class="music-title">Трек не выбран</p>
+              <p id="music-artist" class="music-artist">Музыка будет здесь</p>
+            </div>
+            <button id="music-toggle" class="music-toggle" type="button" aria-label="Воспроизвести" disabled>▶</button>
+            <div class="music-progress-row">
+              <input id="music-progress" class="music-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Позиция трека" disabled />
+              <span id="music-time" class="music-time">0:00 / 0:00</span>
+            </div>
+            <audio id="music-audio" preload="metadata"></audio>
+          </section>
+
+          <div class="quick-grid">
+            <article class="quick-card">
+              <p class="quick-label">Сейчас</p>
+              <p id="current-game" class="quick-value">Загрузка…</p>
+            </article>
+            <article class="quick-card">
+              <p class="quick-label">Последний выход</p>
+              <p id="last-logoff" class="quick-value">Нет данных</p>
+            </article>
+            <article class="quick-card">
+              <p class="quick-label">Обновлено GitHub</p>
+              <p id="last-checked" class="quick-value">Ожидание</p>
+            </article>
+          </div>
         </div>
-        <p class="help-text">
-          Данные получает GitHub Actions. Секретный Steam API key не отправляется в браузер и не хранится в коде.
-        </p>
       </section>
 
-      <section id="message-panel" class="message-panel" hidden aria-live="polite"></section>
+      <section id="message-panel" class="message-panel glass-card" hidden aria-live="polite"></section>
 
-      <section id="profile-card" class="profile-card" hidden aria-live="polite">
-        <div class="profile-top">
-          <img id="profile-avatar" class="avatar" src="" alt="" />
-          <div class="identity">
-            <p class="section-label">STEAM PROFILE</p>
-            <h2 id="profile-name">Неизвестный пользователь</h2>
-            <a id="profile-link" href="#" target="_blank" rel="noreferrer">Открыть профиль Steam</a>
-          </div>
-          <span id="status-pill" class="status-pill">Неизвестно</span>
-        </div>
-
-        <div class="details-grid">
-          <article class="detail-card">
-            <p class="detail-label">Текущая активность</p>
-            <p id="current-game" class="detail-value">Не играет</p>
-          </article>
-          <article class="detail-card">
-            <p class="detail-label">Последний выход</p>
-            <p id="last-logoff" class="detail-value">Нет данных</p>
-          </article>
-          <article class="detail-card">
-            <p class="detail-label">Последняя проверка GitHub</p>
-            <p id="last-checked" class="detail-value">Ожидание</p>
-          </article>
-        </div>
-      </section>
-
-      <section id="csrep-panel" class="lookup-panel section-panel" aria-labelledby="csrep-title">
+      <section id="csrep-panel" class="lookup-panel section-panel glass-card" aria-labelledby="csrep-title">
         <div class="panel-heading">
           <div>
             <p class="section-label">CS2 · CSREP.GG</p>
@@ -82,13 +96,13 @@
           >Открыть CSRep</a>
         </div>
         <p id="csrep-message" class="help-text" aria-live="polite">
-          Ожидание первой проверки CSRep через GitHub Actions.
+          Загрузка информации CSRep.
         </p>
         <div id="csrep-metrics" class="details-grid" hidden></div>
         <p id="csrep-updated" class="data-timestamp"></p>
       </section>
 
-      <section id="history-panel" class="lookup-panel section-panel" hidden aria-labelledby="history-title">
+      <section id="history-panel" class="lookup-panel section-panel glass-card" hidden aria-labelledby="history-title">
         <div class="panel-heading">
           <div>
             <p class="section-label">ИСТОРИЯ STEAM</p>
@@ -96,14 +110,14 @@
           </div>
         </div>
         <p class="help-text history-help">
-          Сохраняются входы и выходы из сети, смены статуса, запущенные игры, начало, окончание и длительность каждой сессии.
+          Входы, выходы, смены статуса, игры, начало, окончание и длительность сессий.
         </p>
-        <div id="history-list" class="details-grid history-grid"></div>
+        <div id="history-list" class="history-list"></div>
       </section>
 
       <footer>
-        <span>GitHub Pages + GitHub Actions</span>
-        <span>Steam Web API + CSRep.gg</span>
+        <span>Quixylon Bio</span>
+        <span>GitHub Pages · Steam Web API</span>
       </footer>
     </main>
 
