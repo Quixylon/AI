@@ -1,0 +1,116 @@
+.music-card {
+  position: relative;
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 16px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(13, 15, 23, 0.68);
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.065);
+  backdrop-filter: blur(26px) saturate(1.2);
+  -webkit-backdrop-filter: blur(26px) saturate(1.2);
+  transform: translateZ(44px);
+}
+
+.music-card::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(300px circle at 8% 0%, rgba(160, 142, 255, 0.16), transparent 58%),
+    radial-gradient(260px circle at 100% 100%, rgba(82, 172, 255, 0.08), transparent 62%);
+  content: "";
+  pointer-events: none;
+}
+
+.music-heading {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 13px;
+}
+
+.music-symbol {
+  display: grid;
+  width: 45px;
+  height: 45px;
+  flex: 0 0 45px;
+  place-items: center;
+  border: 1px solid rgba(183, 170, 255, 0.28);
+  border-radius: 15px;
+  color: #d8d1ff;
+  background: linear-gradient(145deg, rgba(150, 128, 255, 0.26), rgba(55, 133, 255, 0.1));
+  box-shadow:
+    0 12px 25px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.music-symbol svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.music-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.music-copy small {
+  color: #8f97a7;
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.music-copy strong,
+.music-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-copy strong {
+  color: #f8f8fc;
+  font-size: 0.92rem;
+}
+
+.music-copy span {
+  color: #a8afbd;
+  font-size: 0.74rem;
+}
+
+.spotify-player {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 17px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 470px) {
+  .music-card {
+    border-radius: 21px;
+    padding: 13px;
+  }
+
+  .music-symbol {
+    width: 41px;
+    height: 41px;
+    flex-basis: 41px;
+  }
+}
