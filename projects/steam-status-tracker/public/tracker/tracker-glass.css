@@ -224,6 +224,12 @@ body::before {
   transform: translateY(-1px) scale(0.985);
 }
 
+#csrep-message,
+#csrep-metrics,
+#csrep-updated {
+  display: none !important;
+}
+
 @media (max-width: 520px) {
   .csrep-button {
     width: 100%;
