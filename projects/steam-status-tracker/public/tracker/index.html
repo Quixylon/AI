@@ -2,27 +2,29 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#080a0f" />
-    <meta name="description" content="Steam и CS2 трекер Quixylon: статус, игры и история сессий." />
-    <title>Quixylon Tracker</title>
-    <link rel="stylesheet" href="./tracker.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#070810" />
+    <meta name="description" content="Steam-трекер Qu’lon: статус, история сети и запущенных игр." />
+    <title>Qu’lon Tracker</title>
+    <link rel="stylesheet" href="./tracker.css?v=2" />
   </head>
   <body>
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
+    <canvas id="tracker-background" aria-hidden="true"></canvas>
+    <div class="tracker-aurora tracker-aurora-one" aria-hidden="true"></div>
+    <div class="tracker-aurora tracker-aurora-two" aria-hidden="true"></div>
+    <div class="tracker-noise" aria-hidden="true"></div>
+    <div class="tracker-vignette" aria-hidden="true"></div>
 
     <main class="shell">
       <header class="hero">
         <a class="back-link" href="../">← Назад к профилю</a>
         <p class="eyebrow">QUIXYLON TRACKER</p>
-        <h1>Steam & CS2</h1>
-        <p class="intro">Статус, текущая игра, уведомления и история игровых сессий.</p>
+        <h1><span>Steam</span><span class="title-ampersand">&amp;</span><span>CS2</span></h1>
       </header>
 
-      <section id="message-panel" class="message-panel" hidden aria-live="polite"></section>
+      <section id="message-panel" class="message-panel glass-panel" hidden aria-live="polite"></section>
 
-      <section id="profile-card" class="profile-card" hidden aria-live="polite">
+      <section id="profile-card" class="profile-card glass-panel" hidden aria-live="polite">
         <div class="profile-top">
           <img id="profile-avatar" class="avatar" src="" alt="" />
           <div class="identity">
@@ -34,22 +36,22 @@
         </div>
 
         <div class="details-grid">
-          <article class="detail-card">
+          <article class="detail-card liquid-tile">
             <p class="detail-label">Текущая активность</p>
             <p id="current-game" class="detail-value">Загрузка</p>
           </article>
-          <article class="detail-card">
+          <article class="detail-card liquid-tile">
             <p class="detail-label">Последний выход</p>
             <p id="last-logoff" class="detail-value">Нет данных</p>
           </article>
-          <article class="detail-card">
+          <article class="detail-card liquid-tile">
             <p class="detail-label">Последняя проверка GitHub</p>
             <p id="last-checked" class="detail-value">Ожидание</p>
           </article>
         </div>
       </section>
 
-      <section id="csrep-panel" class="panel section-panel" aria-labelledby="csrep-title">
+      <section id="csrep-panel" class="panel section-panel glass-panel" aria-labelledby="csrep-title">
         <div class="panel-heading">
           <div>
             <p class="section-label">CS2 · CSREP.GG</p>
@@ -62,14 +64,24 @@
         <p id="csrep-updated" class="data-timestamp"></p>
       </section>
 
-      <section id="history-panel" class="panel section-panel" hidden aria-labelledby="history-title">
+      <section id="games-panel" class="panel section-panel glass-panel" hidden aria-labelledby="games-title">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">ИСТОРИЯ ИГР</p>
+            <h2 id="games-title">Запущенные игры</h2>
+          </div>
+        </div>
+        <div id="games-summary" class="games-summary"></div>
+        <div id="games-list" class="games-list"></div>
+      </section>
+
+      <section id="history-panel" class="panel section-panel glass-panel" hidden aria-labelledby="history-title">
         <div class="panel-heading">
           <div>
             <p class="section-label">ИСТОРИЯ STEAM</p>
-            <h2 id="history-title">Статусы и игровые сессии</h2>
+            <h2 id="history-title">История сети</h2>
           </div>
         </div>
-        <p class="help-text history-help">Входы, выходы, смены статуса, игры, начало, окончание и длительность сессий.</p>
         <div id="history-list" class="history-list"></div>
       </section>
 
@@ -79,6 +91,7 @@
       </footer>
     </main>
 
-    <script type="module" src="./tracker.js"></script>
+    <script type="module" src="./tracker-background.js?v=1"></script>
+    <script type="module" src="./tracker.js?v=2"></script>
   </body>
 </html>
