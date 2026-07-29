@@ -7,6 +7,7 @@
     <meta name="description" content="Steam-трекер Qu’lon: статус, история сети и запущенных игр." />
     <title>Qu’lon Tracker</title>
     <link rel="stylesheet" href="./tracker.css?v=2" />
+    <link rel="stylesheet" href="./tracker-glass.css?v=1" />
   </head>
   <body>
     <canvas id="tracker-background" aria-hidden="true"></canvas>
@@ -51,18 +52,15 @@
         </div>
       </section>
 
-      <section id="csrep-panel" class="panel section-panel glass-panel" aria-labelledby="csrep-title">
-        <div class="panel-heading">
-          <div>
-            <p class="section-label">CS2 · CSREP.GG</p>
-            <h2 id="csrep-title">Игровая статистика</h2>
-          </div>
-          <a id="csrep-link" class="external-link" href="https://csrep.gg/player/76561199524001992" target="_blank" rel="noreferrer">Открыть CSRep</a>
-        </div>
-        <p id="csrep-message" class="help-text" aria-live="polite">Загрузка информации CSRep.</p>
-        <div id="csrep-metrics" class="details-grid" hidden></div>
-        <p id="csrep-updated" class="data-timestamp"></p>
-      </section>
+      <div id="csrep-panel" class="csrep-action">
+        <a id="csrep-link" class="csrep-button" href="https://csrep.gg/player/76561199524001992" target="_blank" rel="noreferrer">
+          <span>CSRep</span>
+          <span class="csrep-button-arrow" aria-hidden="true">↗</span>
+        </a>
+        <p id="csrep-message" hidden aria-live="polite"></p>
+        <div id="csrep-metrics" hidden></div>
+        <p id="csrep-updated" hidden></p>
+      </div>
 
       <section id="games-panel" class="panel section-panel glass-panel" hidden aria-labelledby="games-title">
         <div class="panel-heading">
