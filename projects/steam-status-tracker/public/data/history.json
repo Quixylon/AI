@@ -4,6 +4,17 @@
     "personaState": "offline",
     "gameName": null,
     "gameId": null,
-    "startedAt": "2026-07-28T20:11:12.437Z"
+    "startedAt": "2026-07-28T20:11:12.437Z",
+    "endedAt": "2026-07-29T16:21:21.173Z",
+    "durationSeconds": 72609
+  },
+  {
+    "status": "online",
+    "personaState": "online",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-07-29T16:21:21.173Z",
+    "endedAt": null,
+    "durationSeconds": null
   }
 ]
