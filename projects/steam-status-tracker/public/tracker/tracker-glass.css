@@ -1,0 +1,244 @@
+:root {
+  --liquid-border: rgba(255, 255, 255, 0.25);
+  --liquid-border-soft: rgba(255, 255, 255, 0.14);
+  --liquid-surface: rgba(11, 14, 25, 0.34);
+  --liquid-surface-soft: rgba(255, 255, 255, 0.045);
+}
+
+body::before {
+  position: fixed;
+  inset: -18%;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(127, 93, 255, 0.28), transparent 23%),
+    radial-gradient(circle at 82% 30%, rgba(38, 170, 255, 0.22), transparent 25%),
+    radial-gradient(circle at 54% 78%, rgba(164, 92, 255, 0.18), transparent 24%);
+  filter: blur(58px) saturate(1.35);
+  content: "";
+  pointer-events: none;
+  animation: tracker-liquid-background 16s ease-in-out infinite alternate;
+}
+
+@keyframes tracker-liquid-background {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+
+  100% {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}
+
+.tracker-aurora {
+  opacity: 0.38;
+  filter: blur(88px) saturate(1.5);
+}
+
+.tracker-vignette {
+  background: radial-gradient(circle at center, transparent 15%, rgba(2, 3, 8, 0.2) 66%, rgba(2, 3, 8, 0.7) 100%);
+}
+
+.glass-panel {
+  isolation: isolate;
+  transform: translateZ(0);
+  border-color: var(--liquid-border);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.035) 38%, rgba(255, 255, 255, 0.012) 68%),
+    var(--liquid-surface);
+  box-shadow:
+    0 34px 100px rgba(0, 0, 0, 0.46),
+    0 8px 30px rgba(73, 72, 150, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.055),
+    inset 18px 18px 45px rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(42px) saturate(1.9) contrast(1.06);
+  -webkit-backdrop-filter: blur(42px) saturate(1.9) contrast(1.06);
+}
+
+.glass-panel::before {
+  z-index: 0;
+  background:
+    radial-gradient(560px circle at 8% -8%, rgba(255, 255, 255, 0.2), transparent 43%),
+    radial-gradient(440px circle at 95% 105%, rgba(88, 178, 255, 0.12), transparent 51%),
+    radial-gradient(360px circle at 64% 18%, rgba(179, 147, 255, 0.09), transparent 55%);
+  opacity: 0.95;
+  mix-blend-mode: screen;
+}
+
+.glass-panel::after {
+  position: absolute;
+  top: -70%;
+  left: -22%;
+  z-index: 1;
+  width: 48%;
+  height: 240%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.11), rgba(201, 219, 255, 0.035), transparent);
+  filter: blur(18px);
+  transform: rotate(18deg);
+  content: "";
+  pointer-events: none;
+  animation: tracker-glass-sheen 10s ease-in-out infinite;
+}
+
+@keyframes tracker-glass-sheen {
+  0%, 18% {
+    transform: translate3d(-32%, 0, 0) rotate(18deg);
+    opacity: 0.15;
+  }
+
+  48% {
+    opacity: 0.85;
+  }
+
+  78%, 100% {
+    transform: translate3d(285%, 0, 0) rotate(18deg);
+    opacity: 0.12;
+  }
+}
+
+.glass-panel > * {
+  position: relative;
+  z-index: 2;
+}
+
+.detail-card,
+.liquid-tile,
+.game-summary-card,
+.game-session,
+.history-content {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--liquid-border-soft);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.018) 48%),
+    rgba(255, 255, 255, 0.035);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+  backdrop-filter: blur(26px) saturate(1.65);
+  -webkit-backdrop-filter: blur(26px) saturate(1.65);
+}
+
+.detail-card::before,
+.game-summary-card::before,
+.game-session::before,
+.history-content::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(240px circle at 4% 0%, rgba(255, 255, 255, 0.12), transparent 46%),
+    linear-gradient(115deg, transparent 48%, rgba(128, 160, 255, 0.035), transparent 72%);
+  content: "";
+  pointer-events: none;
+}
+
+.csrep-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.csrep-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  min-width: 190px;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 0 20px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 19px;
+  color: #f8f8fc;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025)),
+    rgba(13, 16, 28, 0.34);
+  box-shadow:
+    0 22px 54px rgba(0, 0, 0, 0.31),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(34px) saturate(1.85);
+  -webkit-backdrop-filter: blur(34px) saturate(1.85);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.csrep-button::before {
+  position: absolute;
+  top: -80%;
+  left: -25%;
+  width: 48%;
+  height: 260%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  filter: blur(13px);
+  transform: rotate(17deg);
+  content: "";
+  pointer-events: none;
+  animation: csrep-button-sheen 7s ease-in-out infinite;
+}
+
+@keyframes csrep-button-sheen {
+  0%, 20% {
+    transform: translateX(-40%) rotate(17deg);
+    opacity: 0.1;
+  }
+
+  52% {
+    opacity: 0.9;
+  }
+
+  82%, 100% {
+    transform: translateX(310%) rotate(17deg);
+    opacity: 0.08;
+  }
+}
+
+.csrep-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.csrep-button-arrow {
+  color: #cfc8ff;
+  font-size: 1.05rem;
+}
+
+.csrep-button:hover {
+  transform: translateY(-3px);
+  border-color: rgba(190, 181, 255, 0.5);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.38),
+    0 0 32px rgba(139, 124, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.csrep-button:active {
+  transform: translateY(-1px) scale(0.985);
+}
+
+@media (max-width: 520px) {
+  .csrep-button {
+    width: 100%;
+  }
+
+  .glass-panel {
+    backdrop-filter: blur(34px) saturate(1.75);
+    -webkit-backdrop-filter: blur(34px) saturate(1.75);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  .glass-panel::after,
+  .csrep-button::before {
+    animation: none;
+  }
+}
