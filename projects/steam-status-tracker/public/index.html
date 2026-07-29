@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="./refinements.css?v=6" />
     <link rel="stylesheet" href="./inertia.css?v=1" />
     <link rel="stylesheet" href="./cursor-web.css?v=1" />
-    <link rel="stylesheet" href="./music-player.css?v=1" />
+    <link rel="stylesheet" href="./local-audio.css?v=1" />
   </head>
   <body>
     <canvas id="interactive-background" aria-hidden="true"></canvas>
@@ -21,6 +21,24 @@
     <div class="noise" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
     <canvas id="cursor-web-overlay" aria-hidden="true"></canvas>
+
+    <div id="sound-gate" class="sound-gate" hidden>
+      <button id="sound-gate-button" class="sound-gate-button" type="button">
+        <span class="gate-icon" aria-hidden="true">▶</span>
+        <span>
+          <strong>Войти на страницу</strong>
+          <small>Нажми, чтобы включить музыку</small>
+        </span>
+      </button>
+    </div>
+
+    <audio
+      id="profile-audio"
+      src="./media/goremyka-strashnye-zvuki-na-russkom.mp3"
+      preload="auto"
+      autoplay
+      loop
+    ></audio>
 
     <main class="landing-shell">
       <section id="profile-card" class="profile-card" aria-labelledby="profile-name">
@@ -70,31 +88,32 @@
         </div>
 
         <section class="music-card depth-layer" aria-label="Музыкальный плеер">
-          <div class="music-heading">
-            <span class="music-symbol" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="M9 18V5l10-2v13"></path>
-                <circle cx="6" cy="18" r="3"></circle>
-                <circle cx="16" cy="16" r="3"></circle>
+          <div class="music-main">
+            <button id="music-toggle" class="music-toggle" type="button" aria-label="Включить музыку">
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m8 5 11 7-11 7V5Z"></path>
               </svg>
-            </span>
+              <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 5h4v14H7zM14 5h4v14h-4z"></path>
+              </svg>
+            </button>
+
             <div class="music-copy">
               <small>Сейчас играет</small>
               <strong>Страшные звуки на русском</strong>
               <span>горемыка</span>
             </div>
+
+            <div id="music-bars" class="music-bars" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i>
+            </div>
           </div>
-          <iframe
-            class="spotify-player"
-            src="https://open.spotify.com/embed/track/5QTnnDxfcdQzYndjxegNex?utm_source=generator&theme=0"
-            width="100%"
-            height="152"
-            frameborder="0"
-            allowfullscreen
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
-            title="горемыка — Страшные звуки на русском"
-          ></iframe>
+
+          <div class="music-progress-row">
+            <span id="music-current-time">0:00</span>
+            <input id="music-progress" class="music-progress" type="range" min="0" max="1000" value="0" aria-label="Позиция воспроизведения" />
+            <span id="music-duration">0:00</span>
+          </div>
         </section>
 
         <footer class="profile-footer depth-layer">
@@ -108,6 +127,7 @@
     <script type="module" src="./app.js?v=13"></script>
     <script type="module" src="./cursor-web.js?v=1"></script>
     <script type="module" src="./inertia.js?v=1"></script>
+    <script type="module" src="./local-audio.js?v=1"></script>
     <script type="module" src="./visitor-counter.js?v=1"></script>
   </body>
 </html>
