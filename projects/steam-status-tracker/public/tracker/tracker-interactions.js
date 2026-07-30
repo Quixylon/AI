@@ -1,7 +1,7 @@
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
 const shell = document.querySelector('.shell');
-const PANEL_SELECTOR = '#message-panel, #profile-card, #games-panel, #history-panel';
+const PANEL_SELECTOR = '#profile-card, #games-panel, #history-panel';
 const INTERACTIVE_SELECTOR = [
   'a',
   'button',
@@ -20,50 +20,68 @@ const pointer = {
   y: window.innerHeight / 2,
   active: false,
   down: false,
-  pointerId: null,
   startX: 0,
   startY: 0,
   hoveredPanel: null,
   pressedPanel: null
 };
 
+const panelStates = new WeakMap();
 let panels = [];
-const states = new WeakMap();
+let refreshQueued = false;
 
-function stateFor(panel, index) {
-  if (!states.has(panel)) {
-    states.set(panel, {
+function stateFor(panel) {
+  if (!panelStates.has(panel)) {
+    panelStates.set(panel, {
       rotateX: 0,
       rotateY: 0,
       shiftX: 0,
       shiftY: 0,
-      scale: 1,
-      velocityRotateX: 0,
-      velocityRotateY: 0,
-      velocityShiftX: 0,
-      velocityShiftY: 0,
-      velocityScale: 0,
-      phase: index * 1.7 + Math.random() * 0.5
+      scale: 1
     });
   }
 
-  return states.get(panel);
+  return panelStates.get(panel);
+}
+
+function ensureStage(panel) {
+  const existing = panel.parentElement?.classList.contains('tracker-panel-stage')
+    ? panel.parentElement
+    : null;
+
+  if (existing) return existing;
+
+  const stage = document.createElement('div');
+  stage.className = 'tracker-panel-stage';
+  if (panel.matches('.section-panel')) stage.classList.add('tracker-panel-stage-spaced');
+
+  panel.before(stage);
+  stage.append(panel);
+  return stage;
+}
+
+function syncStage(panel) {
+  const stage = ensureStage(panel);
+  stage.hidden = panel.hidden;
+  stage.style.setProperty('--stage-rx', '0deg');
+  stage.style.setProperty('--stage-ry', '0deg');
+  stage.style.setProperty('--stage-x', '0px');
+  stage.style.setProperty('--stage-y', '0px');
+  stage.style.setProperty('--stage-scale', '1');
+  panel.classList.add('tracker-motion-panel');
+  stateFor(panel);
 }
 
 function refreshPanels() {
+  refreshQueued = false;
   panels = [...document.querySelectorAll(PANEL_SELECTOR)];
+  panels.forEach(syncStage);
+}
 
-  panels.forEach((panel, index) => {
-    panel.classList.add('tracker-tilt-panel');
-    panel.style.setProperty('--panel-rx', '0deg');
-    panel.style.setProperty('--panel-ry', '0deg');
-    panel.style.setProperty('--panel-x', '0px');
-    panel.style.setProperty('--panel-y', '0px');
-    panel.style.setProperty('--panel-scale', '1');
-    panel.style.setProperty('--panel-shine-x', '50%');
-    panel.style.setProperty('--panel-shine-y', '50%');
-    stateFor(panel, index);
-  });
+function queueRefresh() {
+  if (refreshQueued) return;
+  refreshQueued = true;
+  requestAnimationFrame(refreshPanels);
 }
 
 function panelAtPoint(x, y) {
@@ -71,12 +89,24 @@ function panelAtPoint(x, y) {
   return target instanceof Element ? target.closest(PANEL_SELECTOR) : null;
 }
 
+function layoutBounds(panel) {
+  const stage = panel.parentElement;
+  if (!shell || !stage) return null;
+
+  const shellBounds = shell.getBoundingClientRect();
+  return {
+    left: shellBounds.left + stage.offsetLeft,
+    top: shellBounds.top + stage.offsetTop,
+    width: stage.offsetWidth,
+    height: stage.offsetHeight
+  };
+}
+
 function releasePress() {
   pointer.down = false;
-  pointer.pointerId = null;
 
   if (pointer.pressedPanel) {
-    pointer.pressedPanel.classList.remove('is-pressed');
+    pointer.pressedPanel.parentElement?.classList.remove('is-pressed');
   }
 
   pointer.pressedPanel = null;
@@ -87,11 +117,12 @@ function releasePress() {
   }
 }
 
-function updatePanel(panel, index, timestamp) {
-  const state = stateFor(panel, index);
-  const bounds = panel.getBoundingClientRect();
-  if (!bounds.width || !bounds.height || panel.hidden) return;
+function updatePanel(panel) {
+  const stage = panel.parentElement;
+  const bounds = layoutBounds(panel);
+  if (!stage || !bounds || !bounds.width || !bounds.height || panel.hidden || stage.hidden) return;
 
+  const state = stateFor(panel);
   const pressed = pointer.down && pointer.pressedPanel === panel;
   const hovered = finePointer && pointer.active && pointer.hoveredPanel === panel;
   const engaged = pressed || hovered;
@@ -114,78 +145,68 @@ function updatePanel(panel, index, timestamp) {
       1
     );
 
-    const tiltX = pressed ? 2.05 : 1.45;
-    const tiltY = pressed ? 2.45 : 1.8;
+    const tiltX = pressed ? 2.05 : 1.35;
+    const tiltY = pressed ? 2.35 : 1.65;
 
     targetRotateX = -normalizedY * tiltX;
     targetRotateY = normalizedX * tiltY;
-    targetShiftX = normalizedX * (pressed ? 1.5 : 0.9);
-    targetShiftY = normalizedY * (pressed ? 1 : 0.6) + (pressed ? 1.05 : 0);
-    targetScale = pressed ? 0.995 : 1;
+    targetShiftX = normalizedX * (pressed ? 1.15 : 0.65);
+    targetShiftY = normalizedY * (pressed ? 0.75 : 0.42) + (pressed ? 0.9 : 0);
+    targetScale = pressed ? 0.996 : 1;
 
     panel.style.setProperty('--panel-shine-x', `${((normalizedX + 1) * 50).toFixed(1)}%`);
     panel.style.setProperty('--panel-shine-y', `${((normalizedY + 1) * 50).toFixed(1)}%`);
-  } else if (finePointer) {
-    targetRotateX = Math.sin(timestamp * 0.00025 + state.phase) * 0.055;
-    targetRotateY = Math.cos(timestamp * 0.00022 + state.phase) * 0.075;
-    targetShiftY = Math.sin(timestamp * 0.00029 + state.phase) * -0.08;
+  } else {
     panel.style.setProperty('--panel-shine-x', '50%');
     panel.style.setProperty('--panel-shine-y', '50%');
   }
 
-  const spring = pressed ? 0.095 : 0.055;
-  const damping = pressed ? 0.72 : 0.78;
+  // Быстрый отклик без желейной задержки, но с мягким возвратом.
+  const response = pressed ? 0.46 : engaged ? 0.34 : 0.2;
+  state.rotateX += (targetRotateX - state.rotateX) * response;
+  state.rotateY += (targetRotateY - state.rotateY) * response;
+  state.shiftX += (targetShiftX - state.shiftX) * response;
+  state.shiftY += (targetShiftY - state.shiftY) * response;
+  state.scale += (targetScale - state.scale) * response;
 
-  state.velocityRotateX += (targetRotateX - state.rotateX) * spring;
-  state.velocityRotateY += (targetRotateY - state.rotateY) * spring;
-  state.velocityShiftX += (targetShiftX - state.shiftX) * spring;
-  state.velocityShiftY += (targetShiftY - state.shiftY) * spring;
-  state.velocityScale += (targetScale - state.scale) * spring;
+  if (!engaged && Math.abs(state.rotateX) < 0.002 && Math.abs(state.rotateY) < 0.002) {
+    state.rotateX = 0;
+    state.rotateY = 0;
+    state.shiftX = 0;
+    state.shiftY = 0;
+    state.scale = 1;
+  }
 
-  state.velocityRotateX *= damping;
-  state.velocityRotateY *= damping;
-  state.velocityShiftX *= damping;
-  state.velocityShiftY *= damping;
-  state.velocityScale *= damping;
-
-  state.rotateX += state.velocityRotateX;
-  state.rotateY += state.velocityRotateY;
-  state.shiftX += state.velocityShiftX;
-  state.shiftY += state.velocityShiftY;
-  state.scale += state.velocityScale;
-
-  panel.style.setProperty('--panel-rx', `${state.rotateX.toFixed(3)}deg`);
-  panel.style.setProperty('--panel-ry', `${state.rotateY.toFixed(3)}deg`);
-  panel.style.setProperty('--panel-x', `${state.shiftX.toFixed(2)}px`);
-  panel.style.setProperty('--panel-y', `${state.shiftY.toFixed(2)}px`);
-  panel.style.setProperty('--panel-scale', state.scale.toFixed(4));
+  stage.style.setProperty('--stage-rx', `${state.rotateX.toFixed(3)}deg`);
+  stage.style.setProperty('--stage-ry', `${state.rotateY.toFixed(3)}deg`);
+  stage.style.setProperty('--stage-x', `${state.shiftX.toFixed(2)}px`);
+  stage.style.setProperty('--stage-y', `${state.shiftY.toFixed(2)}px`);
+  stage.style.setProperty('--stage-scale', state.scale.toFixed(4));
 }
 
-function animate(timestamp = 0) {
-  panels.forEach((panel, index) => updatePanel(panel, index, timestamp));
+function animate() {
+  panels.forEach(updatePanel);
   requestAnimationFrame(animate);
 }
 
 window.addEventListener('pointermove', (event) => {
   if (!finePointer && !pointer.down) return;
 
+  pointer.x = event.clientX;
+  pointer.y = event.clientY;
+  pointer.active = true;
+
   if (pointer.down && event.pointerType === 'touch') {
     const movement = Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY);
-    if (movement > 13) {
+    if (movement > 10) {
       releasePress();
       return;
     }
   }
 
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
-  pointer.active = true;
-
-  if (pointer.down) {
-    pointer.hoveredPanel = pointer.pressedPanel;
-  } else if (finePointer) {
-    pointer.hoveredPanel = panelAtPoint(event.clientX, event.clientY);
-  }
+  pointer.hoveredPanel = pointer.down
+    ? pointer.pressedPanel
+    : panelAtPoint(event.clientX, event.clientY);
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
@@ -199,11 +220,10 @@ window.addEventListener('pointerdown', (event) => {
   if (!pointer.hoveredPanel || event.target.closest(INTERACTIVE_SELECTOR)) return;
 
   pointer.down = true;
-  pointer.pointerId = event.pointerId;
   pointer.startX = event.clientX;
   pointer.startY = event.clientY;
   pointer.pressedPanel = pointer.hoveredPanel;
-  pointer.pressedPanel.classList.add('is-pressed');
+  pointer.pressedPanel.parentElement?.classList.add('is-pressed');
 }, { passive: true });
 
 window.addEventListener('pointerup', releasePress, { passive: true });
@@ -221,21 +241,25 @@ window.addEventListener('blur', () => {
   pointer.hoveredPanel = null;
 }, { passive: true });
 
-window.addEventListener('resize', () => {
-  pointer.x = window.innerWidth / 2;
-  pointer.y = window.innerHeight / 2;
-}, { passive: true });
+const observer = new MutationObserver((mutations) => {
+  const relevant = mutations.some((mutation) =>
+    mutation.type === 'childList' ||
+    (mutation.type === 'attributes' && mutation.attributeName === 'hidden')
+  );
 
-const observer = new MutationObserver(refreshPanels);
-observer.observe(document.body, { childList: true, subtree: true });
+  if (relevant) queueRefresh();
+});
+
+observer.observe(document.body, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['hidden']
+});
 
 if (shell) {
   shell.classList.remove('tracker-shell-motion');
-  shell.style.removeProperty('--shell-rx');
-  shell.style.removeProperty('--shell-ry');
-  shell.style.removeProperty('--shell-x');
-  shell.style.removeProperty('--shell-y');
-  shell.style.removeProperty('--shell-scale');
+  shell.style.transform = 'none';
 }
 
 refreshPanels();
