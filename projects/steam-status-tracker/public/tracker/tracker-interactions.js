@@ -62,7 +62,7 @@ function ensureStage(panel) {
 
 function syncStage(panel) {
   const stage = ensureStage(panel);
-  stage.hidden = panel.hidden;
+  if (stage.hidden !== panel.hidden) stage.hidden = panel.hidden;
   stage.style.setProperty('--stage-rx', '0deg');
   stage.style.setProperty('--stage-ry', '0deg');
   stage.style.setProperty('--stage-x', '0px');
@@ -242,10 +242,13 @@ window.addEventListener('blur', () => {
 }, { passive: true });
 
 const observer = new MutationObserver((mutations) => {
-  const relevant = mutations.some((mutation) =>
-    mutation.type === 'childList' ||
-    (mutation.type === 'attributes' && mutation.attributeName === 'hidden')
-  );
+  const relevant = mutations.some((mutation) => {
+    if (mutation.type === 'childList') return true;
+    return mutation.type === 'attributes' &&
+      mutation.attributeName === 'hidden' &&
+      mutation.target instanceof Element &&
+      mutation.target.matches(PANEL_SELECTOR);
+  });
 
   if (relevant) queueRefresh();
 });
