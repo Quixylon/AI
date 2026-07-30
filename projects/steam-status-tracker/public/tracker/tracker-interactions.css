@@ -15,6 +15,9 @@ body {
   --tilt-y: 0px;
   --panel-shine-x: 50%;
   --panel-shine-y: 50%;
+  --pointer-light-size: 230px;
+  position: relative;
+  isolation: isolate;
   opacity: 1 !important;
   filter: none !important;
   transform:
@@ -33,8 +36,55 @@ body {
     background-color 150ms ease !important;
 }
 
-/* A real colour under the translucent layers prevents transformed glass from
-   visually disappearing in Chromium/WebKit while the pointer is pressed. */
+#message-panel.tracker-tilt-card,
+#profile-card.tracker-tilt-card,
+#games-panel.tracker-tilt-card,
+#history-panel.tracker-tilt-card {
+  --pointer-light-size: 390px;
+}
+
+.tracker-tilt-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.tracker-tilt-card::after {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: inherit !important;
+  background:
+    radial-gradient(
+      circle var(--pointer-light-size) at var(--panel-shine-x) var(--panel-shine-y),
+      rgba(255, 255, 255, 0.13) 0%,
+      rgba(174, 157, 255, 0.055) 30%,
+      rgba(92, 174, 255, 0.025) 49%,
+      transparent 72%
+    ) !important;
+  content: "" !important;
+  opacity: 0 !important;
+  filter: none !important;
+  transform: none !important;
+  animation: none !important;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transition: opacity 90ms ease !important;
+}
+
+.tracker-tilt-card.is-pointer-over::after {
+  opacity: 1 !important;
+}
+
+/* Убираем старую постоянную подсветку стеклянных панелей. */
+.glass-panel.tracker-tilt-card::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Непрозрачная подложка не даёт стеклу исчезать при трансформации. */
 .glass-panel.tracker-tilt-card {
   background-color: rgba(13, 16, 29, 0.86) !important;
 }
@@ -65,20 +115,7 @@ body {
     inset 0 -1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.glass-panel.tracker-tilt-card::before {
-  background:
-    radial-gradient(
-      560px circle at var(--panel-shine-x) var(--panel-shine-y),
-      rgba(255, 255, 255, 0.1),
-      rgba(168, 151, 255, 0.034) 31%,
-      transparent 59%
-    ),
-    radial-gradient(440px circle at 95% 105%, rgba(88, 178, 255, 0.075), transparent 52%);
-  opacity: 0.78;
-  mix-blend-mode: screen;
-}
-
-/* Keep icons and badges rigid inside their cards. */
+/* Маленькие иконки и бейджи остаются жёсткими внутри карточек. */
 .tracker-tilt-card .avatar,
 .tracker-tilt-card .status-pill,
 .tracker-tilt-card .game-session-icon,
@@ -89,8 +126,7 @@ body {
   will-change: auto;
 }
 
-/* Animated diagonal glass strips stay disabled. */
-.glass-panel::after,
+/* Старые диагональные блики остаются отключёнными. */
 .detail-card::before,
 .game-summary-card::before,
 .game-session::before,
@@ -118,6 +154,10 @@ body {
     will-change: auto;
   }
 
+  .tracker-tilt-card::after {
+    display: none !important;
+  }
+
   .tracker-tilt-card:active,
   .glass-panel:active {
     opacity: 1 !important;
@@ -135,5 +175,9 @@ body {
     transform: none !important;
     transition: none !important;
     will-change: auto;
+  }
+
+  .tracker-tilt-card::after {
+    display: none !important;
   }
 }
