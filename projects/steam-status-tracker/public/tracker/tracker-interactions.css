@@ -16,6 +16,7 @@ body {
   --panel-shine-x: 50%;
   --panel-shine-y: 50%;
   --pointer-light-size: 230px;
+  --pointer-light-opacity: 0;
   position: relative;
   isolation: isolate;
   opacity: 1 !important;
@@ -51,7 +52,7 @@ body {
 .tracker-tilt-card::after {
   position: absolute !important;
   inset: 0 !important;
-  z-index: 0 !important;
+  z-index: 2 !important;
   display: block !important;
   width: auto !important;
   height: auto !important;
@@ -65,17 +66,29 @@ body {
       transparent 72%
     ) !important;
   content: "" !important;
-  opacity: 0 !important;
+  opacity: var(--pointer-light-opacity) !important;
   filter: none !important;
   transform: none !important;
   animation: none !important;
   pointer-events: none;
   mix-blend-mode: screen;
-  transition: opacity 90ms ease !important;
 }
 
-.tracker-tilt-card.is-pointer-over::after {
-  opacity: 1 !important;
+/* Свет родительской панели расположен над вложенными карточками, поэтому не
+   исчезает при наведении на иконку или внутреннюю плитку. */
+#message-panel.tracker-tilt-card::after,
+#profile-card.tracker-tilt-card::after,
+#games-panel.tracker-tilt-card::after,
+#history-panel.tracker-tilt-card::after {
+  z-index: 4 !important;
+  background:
+    radial-gradient(
+      circle var(--pointer-light-size) at var(--panel-shine-x) var(--panel-shine-y),
+      rgba(255, 255, 255, 0.095) 0%,
+      rgba(174, 157, 255, 0.04) 31%,
+      rgba(92, 174, 255, 0.018) 50%,
+      transparent 73%
+    ) !important;
 }
 
 /* Убираем старую постоянную подсветку стеклянных панелей. */
