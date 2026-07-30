@@ -1,0 +1,28 @@
+.glass-panel::after,
+.csrep-button::before {
+  display: none !important;
+  content: none !important;
+  animation: none !important;
+}
+
+.detail-card::before,
+.game-summary-card::before,
+.game-session::before,
+.history-content::before {
+  background:
+    radial-gradient(
+      260px circle at 8% 0%,
+      rgba(255, 255, 255, 0.1),
+      transparent 48%
+    ) !important;
+}
+
+.glass-panel,
+.detail-card,
+.game-summary-card,
+.game-session,
+.history-content {
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
