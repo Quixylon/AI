@@ -77,6 +77,15 @@
     "gameName": "Casualties: Unknown Demo",
     "gameId": "4576510",
     "startedAt": "2026-07-30T10:25:15.343Z",
+    "endedAt": "2026-07-30T10:33:15.278Z",
+    "durationSeconds": 480
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "MECCHA CHAMELEON",
+    "gameId": "4704690",
+    "startedAt": "2026-07-30T10:33:15.278Z",
     "endedAt": null,
     "durationSeconds": null
   }
