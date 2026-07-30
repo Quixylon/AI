@@ -17,11 +17,15 @@ if (!document.querySelector('.fallback-stars-one')) {
   canvas.after(firstStars, secondStars);
 }
 
+const coarsePointerMedia = window.matchMedia('(hover: none), (pointer: coarse)');
+const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
+
 let width = 0;
 let height = 0;
 let pixelRatio = 1;
 let particles = [];
 let lastFrame = performance.now();
+let resizeFrame = 0;
 
 const pointer = {
   x: window.innerWidth / 2,
@@ -31,6 +35,14 @@ const pointer = {
   type: 'mouse'
 };
 
+function clampCoordinate(value, limit) {
+  return Math.min(Math.max(value, 0), Math.max(limit, 0));
+}
+
+function mobileMode() {
+  return coarsePointerMedia.matches || width < 700;
+}
+
 function setPointerFromClient(clientX, clientY) {
   const bounds = canvas.getBoundingClientRect();
   const scaleX = width / Math.max(bounds.width, 1);
@@ -38,10 +50,6 @@ function setPointerFromClient(clientX, clientY) {
 
   pointer.x = clampCoordinate((clientX - bounds.left) * scaleX, width);
   pointer.y = clampCoordinate((clientY - bounds.top) * scaleY, height);
-}
-
-function clampCoordinate(value, limit) {
-  return Math.min(Math.max(value, 0), Math.max(limit, 0));
 }
 
 function createParticle(index, count) {
@@ -76,8 +84,11 @@ function createParticle(index, count) {
 }
 
 function resizeCanvas() {
+  resizeFrame = 0;
   const bounds = canvas.getBoundingClientRect();
-  pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  const mobile = coarsePointerMedia.matches || (bounds.width || window.innerWidth) < 700;
+
+  pixelRatio = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
   width = Math.max(1, Math.round(bounds.width || window.innerWidth));
   height = Math.max(1, Math.round(bounds.height || window.innerHeight));
 
@@ -89,13 +100,24 @@ function resizeCanvas() {
 
   pointer.x = width / 2;
   pointer.y = height / 2;
+  pointer.active = false;
+  pointer.down = false;
 
-  const count = Math.min(170, Math.max(105, Math.round((width * height) / 7600)));
+  const areaCount = Math.round((width * height) / (mobile ? 11_500 : 7_600));
+  const count = mobile
+    ? Math.min(88, Math.max(56, areaCount))
+    : Math.min(170, Math.max(105, areaCount));
+
   particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
 }
 
+function scheduleResize() {
+  if (resizeFrame) return;
+  resizeFrame = requestAnimationFrame(resizeCanvas);
+}
+
 function updateParticles(delta, timestamp) {
-  const active = pointer.active;
+  const active = pointer.active && !mobileMode();
   const spring = active ? 0.025 : 0.075;
   const damping = active ? 0.905 : 0.82;
 
@@ -142,13 +164,17 @@ function updateParticles(delta, timestamp) {
       particle.velocityY *= 0.4;
     }
 
-    particle.renderX = particle.x + Math.cos(timestamp * 0.0005 + particle.phase) * particle.depth * 1.7;
-    particle.renderY = particle.y + Math.sin(timestamp * 0.00042 + particle.phase) * particle.depth * 1.45;
+    const motionScale = reducedMotionMedia.matches ? 0.2 : 1;
+    particle.renderX = particle.x + Math.cos(timestamp * 0.0005 + particle.phase) * particle.depth * 1.7 * motionScale;
+    particle.renderY = particle.y + Math.sin(timestamp * 0.00042 + particle.phase) * particle.depth * 1.45 * motionScale;
   }
 }
 
 function drawParticleWeb() {
-  const threshold = Math.min(165, Math.max(120, Math.min(width, height) * 0.16));
+  const mobile = mobileMode();
+  const threshold = mobile
+    ? Math.min(135, Math.max(102, Math.min(width, height) * 0.15))
+    : Math.min(165, Math.max(120, Math.min(width, height) * 0.16));
 
   for (let firstIndex = 0; firstIndex < particles.length; firstIndex += 1) {
     const first = particles[firstIndex];
@@ -159,9 +185,9 @@ function drawParticleWeb() {
       if (distance >= threshold) continue;
 
       const depth = Math.min(first.depth, second.depth);
-      const alpha = (1 - distance / threshold) * 0.27 * depth;
+      const alpha = (1 - distance / threshold) * (mobile ? 0.16 : 0.27) * depth;
       context.strokeStyle = `rgba(178, 169, 255, ${alpha})`;
-      context.lineWidth = 0.62 + depth * 0.48;
+      context.lineWidth = mobile ? 0.62 : 0.62 + depth * 0.48;
       context.beginPath();
       context.moveTo(first.renderX, first.renderY);
       context.lineTo(second.renderX, second.renderY);
@@ -171,7 +197,7 @@ function drawParticleWeb() {
 }
 
 function drawPointerLines() {
-  if (!pointer.active) return;
+  if (!pointer.active || mobileMode()) return;
 
   const reach = pointer.down ? 315 : 285;
   const maximumLines = pointer.down ? 17 : 13;
@@ -214,48 +240,53 @@ function drawPointerLines() {
 }
 
 function drawParticles(timestamp) {
+  const mobile = mobileMode();
+
   for (const particle of particles) {
-    const pulse = 1 + Math.sin(timestamp * 0.0014 + particle.phase) * 0.1;
+    const pulse = 1 + Math.sin(timestamp * 0.0014 + particle.phase) * (reducedMotionMedia.matches ? 0.02 : 0.1);
     context.beginPath();
-    context.fillStyle = `rgba(230, 233, 255, ${particle.alpha})`;
-    context.shadowColor = `rgba(167, 155, 255, ${particle.alpha * 0.68})`;
-    context.shadowBlur = 5 + particle.depth * 7;
+    context.fillStyle = `rgba(230, 233, 255, ${particle.alpha * (mobile ? 0.82 : 1)})`;
+    context.shadowColor = `rgba(167, 155, 255, ${particle.alpha * (mobile ? 0.42 : 0.68)})`;
+    context.shadowBlur = mobile ? 4 : 5 + particle.depth * 7;
     context.arc(particle.renderX, particle.renderY, particle.radius * pulse, 0, Math.PI * 2);
     context.fill();
   }
+
   context.shadowBlur = 0;
 }
 
 function animate(timestamp = 0) {
   const delta = Math.min(2.1, Math.max(0.4, (timestamp - lastFrame) / 16.67));
   lastFrame = timestamp;
-  context.clearRect(0, 0, width, height);
 
-  updateParticles(delta, timestamp);
-  drawParticleWeb();
-  drawPointerLines();
-  drawParticles(timestamp);
+  if (!document.hidden) {
+    context.clearRect(0, 0, width, height);
+    updateParticles(delta, timestamp);
+    drawParticleWeb();
+    drawPointerLines();
+    drawParticles(timestamp);
+  }
 
   requestAnimationFrame(animate);
 }
 
 window.addEventListener('pointermove', (event) => {
-  if (event.pointerType === 'touch') return;
+  if (event.pointerType === 'touch' || coarsePointerMedia.matches) return;
   setPointerFromClient(event.clientX, event.clientY);
   pointer.active = true;
   pointer.type = event.pointerType || 'mouse';
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
+  if (event.pointerType === 'touch' || coarsePointerMedia.matches) return;
   setPointerFromClient(event.clientX, event.clientY);
   pointer.active = true;
   pointer.down = true;
   pointer.type = event.pointerType || 'mouse';
 }, { passive: true });
 
-window.addEventListener('pointerup', (event) => {
+window.addEventListener('pointerup', () => {
   pointer.down = false;
-  if (event.pointerType === 'touch') pointer.active = false;
 }, { passive: true });
 
 window.addEventListener('pointercancel', () => {
@@ -267,35 +298,11 @@ window.addEventListener('pointerleave', (event) => {
   if (event.pointerType !== 'touch') pointer.active = false;
 }, { passive: true });
 
-window.addEventListener('touchstart', (event) => {
-  const touch = event.touches?.[0];
-  if (!touch) return;
-  setPointerFromClient(touch.clientX, touch.clientY);
-  pointer.active = true;
-  pointer.down = true;
-  pointer.type = 'touch';
-}, { passive: true });
-
-window.addEventListener('touchmove', (event) => {
-  const touch = event.touches?.[0];
-  if (!touch) return;
-  setPointerFromClient(touch.clientX, touch.clientY);
-  pointer.active = true;
-  pointer.down = true;
-}, { passive: true });
-
-window.addEventListener('touchend', () => {
-  pointer.down = false;
-  pointer.active = false;
-}, { passive: true });
-
-window.addEventListener('touchcancel', () => {
-  pointer.down = false;
-  pointer.active = false;
-}, { passive: true });
-
-window.addEventListener('resize', resizeCanvas, { passive: true });
-window.visualViewport?.addEventListener('resize', resizeCanvas, { passive: true });
+window.addEventListener('resize', scheduleResize, { passive: true });
+window.addEventListener('orientationchange', scheduleResize, { passive: true });
+window.visualViewport?.addEventListener('resize', scheduleResize, { passive: true });
+coarsePointerMedia.addEventListener?.('change', scheduleResize);
+reducedMotionMedia.addEventListener?.('change', scheduleResize);
 
 resizeCanvas();
 requestAnimationFrame(animate);
