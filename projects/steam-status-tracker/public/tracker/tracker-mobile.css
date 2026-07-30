@@ -1,122 +1,149 @@
-/* Mobile-first fixes loaded after all tracker styles. */
+/* Final responsive and stability layer for the tracker. Loaded last. */
+
 html,
 body {
+  width: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  min-width: 0;
+  background-color: #05060a;
+}
+
+html {
+  min-height: 100%;
+  overscroll-behavior-x: none;
 }
 
 body {
   min-height: 100svh;
   min-height: 100dvh;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  overflow-x: clip;
 }
 
-.shell,
-.tracker-panel-stage,
-.glass-panel,
-.profile-card,
-.panel,
-.game-session,
-.history-content,
-.detail-card,
-.game-summary-card {
-  min-width: 0;
+img,
+svg,
+canvas {
   max-width: 100%;
 }
 
-#profile-link,
-.back-link,
-.csrep-button {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+.shell,
+.profile-card,
+.panel,
+.details-grid,
+.games-summary,
+.games-list,
+.history-list,
+.game-session,
+.game-session-copy,
+.history-content {
+  min-width: 0;
 }
 
-#games-list.is-scrollable,
-#history-list.is-scrollable {
-  -webkit-overflow-scrolling: touch;
+/* Never bring back the diagonal animated glass bands. */
+.glass-panel::after,
+.detail-card::before,
+.game-summary-card::before,
+.game-session::before,
+.history-content::before,
+.csrep-button::before {
+  display: none !important;
+  content: none !important;
+  animation: none !important;
+}
+
+#games-list,
+#history-list {
   touch-action: pan-y;
-  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px), (pointer: coarse), (hover: none) {
+  body {
+    overscroll-behavior-y: none;
+  }
+
   .shell {
-    width: min(100% - 28px, 980px);
+    width: 100%;
+    max-width: 980px;
     padding:
-      calc(28px + env(safe-area-inset-top))
-      0
-      calc(30px + env(safe-area-inset-bottom));
+      max(20px, calc(env(safe-area-inset-top) + 12px))
+      max(10px, calc(env(safe-area-inset-right) + 8px))
+      max(28px, calc(env(safe-area-inset-bottom) + 18px))
+      max(10px, calc(env(safe-area-inset-left) + 8px));
   }
 
   .hero {
-    margin-bottom: 22px;
+    margin-bottom: 20px;
   }
 
   .back-link {
     min-height: 44px;
     margin-bottom: 18px;
-    padding-inline: 15px;
+    padding: 0 14px;
+    font-size: 0.82rem;
+  }
+
+  .eyebrow,
+  .section-label {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
   }
 
   h1 {
+    gap: 0.11em;
     max-width: 100%;
-    gap: 0.12em;
-    font-size: clamp(3rem, 13.5vw, 5.2rem);
-    line-height: 0.95;
+    margin-top: 8px;
+    font-size: clamp(2.55rem, 15.5vw, 4.8rem);
+    line-height: 0.96;
     overflow-wrap: anywhere;
+  }
+
+  .glass-panel {
+    border-radius: clamp(22px, 6vw, 27px);
+    backdrop-filter: blur(24px) saturate(1.45);
+    -webkit-backdrop-filter: blur(24px) saturate(1.45);
   }
 
   .profile-card,
   .panel {
-    padding: 22px;
-  }
-
-  .glass-panel {
-    border-radius: 26px;
+    padding: clamp(16px, 4.8vw, 22px);
   }
 
   .profile-top {
     display: grid;
-    grid-template-columns: 68px minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
     gap: 14px;
   }
 
   .avatar {
-    width: 68px;
-    height: 68px;
-    flex-basis: 68px;
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
     border-radius: 20px;
-  }
-
-  .identity {
-    align-self: center;
   }
 
   .identity h2,
   .panel-heading h2 {
-    font-size: clamp(1.38rem, 5.6vw, 1.8rem);
+    max-width: 100%;
+    margin-top: 5px;
+    font-size: clamp(1.3rem, 7vw, 1.75rem);
     line-height: 1.08;
     overflow-wrap: anywhere;
   }
 
   .identity a {
-    display: inline-flex;
-    min-height: 42px;
-    align-items: center;
+    min-height: 38px;
     margin-top: 5px;
-    line-height: 1.25;
+    padding: 8px 0;
+    font-size: 0.82rem;
+    line-height: 1.35;
   }
 
   .status-pill {
     grid-column: 1 / -1;
-    width: 100%;
-    min-height: 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 9px 12px;
-    text-align: center;
+    justify-self: start;
+    padding: 8px 11px;
+    font-size: 0.74rem;
   }
 
   .details-grid {
@@ -126,77 +153,83 @@ body {
   }
 
   .detail-card {
-    padding: 15px 16px;
-    border-radius: 18px;
+    border-radius: 17px;
+    padding: 14px 15px;
   }
 
   .detail-label {
     margin-bottom: 6px;
+    font-size: 0.69rem;
   }
 
   .detail-value {
-    line-height: 1.35;
+    font-size: 0.91rem;
+    line-height: 1.4;
   }
 
   .csrep-action {
-    margin-top: 14px;
+    width: 100%;
+    margin-top: 12px;
   }
 
   .csrep-button {
     width: 100%;
     min-width: 0;
     min-height: 50px;
-    padding-inline: 17px;
     border-radius: 17px;
+    padding: 0 16px;
+  }
+
+  .section-panel {
+    margin-top: 14px;
   }
 
   .panel-heading {
-    align-items: flex-start;
+    display: block;
   }
 
   .games-summary {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(160px, 72%);
-    grid-template-columns: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     margin-top: 18px;
-    padding: 1px 1px 7px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(177, 166, 255, 0.5) transparent;
-    -webkit-overflow-scrolling: touch;
   }
 
   .game-summary-card {
-    min-height: 112px;
-    padding: 15px;
-    border-radius: 18px;
-    scroll-snap-align: start;
+    border-radius: 17px;
+    padding: 14px;
   }
 
   .game-summary-card h3 {
+    display: -webkit-box;
+    min-height: 2.55em;
+    overflow: hidden;
+    font-size: 0.88rem;
+    line-height: 1.28;
+    text-overflow: ellipsis;
     white-space: normal;
-    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .game-total {
-    margin-top: 11px;
-    font-size: 1.06rem;
+    margin-top: 9px;
+    font-size: 1rem;
+  }
+
+  .game-sessions-count {
+    font-size: 0.69rem;
   }
 
   .games-list,
   .history-list {
     gap: 9px;
-    margin-top: 15px;
+    margin-top: 14px;
   }
 
   #games-list.is-scrollable,
   #history-list.is-scrollable {
     padding-right: 5px;
+    scroll-behavior: auto;
     scrollbar-gutter: auto;
   }
 
@@ -207,62 +240,71 @@ body {
 
   .game-session {
     grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-areas:
+      "icon copy"
+      ". badge";
     align-items: start;
-    gap: 11px;
-    padding: 15px;
+    gap: 8px 11px;
     border-radius: 18px;
+    padding: 14px;
   }
 
   .game-session-icon {
+    grid-area: icon;
     width: 40px;
     height: 40px;
+    margin: 0;
     border-radius: 13px;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
+  }
+
+  .game-session-copy {
+    grid-area: copy;
   }
 
   .game-session-copy h3 {
+    font-size: 0.96rem;
+    line-height: 1.3;
     white-space: normal;
-    line-height: 1.25;
     overflow-wrap: anywhere;
   }
 
   .game-badge {
-    grid-column: 2;
+    grid-area: badge;
+    align-self: start;
     justify-self: start;
-    min-height: 30px;
-    display: inline-flex;
-    align-items: center;
-    margin-top: -2px;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 5px 8px;
+    font-size: 0.62rem;
+    text-overflow: ellipsis;
   }
 
   .session-facts {
     grid-template-columns: 1fr;
-    gap: 7px;
+    gap: 8px;
     margin-top: 11px;
   }
 
   .session-fact,
   .session-fact.emphasized {
     grid-column: auto;
-    display: grid;
-    grid-template-columns: minmax(82px, 0.7fr) minmax(0, 1.3fr);
-    align-items: start;
-    gap: 10px;
     padding-top: 8px;
   }
 
   .session-fact dt {
-    margin: 1px 0 0;
+    margin-bottom: 4px;
+    font-size: 0.62rem;
   }
 
   .session-fact dd {
-    text-align: right;
-    overflow-wrap: anywhere;
+    font-size: 0.78rem;
+    line-height: 1.4;
   }
 
   .history-entry {
-    grid-template-columns: 13px minmax(0, 1fr);
-    gap: 9px;
+    grid-template-columns: 12px minmax(0, 1fr);
+    gap: 8px;
   }
 
   .history-marker-wrap {
@@ -271,132 +313,7 @@ body {
 
   .history-marker-wrap::after {
     top: 34px;
-  }
-
-  .history-content {
-    padding: 15px;
-    border-radius: 18px;
-  }
-
-  .history-top {
-    align-items: flex-start;
-  }
-
-  .history-top h3 {
-    min-width: 0;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .history-period {
-    font-size: 0.8rem;
-    overflow-wrap: anywhere;
-  }
-
-  .history-duration-row {
-    gap: 10px;
-  }
-
-  footer {
-    flex-direction: column;
-    gap: 6px;
-    padding: 20px 3px 0;
-    line-height: 1.45;
-  }
-}
-
-@media (max-width: 560px) {
-  .shell {
-    width: calc(100% - 18px);
-    padding-top: calc(20px + env(safe-area-inset-top));
-  }
-
-  .hero {
-    margin-bottom: 18px;
-  }
-
-  .eyebrow,
-  .section-label {
-    font-size: 0.66rem;
-    letter-spacing: 0.145em;
-  }
-
-  h1 {
-    margin-top: 8px;
-    font-size: clamp(2.65rem, 16vw, 4.15rem);
-  }
-
-  .profile-card,
-  .panel {
-    padding: 17px;
-  }
-
-  .glass-panel {
-    border-radius: 22px;
-  }
-
-  .profile-top {
-    grid-template-columns: 60px minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .avatar {
-    width: 60px;
-    height: 60px;
-    flex-basis: 60px;
-    border-radius: 18px;
-  }
-
-  .identity h2,
-  .panel-heading h2 {
-    font-size: clamp(1.3rem, 6.8vw, 1.65rem);
-  }
-
-  .identity a {
-    font-size: 0.82rem;
-  }
-
-  .games-summary {
-    grid-auto-columns: minmax(150px, 82%);
-  }
-
-  .game-session {
-    grid-template-columns: 36px minmax(0, 1fr);
-    padding: 13px;
-    gap: 10px;
-  }
-
-  .game-session-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
-  }
-
-  .game-session-copy h3 {
-    font-size: 0.98rem;
-  }
-
-  .session-fact {
-    grid-template-columns: 76px minmax(0, 1fr);
-    gap: 8px;
-  }
-
-  .session-fact dt {
-    font-size: 0.61rem;
-    letter-spacing: 0.06em;
-  }
-
-  .session-fact dd {
-    font-size: 0.75rem;
-  }
-
-  .history-entry {
-    grid-template-columns: 11px minmax(0, 1fr);
-    gap: 7px;
-  }
-
-  .history-marker-wrap {
-    padding-top: 19px;
+    bottom: -9px;
   }
 
   .history-marker {
@@ -405,32 +322,88 @@ body {
   }
 
   .history-content {
-    padding: 13px;
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .history-top {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .history-top h3 {
+    font-size: 0.96rem;
   }
 
   .history-badge {
-    padding: 4px 7px;
+    padding: 5px 7px;
     font-size: 0.6rem;
   }
 
   .history-period {
-    font-size: 0.76rem;
+    margin-top: 8px;
+    font-size: 0.79rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
   }
 
   .history-duration-row {
     align-items: flex-start;
     flex-direction: column;
     gap: 4px;
+    margin-top: 10px;
+    padding-top: 9px;
+  }
+
+  .history-duration-row span {
+    font-size: 0.61rem;
   }
 
   .history-duration-row strong {
+    font-size: 0.8rem;
     text-align: left;
+  }
+
+  footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+    padding:
+      20px 4px
+      max(2px, env(safe-area-inset-bottom));
+    font-size: 0.68rem;
+    line-height: 1.45;
+  }
+
+  /* Mobile panels stay in normal document flow. */
+  .tracker-panel-stage,
+  .tracker-motion-panel {
+    transform: none !important;
+    will-change: auto !important;
+  }
+
+  .tracker-panel-stage {
+    overflow: visible;
+  }
+
+  .tracker-motion-panel,
+  .glass-panel {
+    transition: border-color 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+  }
+
+  .glass-panel:active {
+    filter: brightness(0.985);
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 389px) {
   .shell {
-    width: calc(100% - 14px);
+    padding-right: max(7px, env(safe-area-inset-right));
+    padding-left: max(7px, env(safe-area-inset-left));
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 15vw, 3.2rem);
   }
 
   .profile-card,
@@ -439,87 +412,72 @@ body {
   }
 
   .profile-top {
-    grid-template-columns: 54px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 11px;
   }
 
   .avatar {
-    width: 54px;
-    height: 54px;
-    flex-basis: 54px;
-    border-radius: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
   }
 
-  .session-fact {
+  .identity h2,
+  .panel-heading h2 {
+    font-size: 1.25rem;
+  }
+
+  .games-summary {
     grid-template-columns: 1fr;
-    gap: 3px;
   }
 
-  .session-fact dd {
-    text-align: left;
+  .game-summary-card h3 {
+    min-height: 0;
+  }
+
+  .game-session {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 8px 10px;
+    padding: 12px;
+  }
+
+  .game-session-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .history-entry {
+    grid-template-columns: 10px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .history-content {
+    padding: 12px;
   }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
   .shell {
-    padding-top: calc(12px + env(safe-area-inset-top));
-  }
-
-  .back-link {
-    margin-bottom: 10px;
+    padding-top: max(12px, env(safe-area-inset-top));
   }
 
   .hero {
     margin-bottom: 14px;
   }
 
+  .back-link {
+    margin-bottom: 10px;
+  }
+
   h1 {
-    font-size: clamp(2.45rem, 10vw, 3.8rem);
-  }
-}
-
-@media (hover: none), (pointer: coarse) {
-  .tracker-panel-stage,
-  .tracker-motion-panel {
-    transform: none !important;
-    will-change: auto !important;
-  }
-
-  .tracker-panel-stage:hover > .tracker-motion-panel,
-  .tracker-motion-panel:hover,
-  .glass-panel:hover {
-    filter: none !important;
-  }
-
-  .back-link:hover,
-  .csrep-button:hover {
-    transform: none;
-  }
-
-  .back-link:active,
-  .csrep-button:active {
-    transform: scale(0.985);
-  }
-
-  .glass-panel {
-    backdrop-filter: blur(26px) saturate(1.55);
-    -webkit-backdrop-filter: blur(26px) saturate(1.55);
-  }
-
-  .detail-card,
-  .liquid-tile,
-  .game-summary-card,
-  .game-session,
-  .history-content {
-    backdrop-filter: blur(18px) saturate(1.4);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    font-size: clamp(2.4rem, 9vw, 4rem);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .games-summary,
-  #games-list,
-  #history-list {
-    scroll-behavior: auto;
+  .tracker-panel-stage,
+  .tracker-motion-panel,
+  .glass-panel {
+    transition: none !important;
   }
 }
