@@ -1,16 +1,15 @@
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
-const shell = document.querySelector('.shell');
-const PANEL_SELECTOR = '#profile-card, #games-panel, #history-panel';
-const INTERACTIVE_SELECTOR = [
-  'a',
-  'button',
-  'input',
-  'select',
-  'textarea',
-  'summary',
-  '[role="button"]',
-  '[role="link"]'
+const CARD_SELECTOR = [
+  '#message-panel',
+  '#profile-card',
+  '#games-panel',
+  '#history-panel',
+  '.detail-card',
+  '.game-summary-card',
+  '.game-session',
+  '.history-content',
+  '.csrep-button'
 ].join(', ');
 
 const motionMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 769px)');
@@ -21,235 +20,171 @@ const pointer = {
   y: window.innerHeight / 2,
   active: false,
   down: false,
-  startX: 0,
-  startY: 0,
-  hoveredPanel: null,
-  pressedPanel: null
+  pressedCard: null
 };
 
-const panelStates = new WeakMap();
-let panels = [];
+const states = new WeakMap();
+let cards = [];
 let motionEnabled = false;
+let refreshFrame = 0;
 
-function stateFor(panel) {
-  if (!panelStates.has(panel)) {
-    panelStates.set(panel, {
+function stateFor(card) {
+  if (!states.has(card)) {
+    states.set(card, {
       rotateX: 0,
       rotateY: 0,
       shiftX: 0,
-      shiftY: 0,
-      scale: 1
+      shiftY: 0
     });
   }
 
-  return panelStates.get(panel);
+  return states.get(card);
 }
 
-function resetState(panel) {
-  const state = stateFor(panel);
-  state.rotateX = 0;
-  state.rotateY = 0;
-  state.shiftX = 0;
-  state.shiftY = 0;
-  state.scale = 1;
+function isLargeCard(card) {
+  return card.matches('#message-panel, #profile-card, #games-panel, #history-panel');
+}
 
-  const stage = panel.parentElement?.classList.contains('tracker-panel-stage')
-    ? panel.parentElement
-    : null;
+function isActionCard(card) {
+  return card.matches('.csrep-button');
+}
 
-  if (stage) {
-    stage.style.setProperty('--stage-rx', '0deg');
-    stage.style.setProperty('--stage-ry', '0deg');
-    stage.style.setProperty('--stage-x', '0px');
-    stage.style.setProperty('--stage-y', '0px');
-    stage.style.setProperty('--stage-scale', '1');
-    stage.classList.remove('is-pressed');
+function resetCard(card, immediate = false) {
+  const state = stateFor(card);
+
+  if (immediate) {
+    state.rotateX = 0;
+    state.rotateY = 0;
+    state.shiftX = 0;
+    state.shiftY = 0;
   }
 
-  panel.style.setProperty('--panel-shine-x', '50%');
-  panel.style.setProperty('--panel-shine-y', '50%');
+  card.style.setProperty('--tilt-rx', '0deg');
+  card.style.setProperty('--tilt-ry', '0deg');
+  card.style.setProperty('--tilt-x', '0px');
+  card.style.setProperty('--tilt-y', '0px');
+  card.style.setProperty('--panel-shine-x', '50%');
+  card.style.setProperty('--panel-shine-y', '50%');
+  card.classList.remove('is-tilt-pressed');
 }
 
-function ensureStage(panel) {
-  const existing = panel.parentElement?.classList.contains('tracker-panel-stage')
-    ? panel.parentElement
-    : null;
+function registerCards() {
+  const nextCards = [...document.querySelectorAll(CARD_SELECTOR)];
 
-  if (existing) return existing;
+  for (const card of cards) {
+    if (!nextCards.includes(card)) {
+      card.classList.remove('tracker-tilt-card', 'is-tilt-pressed');
+      resetCard(card, true);
+    }
+  }
 
-  const stage = document.createElement('div');
-  stage.className = 'tracker-panel-stage';
-  if (panel.matches('.section-panel')) stage.classList.add('tracker-panel-stage-spaced');
+  cards = nextCards;
 
-  panel.before(stage);
-  stage.append(panel);
-  return stage;
-}
-
-function unwrapPanel(panel) {
-  const stage = panel.parentElement?.classList.contains('tracker-panel-stage')
-    ? panel.parentElement
-    : null;
-
-  resetState(panel);
-  panel.classList.remove('tracker-motion-panel');
-
-  if (!stage) return;
-  stage.before(panel);
-  stage.remove();
-}
-
-function syncStage(panel) {
-  const stage = ensureStage(panel);
-  stage.hidden = panel.hidden;
-  panel.classList.add('tracker-motion-panel');
-
-  if (stage.dataset.motionReady !== 'true') {
-    stage.dataset.motionReady = 'true';
-    resetState(panel);
+  for (const card of cards) {
+    stateFor(card);
+    card.classList.toggle('tracker-tilt-card', motionEnabled);
+    if (!motionEnabled) resetCard(card, true);
   }
 }
 
-function refreshPanels() {
-  panels = [...document.querySelectorAll(PANEL_SELECTOR)];
-
-  if (motionEnabled) {
-    panels.forEach(syncStage);
-  } else {
-    panels.forEach(unwrapPanel);
-  }
-}
-
-function panelAtPoint(x, y) {
-  if (!motionEnabled) return null;
-  const target = document.elementFromPoint(x, y);
-  return target instanceof Element ? target.closest(PANEL_SELECTOR) : null;
-}
-
-function layoutBounds(panel) {
-  const stage = panel.parentElement?.classList.contains('tracker-panel-stage')
-    ? panel.parentElement
-    : null;
-
-  if (!shell || !stage) return null;
-
-  const shellBounds = shell.getBoundingClientRect();
-  return {
-    left: shellBounds.left + stage.offsetLeft,
-    top: shellBounds.top + stage.offsetTop,
-    width: stage.offsetWidth,
-    height: stage.offsetHeight
-  };
+function scheduleRefresh() {
+  if (refreshFrame) return;
+  refreshFrame = requestAnimationFrame(() => {
+    refreshFrame = 0;
+    registerCards();
+  });
 }
 
 function releasePress() {
   pointer.down = false;
-
-  if (pointer.pressedPanel) {
-    pointer.pressedPanel.parentElement?.classList.remove('is-pressed');
-  }
-
-  pointer.pressedPanel = null;
+  if (pointer.pressedCard) pointer.pressedCard.classList.remove('is-tilt-pressed');
+  pointer.pressedCard = null;
 }
 
 function configureMotion() {
   const nextEnabled = motionMedia.matches && !reducedMotionMedia.matches;
 
-  if (nextEnabled === motionEnabled && panels.length) {
-    refreshPanels();
-    return;
+  if (nextEnabled !== motionEnabled) {
+    releasePress();
+    pointer.active = false;
+    motionEnabled = nextEnabled;
+    document.documentElement.classList.toggle('tracker-motion-enabled', motionEnabled);
   }
 
-  releasePress();
-  pointer.active = false;
-  pointer.hoveredPanel = null;
-  motionEnabled = nextEnabled;
-  document.documentElement.classList.toggle('tracker-motion-enabled', motionEnabled);
-  refreshPanels();
+  registerCards();
 }
 
-function updatePanel(panel) {
-  if (!motionEnabled) return;
+function updateCard(card) {
+  if (!motionEnabled || card.hidden || card.closest('[hidden]')) return;
 
-  const stage = panel.parentElement;
-  const bounds = layoutBounds(panel);
-  if (!stage || !bounds || !bounds.width || !bounds.height || panel.hidden || stage.hidden) return;
+  const rect = card.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
 
-  const state = stateFor(panel);
-  const pressed = pointer.down && pointer.pressedPanel === panel;
-  const hovered = pointer.active && pointer.hoveredPanel === panel;
-  const engaged = pressed || hovered;
+  const state = stateFor(card);
+  const pressed = pointer.down && pointer.pressedCard === card;
+  const active = pointer.active;
 
   let targetRotateX = 0;
   let targetRotateY = 0;
   let targetShiftX = 0;
   let targetShiftY = 0;
-  let targetScale = 1;
 
-  if (engaged) {
-    const normalizedX = clamp(
-      (pointer.x - (bounds.left + bounds.width / 2)) / Math.max(bounds.width / 2, 1),
-      -1,
-      1
-    );
-    const normalizedY = clamp(
-      (pointer.y - (bounds.top + bounds.height / 2)) / Math.max(bounds.height / 2, 1),
-      -1,
-      1
-    );
+  if (active) {
+    const horizontalRange = Math.max(rect.width * 1.15, window.innerWidth * 0.42, 320);
+    const verticalRange = Math.max(rect.height * 1.15, window.innerHeight * 0.42, 260);
+    const normalizedX = clamp((pointer.x - (rect.left + rect.width / 2)) / horizontalRange, -1, 1);
+    const normalizedY = clamp((pointer.y - (rect.top + rect.height / 2)) / verticalRange, -1, 1);
 
-    const tiltX = pressed ? 2.05 : 1.35;
-    const tiltY = pressed ? 2.35 : 1.65;
+    const large = isLargeCard(card);
+    const action = isActionCard(card);
+    const strengthX = large ? 1.45 : action ? 1.05 : 0.82;
+    const strengthY = large ? 1.7 : action ? 1.2 : 0.96;
+    const pressBoost = pressed ? 1.22 : 1;
 
-    targetRotateX = -normalizedY * tiltX;
-    targetRotateY = normalizedX * tiltY;
-    targetShiftX = normalizedX * (pressed ? 1.15 : 0.65);
-    targetShiftY = normalizedY * (pressed ? 0.75 : 0.42) + (pressed ? 0.9 : 0);
-    targetScale = pressed ? 0.996 : 1;
+    targetRotateX = -normalizedY * strengthX * pressBoost;
+    targetRotateY = normalizedX * strengthY * pressBoost;
+    targetShiftX = normalizedX * (large ? 0.85 : 0.46);
+    targetShiftY = normalizedY * (large ? 0.58 : 0.32) + (pressed ? 1.15 : 0);
 
-    panel.style.setProperty('--panel-shine-x', `${((normalizedX + 1) * 50).toFixed(1)}%`);
-    panel.style.setProperty('--panel-shine-y', `${((normalizedY + 1) * 50).toFixed(1)}%`);
+    card.style.setProperty('--panel-shine-x', `${clamp(50 + normalizedX * 34, 12, 88).toFixed(1)}%`);
+    card.style.setProperty('--panel-shine-y', `${clamp(50 + normalizedY * 34, 12, 88).toFixed(1)}%`);
   } else {
-    panel.style.setProperty('--panel-shine-x', '50%');
-    panel.style.setProperty('--panel-shine-y', '50%');
+    card.style.setProperty('--panel-shine-x', '50%');
+    card.style.setProperty('--panel-shine-y', '50%');
   }
 
-  const response = pressed ? 0.52 : engaged ? 0.4 : 0.24;
+  const response = pressed ? 0.58 : active ? 0.34 : 0.22;
   state.rotateX += (targetRotateX - state.rotateX) * response;
   state.rotateY += (targetRotateY - state.rotateY) * response;
   state.shiftX += (targetShiftX - state.shiftX) * response;
   state.shiftY += (targetShiftY - state.shiftY) * response;
-  state.scale += (targetScale - state.scale) * response;
 
-  if (!engaged && Math.abs(state.rotateX) < 0.002 && Math.abs(state.rotateY) < 0.002) {
+  if (!active && Math.abs(state.rotateX) < 0.002 && Math.abs(state.rotateY) < 0.002) {
     state.rotateX = 0;
     state.rotateY = 0;
     state.shiftX = 0;
     state.shiftY = 0;
-    state.scale = 1;
   }
 
-  stage.style.setProperty('--stage-rx', `${state.rotateX.toFixed(3)}deg`);
-  stage.style.setProperty('--stage-ry', `${state.rotateY.toFixed(3)}deg`);
-  stage.style.setProperty('--stage-x', `${state.shiftX.toFixed(2)}px`);
-  stage.style.setProperty('--stage-y', `${state.shiftY.toFixed(2)}px`);
-  stage.style.setProperty('--stage-scale', state.scale.toFixed(4));
+  card.style.setProperty('--tilt-rx', `${state.rotateX.toFixed(3)}deg`);
+  card.style.setProperty('--tilt-ry', `${state.rotateY.toFixed(3)}deg`);
+  card.style.setProperty('--tilt-x', `${state.shiftX.toFixed(2)}px`);
+  card.style.setProperty('--tilt-y', `${state.shiftY.toFixed(2)}px`);
 }
 
 function animate() {
-  if (motionEnabled) panels.forEach(updatePanel);
+  if (motionEnabled) {
+    for (const card of cards) updateCard(card);
+  }
+
   requestAnimationFrame(animate);
 }
 
 window.addEventListener('pointermove', (event) => {
   if (!motionEnabled || event.pointerType === 'touch') return;
-
   pointer.x = event.clientX;
   pointer.y = event.clientY;
   pointer.active = true;
-  pointer.hoveredPanel = pointer.down
-    ? pointer.pressedPanel
-    : panelAtPoint(event.clientX, event.clientY);
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
@@ -258,65 +193,40 @@ window.addEventListener('pointerdown', (event) => {
   pointer.x = event.clientX;
   pointer.y = event.clientY;
   pointer.active = true;
-  pointer.hoveredPanel = event.target.closest(PANEL_SELECTOR);
-
-  if (!pointer.hoveredPanel || event.target.closest(INTERACTIVE_SELECTOR)) return;
-
   pointer.down = true;
-  pointer.startX = event.clientX;
-  pointer.startY = event.clientY;
-  pointer.pressedPanel = pointer.hoveredPanel;
-  pointer.pressedPanel.parentElement?.classList.add('is-pressed');
+  pointer.pressedCard = event.target.closest(CARD_SELECTOR);
+  pointer.pressedCard?.classList.add('is-tilt-pressed');
 }, { passive: true });
 
 window.addEventListener('pointerup', releasePress, { passive: true });
 window.addEventListener('pointercancel', releasePress, { passive: true });
 
-window.addEventListener('scroll', () => {
-  if (motionEnabled && pointer.active && !pointer.down) {
-    pointer.hoveredPanel = panelAtPoint(pointer.x, pointer.y);
-  }
-}, { passive: true });
-
 window.addEventListener('pointerleave', () => {
   releasePress();
   pointer.active = false;
-  pointer.hoveredPanel = null;
 }, { passive: true });
 
 window.addEventListener('blur', () => {
   releasePress();
   pointer.active = false;
-  pointer.hoveredPanel = null;
 }, { passive: true });
 
+window.addEventListener('resize', configureMotion, { passive: true });
+motionMedia.addEventListener?.('change', configureMotion);
+reducedMotionMedia.addEventListener?.('change', configureMotion);
+
 const observer = new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    if (
-      mutation.type === 'attributes' &&
-      mutation.attributeName === 'hidden' &&
-      mutation.target instanceof Element &&
-      mutation.target.matches(PANEL_SELECTOR)
-    ) {
-      if (motionEnabled) syncStage(mutation.target);
-    }
+  if (mutations.some((mutation) => mutation.type === 'childList' || mutation.attributeName === 'hidden')) {
+    scheduleRefresh();
   }
 });
 
 observer.observe(document.body, {
   subtree: true,
+  childList: true,
   attributes: true,
   attributeFilter: ['hidden']
 });
-
-motionMedia.addEventListener?.('change', configureMotion);
-reducedMotionMedia.addEventListener?.('change', configureMotion);
-window.addEventListener('resize', configureMotion, { passive: true });
-
-if (shell) {
-  shell.classList.remove('tracker-shell-motion');
-  shell.style.transform = 'none';
-}
 
 configureMotion();
 requestAnimationFrame(animate);
