@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="./refinements.css?v=6" />
     <link rel="stylesheet" href="./inertia.css?v=1" />
     <link rel="stylesheet" href="./cursor-web.css?v=1" />
+    <link rel="stylesheet" href="./main-card-effects.css?v=1" />
   </head>
   <body>
     <canvas id="interactive-background" aria-hidden="true"></canvas>
@@ -39,7 +40,10 @@
         </header>
 
         <section class="about depth-layer" aria-label="Описание профиля">
-          <p class="about-greeting"><span>Привет</span><span class="about-emoji" aria-hidden="true">🐈</span></p>
+          <p class="about-greeting">
+            <span>Привет</span>
+            <button id="dancing-cat" class="about-emoji" type="button" aria-label="Мяукнуть" title="Мяу">🐈</button>
+          </p>
           <p id="profile-description" class="description">
             Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.
           </p>
@@ -80,5 +84,6 @@
     <script type="module" src="./cursor-web.js?v=1"></script>
     <script type="module" src="./inertia.js?v=1"></script>
     <script type="module" src="./visitor-counter.js?v=1"></script>
+    <script type="module" src="./cat-meow.js?v=1"></script>
   </body>
 </html>
