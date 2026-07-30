@@ -16,6 +16,7 @@ body {
   --stage-scale: 1;
   position: relative;
   width: 100%;
+  overflow: visible;
   transform:
     perspective(1500px)
     translate3d(var(--stage-x), var(--stage-y), 0)
@@ -23,7 +24,7 @@ body {
     rotateY(var(--stage-ry))
     scale(var(--stage-scale));
   transform-origin: center;
-  transform-style: preserve-3d;
+  transform-style: flat;
   will-change: transform;
 }
 
