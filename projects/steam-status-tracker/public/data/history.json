@@ -50,6 +50,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-07-30T09:39:40.889Z",
+    "endedAt": "2026-07-30T10:05:14.357Z",
+    "durationSeconds": 1533
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Blender",
+    "gameId": "365670",
+    "startedAt": "2026-07-30T10:05:14.357Z",
     "endedAt": null,
     "durationSeconds": null
   }
