@@ -1,0 +1,123 @@
+:root {
+  --background: #05060a;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(31, 34, 59, 0.84) 0, rgba(10, 11, 18, 0.9) 44%, #05060a 100%);
+}
+
+body::before {
+  display: none !important;
+}
+
+#tracker-background,
+.fallback-stars,
+.tracker-aurora,
+.tracker-noise,
+.tracker-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#tracker-background {
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.fallback-stars {
+  z-index: 1;
+  opacity: 0.34;
+  background-repeat: repeat;
+  animation: tracker-stars-drift 30s linear infinite;
+}
+
+.fallback-stars-one {
+  background-image:
+    radial-gradient(circle, rgba(226, 230, 255, 0.86) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(140, 130, 255, 0.56) 0 0.9px, transparent 1.4px);
+  background-position: 0 0, 36px 52px;
+  background-size: 92px 92px, 126px 126px;
+}
+
+.fallback-stars-two {
+  opacity: 0.18;
+  background-image:
+    radial-gradient(circle, rgba(100, 201, 255, 0.72) 0 1.1px, transparent 1.7px);
+  background-position: 17px 29px;
+  background-size: 152px 152px;
+  animation-duration: 44s;
+  animation-direction: reverse;
+}
+
+@keyframes tracker-stars-drift {
+  to {
+    transform: translate3d(-44px, 34px, 0);
+  }
+}
+
+.tracker-aurora {
+  z-index: 2;
+  width: 56vw;
+  height: 56vw;
+  min-width: 520px;
+  min-height: 520px;
+  border-radius: 50%;
+  filter: blur(115px);
+  opacity: 0.16;
+  animation: tracker-main-aurora-drift 14s ease-in-out infinite alternate;
+}
+
+.tracker-aurora-one {
+  top: -30vw;
+  right: -18vw;
+  background: #7659ff;
+}
+
+.tracker-aurora-two {
+  top: auto;
+  right: auto;
+  bottom: -34vw;
+  left: -20vw;
+  background: #209fde;
+  animation-delay: -5s;
+}
+
+@keyframes tracker-main-aurora-drift {
+  to {
+    transform: translate3d(5vw, 4vw, 0) scale(1.1);
+    opacity: 0.24;
+  }
+}
+
+.tracker-noise {
+  z-index: 3;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");
+}
+
+.tracker-vignette {
+  z-index: 4;
+  background:
+    radial-gradient(circle at center, transparent 18%, rgba(3, 4, 8, 0.32) 68%, rgba(1, 2, 5, 0.76) 100%),
+    linear-gradient(180deg, rgba(5, 6, 10, 0), rgba(5, 6, 10, 0.25));
+}
+
+.shell {
+  z-index: 5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fallback-stars,
+  .tracker-aurora {
+    animation: none;
+  }
+}
