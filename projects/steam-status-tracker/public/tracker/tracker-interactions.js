@@ -11,6 +11,17 @@ const CARD_SELECTOR = [
   '.history-content'
 ].join(', ');
 
+const INTERACTIVE_SELECTOR = [
+  'a',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'summary',
+  '[role="button"]',
+  '[role="link"]'
+].join(', ');
+
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 const pointer = {
@@ -141,6 +152,14 @@ function animate() {
 function beginPress(event) {
   if (!(event.target instanceof Element)) return;
 
+  // Never capture clicks that belong to a real link or control. Pointer capture on
+  // the surrounding card can cancel the browser's normal click/navigation event.
+  if (event.target.closest(INTERACTIVE_SELECTOR)) {
+    pointer.down = false;
+    pointer.activeCard = null;
+    return;
+  }
+
   const card = event.target.closest(CARD_SELECTOR);
   if (!card) return;
 
@@ -158,7 +177,7 @@ function beginPress(event) {
   try {
     card.setPointerCapture(event.pointerId);
   } catch {
-    // Захват указателя может быть недоступен в некоторых браузерах.
+    // Pointer capture may be unavailable in some browsers.
   }
 }
 
