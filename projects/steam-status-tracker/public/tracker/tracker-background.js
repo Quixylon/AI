@@ -5,6 +5,23 @@ if (!canvas || !context) {
   throw new Error('Tracker background canvas is unavailable');
 }
 
+const backgroundStyles = document.createElement('link');
+backgroundStyles.rel = 'stylesheet';
+backgroundStyles.href = './tracker-main-background.css?v=1';
+document.head.append(backgroundStyles);
+
+if (!document.querySelector('.fallback-stars-one')) {
+  const firstStars = document.createElement('div');
+  firstStars.className = 'fallback-stars fallback-stars-one';
+  firstStars.setAttribute('aria-hidden', 'true');
+
+  const secondStars = document.createElement('div');
+  secondStars.className = 'fallback-stars fallback-stars-two';
+  secondStars.setAttribute('aria-hidden', 'true');
+
+  canvas.after(firstStars, secondStars);
+}
+
 let width = 0;
 let height = 0;
 let pixelRatio = 1;
