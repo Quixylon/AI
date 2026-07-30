@@ -77,6 +77,7 @@ function playMeow() {
 function react() {
   if (!cat) return;
 
+  cat.classList.add('is-hint-dismissed');
   window.clearTimeout(reactionTimer);
   cat.classList.remove('is-meowing');
   void cat.offsetWidth;
