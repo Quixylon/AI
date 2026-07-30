@@ -44,8 +44,7 @@
   padding: 18px;
 }
 
-.game-session-copy h3,
-.history-top h3 {
+.game-session-copy h3 {
   color: #fbfbff;
   font-size: 1.06rem;
   line-height: 1.32;
@@ -105,12 +104,133 @@
   background: rgba(100, 236, 173, 0.08);
 }
 
-.history-content {
-  padding: 18px;
+#history-list {
+  gap: 10px;
 }
 
-.history-facts {
-  margin-top: 14px;
+.history-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.history-marker-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 22px;
+}
+
+.history-marker-wrap::after {
+  position: absolute;
+  top: 38px;
+  bottom: -10px;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(175, 166, 255, 0.28), rgba(175, 166, 255, 0.04));
+  content: "";
+  transform: translateX(-50%);
+}
+
+.history-entry:last-child .history-marker-wrap::after {
+  display: none;
+}
+
+.history-marker {
+  position: relative;
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  margin: 0;
+  border: 2px solid rgba(8, 10, 17, 0.96);
+  border-radius: 50%;
+  background: #858d9c;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 12px rgba(133, 141, 156, 0.2);
+}
+
+.history-entry.online .history-marker,
+.history-entry.in-game .history-marker {
+  background: var(--online);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 18px rgba(100, 236, 173, 0.58);
+}
+
+.history-entry.away .history-marker,
+.history-entry.busy .history-marker,
+.history-entry.snooze .history-marker {
+  background: var(--warn);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 16px rgba(255, 197, 92, 0.42);
+}
+
+.history-content {
+  min-width: 0;
+  border-radius: 20px;
+  padding: 17px 18px 16px;
+}
+
+.history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-top h3 {
+  margin: 0;
+  color: #fbfbff;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+}
+
+.history-badge {
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #9aa3b4;
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 0.64rem;
+  white-space: nowrap;
+}
+
+.history-period {
+  margin: 9px 0 0;
+  color: #cfd5e2;
+  font-size: 0.84rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.history-duration-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.085);
+}
+
+.history-duration-row span {
+  color: #7f899c;
+  font-size: 0.67rem;
+  font-weight: 820;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.history-duration-row strong {
+  color: #f5f6fb;
+  font-size: 0.84rem;
+  font-weight: 850;
+  text-align: right;
 }
 
 @media (max-width: 680px) {
@@ -133,17 +253,46 @@
     padding-right: 6px;
   }
 
-  .game-session,
-  .history-content {
+  .game-session {
     padding: 16px;
   }
 
-  .game-session-copy h3,
-  .history-top h3 {
+  .game-session-copy h3 {
     white-space: normal;
   }
 
   .session-fact dd {
     font-size: 0.76rem;
+  }
+
+  .history-entry {
+    grid-template-columns: 13px minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .history-marker-wrap {
+    padding-top: 21px;
+  }
+
+  .history-content {
+    padding: 15px 15px 14px;
+  }
+
+  .history-top {
+    align-items: flex-start;
+  }
+
+  .history-period {
+    font-size: 0.79rem;
+  }
+
+  .history-duration-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .history-duration-row strong {
+    text-align: left;
   }
 }
