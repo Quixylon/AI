@@ -1,0 +1,221 @@
+/* Одноразовая подсказка котика и постоянная живая анимация описания. */
+
+#profile-description {
+  transform-origin: left center;
+  animation:
+    reveal-text 780ms 300ms ease forwards,
+    description-paragraph-living 7.2s 1.1s ease-in-out infinite;
+  will-change: translate;
+}
+
+.description-word {
+  animation:
+    description-word-in 500ms cubic-bezier(.2, .8, .2, 1) forwards,
+    description-word-flow 4.9s ease-in-out infinite;
+  animation-delay:
+    calc(170ms + var(--word-index) * 45ms),
+    calc(var(--word-index) * -180ms);
+  will-change: translate, scale, color, text-shadow;
+}
+
+.about-emoji {
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.about-emoji::before,
+.about-emoji::after {
+  position: absolute;
+  z-index: 8;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.about-emoji::before {
+  top: 0.12em;
+  left: calc(100% + 0.14em);
+  color: #c8bdff;
+  content: "↙";
+  font-size: 1.05em;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow:
+    0 0 12px rgba(176, 164, 255, 0.72),
+    0 3px 8px rgba(0, 0, 0, 0.45);
+  animation: cat-hint-arrow-once 5.4s 1s cubic-bezier(.22, .72, .2, 1) both;
+}
+
+.about-emoji::after {
+  top: -1.28em;
+  left: calc(100% + 0.82em);
+  padding: 0.36em 0.62em 0.4em;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: #f5f3ff;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035)),
+    rgba(18, 19, 32, 0.72);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.32),
+    0 0 20px rgba(145, 126, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(14px) saturate(1.35);
+  -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  content: "нажми";
+  font-size: 0.58em;
+  font-weight: 850;
+  letter-spacing: 0.035em;
+  line-height: 1;
+  white-space: nowrap;
+  animation: cat-hint-label-once 5.4s 1s cubic-bezier(.22, .72, .2, 1) both;
+}
+
+.about-emoji.is-hint-dismissed::before,
+.about-emoji.is-hint-dismissed::after {
+  opacity: 0 !important;
+  animation: none !important;
+  transition: opacity 160ms ease, translate 160ms ease;
+  translate: 4px -4px;
+}
+
+@keyframes description-paragraph-living {
+  0%, 100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -1.2px;
+  }
+}
+
+@keyframes description-word-flow {
+  0%, 100% {
+    color: #bcc3d1;
+    translate: 0 0;
+    scale: 1;
+    text-shadow: 0 0 0 rgba(170, 158, 255, 0);
+  }
+
+  24% {
+    color: #f4f3ff;
+    translate: 0 -1.7px;
+    scale: 1.012;
+    text-shadow:
+      0 0 12px rgba(174, 159, 255, 0.24),
+      0 0 3px rgba(255, 255, 255, 0.16);
+  }
+
+  52% {
+    color: #d8e7f8;
+    translate: 0 0.7px;
+    scale: 0.998;
+    text-shadow: 0 0 8px rgba(96, 192, 255, 0.12);
+  }
+
+  76% {
+    color: #e5e1ff;
+    translate: 0 -0.8px;
+    scale: 1.005;
+    text-shadow: 0 0 9px rgba(176, 164, 255, 0.16);
+  }
+}
+
+@keyframes cat-hint-arrow-once {
+  0%, 8% {
+    opacity: 0;
+    translate: 8px -8px;
+    scale: 0.82;
+  }
+
+  18% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+
+  32% {
+    translate: -3px 3px;
+  }
+
+  46% {
+    translate: 1px -1px;
+  }
+
+  60% {
+    opacity: 1;
+    translate: -3px 3px;
+  }
+
+  76% {
+    opacity: 1;
+    translate: 1px -1px;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 7px -7px;
+    scale: 0.9;
+  }
+}
+
+@keyframes cat-hint-label-once {
+  0%, 10% {
+    opacity: 0;
+    translate: -5px 7px;
+    scale: 0.9;
+  }
+
+  20% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+
+  38% {
+    translate: 0 -2px;
+  }
+
+  56% {
+    translate: 0 1px;
+  }
+
+  74% {
+    opacity: 1;
+    translate: 0 -2px;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 5px -7px;
+    scale: 0.94;
+  }
+}
+
+@media (max-width: 430px) {
+  .about-emoji::after {
+    top: -1.1em;
+    left: calc(100% + 0.62em);
+    font-size: 0.54em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #profile-description,
+  .description-word,
+  .about-emoji::before,
+  .about-emoji::after {
+    animation: none !important;
+  }
+
+  .description-word {
+    color: #c7ccd7;
+    translate: none;
+    scale: 1;
+  }
+
+  .about-emoji::before,
+  .about-emoji::after {
+    display: none;
+  }
+}
