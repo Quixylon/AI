@@ -1,0 +1,5 @@
+.description-word {
+  animation-delay:
+    var(--word-entry-delay, 170ms),
+    var(--word-flow-delay, 0ms) !important;
+}
