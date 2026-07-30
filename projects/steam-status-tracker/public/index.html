@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="./main-card-effects.css?v=1" />
     <link rel="stylesheet" href="./main-card-hint.css?v=1" />
     <link rel="stylesheet" href="./description-motion.css?v=1" />
+    <link rel="stylesheet" href="./mobile.css?v=1" />
   </head>
   <body>
     <canvas id="interactive-background" aria-hidden="true"></canvas>
@@ -31,7 +32,7 @@
 
         <header class="profile-header depth-layer depth-high">
           <div class="avatar-wrap">
-            <img id="profile-avatar" class="profile-avatar" src="" alt="" />
+            <img id="profile-avatar" class="profile-avatar" src="" alt="" decoding="async" />
             <span class="avatar-ring" aria-hidden="true"></span>
           </div>
 
@@ -65,7 +66,7 @@
         <div class="action-stage depth-layer">
           <a class="tracker-button floating-action" href="./tracker/">
             <span class="tracker-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path>
               </svg>
             </span>
@@ -84,8 +85,7 @@
 
     <script type="module" src="./app.js?v=13"></script>
     <script type="module" src="./description-motion.js?v=1"></script>
-    <script type="module" src="./cursor-web.js?v=1"></script>
-    <script type="module" src="./inertia.js?v=1"></script>
+    <script type="module" src="./responsive-runtime.js?v=1"></script>
     <script type="module" src="./visitor-counter.js?v=1"></script>
     <script type="module" src="./cat-meow.js?v=2"></script>
   </body>
