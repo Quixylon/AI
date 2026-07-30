@@ -1,7 +1,7 @@
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
 const shell = document.querySelector('.shell');
-const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const PANEL_SELECTOR = '#message-panel, #profile-card, #games-panel, #history-panel';
 const INTERACTIVE_SELECTOR = [
   'a',
   'button',
@@ -13,46 +13,88 @@ const INTERACTIVE_SELECTOR = [
   '[role="link"]'
 ].join(', ');
 
+const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
   active: false,
   down: false,
-  pointerType: 'mouse',
+  pointerId: null,
   startX: 0,
-  startY: 0
+  startY: 0,
+  hoveredPanel: null,
+  pressedPanel: null
 };
 
-const state = {
-  rotateX: 0,
-  rotateY: 0,
-  shiftX: 0,
-  shiftY: 0,
-  scale: 1,
-  velocityRotateX: 0,
-  velocityRotateY: 0,
-  velocityShiftX: 0,
-  velocityShiftY: 0,
-  velocityScale: 0
-};
+let panels = [];
+const states = new WeakMap();
 
-function setPointer(clientX, clientY) {
-  pointer.x = clientX;
-  pointer.y = clientY;
-  pointer.active = true;
+function stateFor(panel, index) {
+  if (!states.has(panel)) {
+    states.set(panel, {
+      rotateX: 0,
+      rotateY: 0,
+      shiftX: 0,
+      shiftY: 0,
+      scale: 1,
+      velocityRotateX: 0,
+      velocityRotateY: 0,
+      velocityShiftX: 0,
+      velocityShiftY: 0,
+      velocityScale: 0,
+      phase: index * 1.7 + Math.random() * 0.5
+    });
+  }
+
+  return states.get(panel);
+}
+
+function refreshPanels() {
+  panels = [...document.querySelectorAll(PANEL_SELECTOR)];
+
+  panels.forEach((panel, index) => {
+    panel.classList.add('tracker-tilt-panel');
+    panel.style.setProperty('--panel-rx', '0deg');
+    panel.style.setProperty('--panel-ry', '0deg');
+    panel.style.setProperty('--panel-x', '0px');
+    panel.style.setProperty('--panel-y', '0px');
+    panel.style.setProperty('--panel-scale', '1');
+    panel.style.setProperty('--panel-shine-x', '50%');
+    panel.style.setProperty('--panel-shine-y', '50%');
+    stateFor(panel, index);
+  });
+}
+
+function panelAtPoint(x, y) {
+  const target = document.elementFromPoint(x, y);
+  return target instanceof Element ? target.closest(PANEL_SELECTOR) : null;
 }
 
 function releasePress() {
   pointer.down = false;
-  shell?.classList.remove('is-pressed');
+  pointer.pointerId = null;
+
+  if (pointer.pressedPanel) {
+    pointer.pressedPanel.classList.remove('is-pressed');
+  }
+
+  pointer.pressedPanel = null;
 
   if (!finePointer) {
     pointer.active = false;
+    pointer.hoveredPanel = null;
   }
 }
 
-function animate(timestamp = 0) {
-  if (!shell) return;
+function updatePanel(panel, index, timestamp) {
+  const state = stateFor(panel, index);
+  const bounds = panel.getBoundingClientRect();
+  if (!bounds.width || !bounds.height || panel.hidden) return;
+
+  const pressed = pointer.down && pointer.pressedPanel === panel;
+  const hovered = finePointer && pointer.active && pointer.hoveredPanel === panel;
+  const engaged = pressed || hovered;
 
   let targetRotateX = 0;
   let targetRotateY = 0;
@@ -60,30 +102,39 @@ function animate(timestamp = 0) {
   let targetShiftY = 0;
   let targetScale = 1;
 
-  if (pointer.active && (finePointer || pointer.down)) {
-    const normalizedX = clamp((pointer.x / Math.max(window.innerWidth, 1) - 0.5) * 2, -1, 1);
-    const normalizedY = clamp((pointer.y / Math.max(window.innerHeight, 1) - 0.5) * 2, -1, 1);
-    const strengthX = pointer.down ? 2.05 : 1.45;
-    const strengthY = pointer.down ? 2.45 : 1.8;
+  if (engaged) {
+    const normalizedX = clamp(
+      (pointer.x - (bounds.left + bounds.width / 2)) / Math.max(bounds.width / 2, 1),
+      -1,
+      1
+    );
+    const normalizedY = clamp(
+      (pointer.y - (bounds.top + bounds.height / 2)) / Math.max(bounds.height / 2, 1),
+      -1,
+      1
+    );
 
-    targetRotateX = -normalizedY * strengthX;
-    targetRotateY = normalizedX * strengthY;
-    targetShiftX = normalizedX * (pointer.down ? 1.7 : 1.2);
-    targetShiftY = normalizedY * (pointer.down ? 1.2 : 0.8) + (pointer.down ? 1.15 : 0);
-    targetScale = pointer.down ? 0.995 : 1;
+    const tiltX = pressed ? 2.05 : 1.45;
+    const tiltY = pressed ? 2.45 : 1.8;
 
-    shell.style.setProperty('--shell-shine-x', `${((normalizedX + 1) * 50).toFixed(1)}%`);
-    shell.style.setProperty('--shell-shine-y', `${((normalizedY + 1) * 50).toFixed(1)}%`);
+    targetRotateX = -normalizedY * tiltX;
+    targetRotateY = normalizedX * tiltY;
+    targetShiftX = normalizedX * (pressed ? 1.5 : 0.9);
+    targetShiftY = normalizedY * (pressed ? 1 : 0.6) + (pressed ? 1.05 : 0);
+    targetScale = pressed ? 0.995 : 1;
+
+    panel.style.setProperty('--panel-shine-x', `${((normalizedX + 1) * 50).toFixed(1)}%`);
+    panel.style.setProperty('--panel-shine-y', `${((normalizedY + 1) * 50).toFixed(1)}%`);
   } else if (finePointer) {
-    targetRotateX = Math.sin(timestamp * 0.00028) * 0.1;
-    targetRotateY = Math.cos(timestamp * 0.00024) * 0.14;
-    targetShiftY = Math.sin(timestamp * 0.00032) * -0.14;
-    shell.style.setProperty('--shell-shine-x', '50%');
-    shell.style.setProperty('--shell-shine-y', '50%');
+    targetRotateX = Math.sin(timestamp * 0.00025 + state.phase) * 0.055;
+    targetRotateY = Math.cos(timestamp * 0.00022 + state.phase) * 0.075;
+    targetShiftY = Math.sin(timestamp * 0.00029 + state.phase) * -0.08;
+    panel.style.setProperty('--panel-shine-x', '50%');
+    panel.style.setProperty('--panel-shine-y', '50%');
   }
 
-  const spring = pointer.down ? 0.095 : 0.055;
-  const damping = pointer.down ? 0.72 : 0.78;
+  const spring = pressed ? 0.095 : 0.055;
+  const damping = pressed ? 0.72 : 0.78;
 
   state.velocityRotateX += (targetRotateX - state.rotateX) * spring;
   state.velocityRotateY += (targetRotateY - state.rotateY) * spring;
@@ -103,12 +154,15 @@ function animate(timestamp = 0) {
   state.shiftY += state.velocityShiftY;
   state.scale += state.velocityScale;
 
-  shell.style.setProperty('--shell-rx', `${state.rotateX.toFixed(3)}deg`);
-  shell.style.setProperty('--shell-ry', `${state.rotateY.toFixed(3)}deg`);
-  shell.style.setProperty('--shell-x', `${state.shiftX.toFixed(2)}px`);
-  shell.style.setProperty('--shell-y', `${state.shiftY.toFixed(2)}px`);
-  shell.style.setProperty('--shell-scale', state.scale.toFixed(4));
+  panel.style.setProperty('--panel-rx', `${state.rotateX.toFixed(3)}deg`);
+  panel.style.setProperty('--panel-ry', `${state.rotateY.toFixed(3)}deg`);
+  panel.style.setProperty('--panel-x', `${state.shiftX.toFixed(2)}px`);
+  panel.style.setProperty('--panel-y', `${state.shiftY.toFixed(2)}px`);
+  panel.style.setProperty('--panel-scale', state.scale.toFixed(4));
+}
 
+function animate(timestamp = 0) {
+  panels.forEach((panel, index) => updatePanel(panel, index, timestamp));
   requestAnimationFrame(animate);
 }
 
@@ -123,23 +177,33 @@ window.addEventListener('pointermove', (event) => {
     }
   }
 
-  setPointer(event.clientX, event.clientY);
+  pointer.x = event.clientX;
+  pointer.y = event.clientY;
+  pointer.active = true;
+
+  if (pointer.down) {
+    pointer.hoveredPanel = pointer.pressedPanel;
+  } else if (finePointer) {
+    pointer.hoveredPanel = panelAtPoint(event.clientX, event.clientY);
+  }
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
-  if (!shell || !(event.target instanceof Element) || !shell.contains(event.target)) return;
+  if (!(event.target instanceof Element)) return;
 
-  pointer.pointerType = event.pointerType;
-  setPointer(event.clientX, event.clientY);
+  pointer.x = event.clientX;
+  pointer.y = event.clientY;
+  pointer.active = true;
+  pointer.hoveredPanel = event.target.closest(PANEL_SELECTOR);
 
-  // Real links and controls keep their normal click behaviour. The whole tracker
-  // still follows the cursor, but no pointer capture is used anywhere.
-  if (event.target.closest(INTERACTIVE_SELECTOR)) return;
+  if (!pointer.hoveredPanel || event.target.closest(INTERACTIVE_SELECTOR)) return;
 
   pointer.down = true;
+  pointer.pointerId = event.pointerId;
   pointer.startX = event.clientX;
   pointer.startY = event.clientY;
-  shell.classList.add('is-pressed');
+  pointer.pressedPanel = pointer.hoveredPanel;
+  pointer.pressedPanel.classList.add('is-pressed');
 }, { passive: true });
 
 window.addEventListener('pointerup', releasePress, { passive: true });
@@ -148,11 +212,13 @@ window.addEventListener('pointercancel', releasePress, { passive: true });
 window.addEventListener('pointerleave', () => {
   releasePress();
   pointer.active = false;
+  pointer.hoveredPanel = null;
 }, { passive: true });
 
 window.addEventListener('blur', () => {
   releasePress();
   pointer.active = false;
+  pointer.hoveredPanel = null;
 }, { passive: true });
 
 window.addEventListener('resize', () => {
@@ -160,9 +226,17 @@ window.addEventListener('resize', () => {
   pointer.y = window.innerHeight / 2;
 }, { passive: true });
 
+const observer = new MutationObserver(refreshPanels);
+observer.observe(document.body, { childList: true, subtree: true });
+
 if (shell) {
-  shell.classList.add('tracker-shell-motion');
-  shell.style.setProperty('--shell-shine-x', '50%');
-  shell.style.setProperty('--shell-shine-y', '50%');
-  requestAnimationFrame(animate);
+  shell.classList.remove('tracker-shell-motion');
+  shell.style.removeProperty('--shell-rx');
+  shell.style.removeProperty('--shell-ry');
+  shell.style.removeProperty('--shell-x');
+  shell.style.removeProperty('--shell-y');
+  shell.style.removeProperty('--shell-scale');
 }
+
+refreshPanels();
+requestAnimationFrame(animate);
