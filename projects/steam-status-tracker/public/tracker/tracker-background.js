@@ -5,11 +5,6 @@ if (!canvas || !context) {
   throw new Error('Tracker background canvas is unavailable');
 }
 
-const backgroundStyles = document.createElement('link');
-backgroundStyles.rel = 'stylesheet';
-backgroundStyles.href = './tracker-main-background.css?v=1';
-document.head.append(backgroundStyles);
-
 if (!document.querySelector('.fallback-stars-one')) {
   const firstStars = document.createElement('div');
   firstStars.className = 'fallback-stars fallback-stars-one';
@@ -35,6 +30,19 @@ const pointer = {
   down: false,
   type: 'mouse'
 };
+
+function setPointerFromClient(clientX, clientY) {
+  const bounds = canvas.getBoundingClientRect();
+  const scaleX = width / Math.max(bounds.width, 1);
+  const scaleY = height / Math.max(bounds.height, 1);
+
+  pointer.x = clampCoordinate((clientX - bounds.left) * scaleX, width);
+  pointer.y = clampCoordinate((clientY - bounds.top) * scaleY, height);
+}
+
+function clampCoordinate(value, limit) {
+  return Math.min(Math.max(value, 0), Math.max(limit, 0));
+}
 
 function createParticle(index, count) {
   const aspect = Math.max(0.55, width / Math.max(height, 1));
@@ -68,15 +76,19 @@ function createParticle(index, count) {
 }
 
 function resizeCanvas() {
+  const bounds = canvas.getBoundingClientRect();
   pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-  width = window.innerWidth;
-  height = window.innerHeight;
+  width = Math.max(1, Math.round(bounds.width || window.innerWidth));
+  height = Math.max(1, Math.round(bounds.height || window.innerHeight));
 
   canvas.width = Math.round(width * pixelRatio);
   canvas.height = Math.round(height * pixelRatio);
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+  pointer.x = width / 2;
+  pointer.y = height / 2;
 
   const count = Math.min(170, Math.max(105, Math.round((width * height) / 7600)));
   particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
@@ -229,15 +241,13 @@ function animate(timestamp = 0) {
 
 window.addEventListener('pointermove', (event) => {
   if (event.pointerType === 'touch') return;
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
+  setPointerFromClient(event.clientX, event.clientY);
   pointer.active = true;
   pointer.type = event.pointerType || 'mouse';
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
+  setPointerFromClient(event.clientX, event.clientY);
   pointer.active = true;
   pointer.down = true;
   pointer.type = event.pointerType || 'mouse';
@@ -260,8 +270,7 @@ window.addEventListener('pointerleave', (event) => {
 window.addEventListener('touchstart', (event) => {
   const touch = event.touches?.[0];
   if (!touch) return;
-  pointer.x = touch.clientX;
-  pointer.y = touch.clientY;
+  setPointerFromClient(touch.clientX, touch.clientY);
   pointer.active = true;
   pointer.down = true;
   pointer.type = 'touch';
@@ -270,8 +279,7 @@ window.addEventListener('touchstart', (event) => {
 window.addEventListener('touchmove', (event) => {
   const touch = event.touches?.[0];
   if (!touch) return;
-  pointer.x = touch.clientX;
-  pointer.y = touch.clientY;
+  setPointerFromClient(touch.clientX, touch.clientY);
   pointer.active = true;
   pointer.down = true;
 }, { passive: true });
@@ -287,6 +295,7 @@ window.addEventListener('touchcancel', () => {
 }, { passive: true });
 
 window.addEventListener('resize', resizeCanvas, { passive: true });
+window.visualViewport?.addEventListener('resize', resizeCanvas, { passive: true });
 
 resizeCanvas();
 requestAnimationFrame(animate);
