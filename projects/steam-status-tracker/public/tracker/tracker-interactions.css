@@ -1,70 +1,102 @@
 body {
   overflow-x: hidden;
-  perspective: 1500px;
+  perspective: none !important;
 }
 
 .shell {
   transform: none !important;
-  transform-style: preserve-3d;
+  transform-style: flat;
 }
 
-.tracker-tilt-panel {
-  --panel-rx: 0deg;
-  --panel-ry: 0deg;
-  --panel-x: 0px;
-  --panel-y: 0px;
-  --panel-scale: 1;
-  --panel-shine-x: 50%;
-  --panel-shine-y: 50%;
+.tracker-panel-stage {
+  --stage-rx: 0deg;
+  --stage-ry: 0deg;
+  --stage-x: 0px;
+  --stage-y: 0px;
+  --stage-scale: 1;
+  position: relative;
+  width: 100%;
   transform:
     perspective(1500px)
-    translate3d(var(--panel-x), var(--panel-y), 0)
-    rotateX(var(--panel-rx))
-    rotateY(var(--panel-ry))
-    scale(var(--panel-scale)) !important;
+    translate3d(var(--stage-x), var(--stage-y), 0)
+    rotateX(var(--stage-rx))
+    rotateY(var(--stage-ry))
+    scale(var(--stage-scale));
   transform-origin: center;
   transform-style: preserve-3d;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   will-change: transform;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    filter 180ms ease;
 }
 
-.tracker-tilt-panel:hover {
-  filter: brightness(1.012);
+.tracker-panel-stage-spaced {
+  margin-top: 18px;
 }
 
-.tracker-tilt-panel.is-pressed {
+.tracker-panel-stage > .section-panel,
+.tracker-panel-stage > .message-panel {
+  margin-top: 0 !important;
+}
+
+.tracker-panel-stage.is-pressed {
   filter: brightness(0.99);
 }
 
-.tracker-tilt-panel.glass-panel::before {
+/* Стеклянная панель остаётся плоской внутри отдельной движущейся обёртки.
+   Это убирает диагональные полосы и артефакты backdrop-filter. */
+.tracker-motion-panel {
+  --panel-shine-x: 50%;
+  --panel-shine-y: 50%;
+  width: 100%;
+  transform: none !important;
+  transform-style: flat !important;
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
+  will-change: auto;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    filter 150ms ease;
+}
+
+.tracker-panel-stage:hover > .tracker-motion-panel {
+  filter: brightness(1.012);
+}
+
+.tracker-panel-stage.is-pressed > .tracker-motion-panel {
+  filter: brightness(0.99);
+}
+
+.tracker-motion-panel.glass-panel::before {
   background:
     radial-gradient(
       560px circle at var(--panel-shine-x) var(--panel-shine-y),
-      rgba(255, 255, 255, 0.11),
-      rgba(168, 151, 255, 0.04) 30%,
-      transparent 58%
+      rgba(255, 255, 255, 0.105),
+      rgba(168, 151, 255, 0.038) 31%,
+      transparent 59%
     ),
-    radial-gradient(440px circle at 95% 105%, rgba(88, 178, 255, 0.09), transparent 52%);
-  opacity: 0.85;
+    radial-gradient(440px circle at 95% 105%, rgba(88, 178, 255, 0.08), transparent 52%);
+  opacity: 0.82;
   mix-blend-mode: screen;
 }
 
-/* Внутренние карточки остаются неподвижными внутри своей большой панели. */
-.tracker-tilt-panel .detail-card,
-.tracker-tilt-panel .game-summary-card,
-.tracker-tilt-panel .game-session,
-.tracker-tilt-panel .history-content,
-.tracker-tilt-panel .avatar,
-.tracker-tilt-panel .status-pill,
-.tracker-tilt-panel .game-session-icon,
-.tracker-tilt-panel .game-badge,
-.tracker-tilt-panel .history-marker,
-.tracker-tilt-panel .history-badge {
+.tracker-motion-panel.glass-panel::after,
+.tracker-motion-panel .detail-card::before,
+.tracker-motion-panel .game-summary-card::before,
+.tracker-motion-panel .game-session::before,
+.tracker-motion-panel .history-content::before {
+  animation: none !important;
+}
+
+/* Внутренние карточки больше не наклоняются и не живут отдельно. */
+.tracker-motion-panel .detail-card,
+.tracker-motion-panel .game-summary-card,
+.tracker-motion-panel .game-session,
+.tracker-motion-panel .history-content,
+.tracker-motion-panel .avatar,
+.tracker-motion-panel .status-pill,
+.tracker-motion-panel .game-session-icon,
+.tracker-motion-panel .game-badge,
+.tracker-motion-panel .history-marker,
+.tracker-motion-panel .history-badge {
   transform: none !important;
   will-change: auto;
 }
@@ -80,7 +112,7 @@ body {
 }
 
 @media (hover: none) {
-  .tracker-tilt-panel:hover {
+  .tracker-panel-stage:hover > .tracker-motion-panel {
     filter: none;
   }
 
@@ -91,7 +123,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tracker-tilt-panel {
+  .tracker-panel-stage {
     transform: none !important;
     will-change: auto;
   }
