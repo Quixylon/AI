@@ -1,66 +1,52 @@
-.shell {
+body {
+  overflow-x: hidden;
   perspective: 1500px;
 }
 
-.tracker-tilt-card {
-  --card-rx: 0deg;
-  --card-ry: 0deg;
-  --card-scale: 1;
-  --card-press-y: 0px;
-  --card-shine-x: 50%;
-  --card-shine-y: 50%;
+.tracker-shell-motion {
+  --shell-rx: 0deg;
+  --shell-ry: 0deg;
+  --shell-x: 0px;
+  --shell-y: 0px;
+  --shell-scale: 1;
+  --shell-shine-x: 50%;
+  --shell-shine-y: 50%;
   transform:
     perspective(1500px)
-    translate3d(0, var(--card-press-y), 0)
-    rotateX(var(--card-rx))
-    rotateY(var(--card-ry))
-    scale(var(--card-scale)) !important;
-  transform-origin: center;
-  transform-style: flat;
+    translate3d(var(--shell-x), var(--shell-y), 0)
+    rotateX(var(--shell-rx))
+    rotateY(var(--shell-ry))
+    scale(var(--shell-scale));
+  transform-origin: 50% 30vh;
+  transform-style: preserve-3d;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   will-change: transform;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    filter 180ms ease;
+  transition: filter 180ms ease;
 }
 
-.tracker-tilt-card:hover {
-  filter: brightness(1.018);
+.tracker-shell-motion.is-pressed {
+  filter: brightness(0.99);
 }
 
-.tracker-tilt-card.is-pressed {
-  filter: brightness(0.985);
+/* All panels are now fixed parts of one moving tracker, not separate tilt objects. */
+.tracker-shell-motion .glass-panel,
+.tracker-shell-motion .detail-card,
+.tracker-shell-motion .game-summary-card,
+.tracker-shell-motion .game-session,
+.tracker-shell-motion .history-content {
+  transform: none !important;
+  will-change: auto;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-#profile-card.tracker-tilt-card.is-pressed,
-#games-panel.tracker-tilt-card.is-pressed,
-#history-panel.tracker-tilt-card.is-pressed,
-#message-panel.tracker-tilt-card.is-pressed {
-  box-shadow:
-    0 24px 68px rgba(0, 0, 0, 0.4),
-    0 5px 20px rgba(73, 72, 150, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.045);
-}
-
-.detail-card.tracker-tilt-card.is-pressed,
-.game-summary-card.tracker-tilt-card.is-pressed,
-.game-session.tracker-tilt-card.is-pressed,
-.history-content.tracker-tilt-card.is-pressed {
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.19),
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
-}
-
-.tracker-tilt-card.glass-panel::before {
+.tracker-shell-motion .glass-panel::before {
   background:
     radial-gradient(
-      560px circle at var(--card-shine-x) var(--card-shine-y),
-      rgba(255, 255, 255, 0.115),
-      rgba(168, 151, 255, 0.045) 30%,
+      560px circle at var(--shell-shine-x) var(--shell-shine-y),
+      rgba(255, 255, 255, 0.11),
+      rgba(168, 151, 255, 0.04) 30%,
       transparent 58%
     ),
     radial-gradient(440px circle at 95% 105%, rgba(88, 178, 255, 0.09), transparent 52%);
@@ -68,16 +54,13 @@
   mix-blend-mode: screen;
 }
 
-/* Small controls stay fixed inside the tilting panel. */
 .avatar,
 .status-pill,
-.csrep-button,
 .game-session-icon,
 .game-badge,
 .history-marker,
-.history-badge,
-.back-link {
-  transform: none;
+.history-badge {
+  transform: none !important;
   will-change: auto;
 }
 
@@ -92,14 +75,6 @@
 }
 
 @media (hover: none) {
-  .tracker-tilt-card:hover {
-    filter: none;
-  }
-
-  .tracker-tilt-card.is-pressed {
-    filter: brightness(0.985);
-  }
-
   .csrep-button:hover,
   .back-link:hover {
     transform: none;
@@ -107,7 +82,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tracker-tilt-card {
+  .tracker-shell-motion {
     transform: none !important;
     will-change: auto;
   }
