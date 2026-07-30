@@ -1,0 +1,147 @@
+.tracker-motion-item {
+  --tracker-lag-x: 0px;
+  --tracker-lag-y: 0px;
+  --tracker-lag-rx: 0deg;
+  --tracker-lag-ry: 0deg;
+  --tracker-motion-scale: 1;
+  --interaction-x: 50%;
+  --interaction-y: 50%;
+  transform:
+    perspective(900px)
+    translate3d(var(--tracker-lag-x), var(--tracker-lag-y), 0)
+    rotateX(var(--tracker-lag-rx))
+    rotateY(var(--tracker-lag-ry))
+    scale(var(--tracker-motion-scale));
+  transform-origin: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.tracker-motion-item:hover {
+  --tracker-motion-scale: 1.018;
+  filter: brightness(1.055);
+}
+
+.tracker-motion-item.is-pressed,
+.tracker-motion-item:active {
+  --tracker-motion-scale: 0.985;
+}
+
+.tracker-motion-item.back-link:hover,
+.tracker-motion-item.csrep-button:hover {
+  transform:
+    perspective(900px)
+    translate3d(var(--tracker-lag-x), calc(var(--tracker-lag-y) - 2px), 0)
+    rotateX(var(--tracker-lag-rx))
+    rotateY(var(--tracker-lag-ry))
+    scale(var(--tracker-motion-scale));
+}
+
+.avatar.tracker-motion-item {
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.38),
+    0 0 30px rgba(139, 124, 255, 0.16);
+}
+
+.status-pill.tracker-motion-item,
+.detail-card.tracker-motion-item,
+.csrep-button.tracker-motion-item,
+.game-summary-card.tracker-motion-item,
+.game-session-icon.tracker-motion-item,
+.game-badge.tracker-motion-item,
+.history-marker.tracker-motion-item,
+.history-badge.tracker-motion-item,
+.back-link.tracker-motion-item {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease,
+    background 180ms ease;
+}
+
+.status-pill.tracker-motion-item,
+.detail-card.tracker-motion-item,
+.csrep-button.tracker-motion-item,
+.game-summary-card.tracker-motion-item,
+.game-session-icon.tracker-motion-item,
+.game-badge.tracker-motion-item,
+.history-badge.tracker-motion-item,
+.back-link.tracker-motion-item {
+  position: relative;
+  isolation: isolate;
+}
+
+.status-pill.tracker-motion-item::after,
+.detail-card.tracker-motion-item::after,
+.csrep-button.tracker-motion-item::after,
+.game-summary-card.tracker-motion-item::after,
+.game-session-icon.tracker-motion-item::after,
+.game-badge.tracker-motion-item::after,
+.history-badge.tracker-motion-item::after,
+.back-link.tracker-motion-item::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      circle at var(--interaction-x) var(--interaction-y),
+      rgba(255, 255, 255, 0.18),
+      rgba(190, 181, 255, 0.065) 28%,
+      transparent 58%
+    );
+  opacity: 0.42;
+  content: "";
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.status-pill.tracker-motion-item:hover::after,
+.detail-card.tracker-motion-item:hover::after,
+.csrep-button.tracker-motion-item:hover::after,
+.game-summary-card.tracker-motion-item:hover::after,
+.game-session-icon.tracker-motion-item:hover::after,
+.game-badge.tracker-motion-item:hover::after,
+.history-badge.tracker-motion-item:hover::after,
+.back-link.tracker-motion-item:hover::after {
+  opacity: 0.95;
+}
+
+.status-pill.tracker-motion-item > *,
+.detail-card.tracker-motion-item > *,
+.csrep-button.tracker-motion-item > *,
+.game-summary-card.tracker-motion-item > *,
+.game-session-icon.tracker-motion-item > *,
+.game-badge.tracker-motion-item > *,
+.history-badge.tracker-motion-item > *,
+.back-link.tracker-motion-item > * {
+  position: relative;
+  z-index: 1;
+}
+
+.history-marker.tracker-motion-item {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 15px rgba(143, 132, 255, 0.18);
+}
+
+.history-entry.online .history-marker.tracker-motion-item,
+.history-entry.in-game .history-marker.tracker-motion-item {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 22px rgba(100, 236, 173, 0.58);
+}
+
+@media (hover: none) {
+  .tracker-motion-item:hover {
+    --tracker-motion-scale: 1;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tracker-motion-item {
+    transform: none !important;
+    will-change: auto;
+  }
+}
