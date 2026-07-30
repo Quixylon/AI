@@ -20,6 +20,7 @@ const pointer = {
   y: window.innerHeight / 2,
   active: false,
   down: false,
+  hoveredCard: null,
   pressedCard: null
 };
 
@@ -49,6 +50,23 @@ function isActionCard(card) {
   return card.matches('.csrep-button');
 }
 
+function cardAtPoint(x, y) {
+  if (!motionEnabled) return null;
+  const target = document.elementFromPoint(x, y);
+  if (!(target instanceof Element)) return null;
+
+  const card = target.closest(CARD_SELECTOR);
+  if (!card || card.hidden || card.closest('[hidden]')) return null;
+  return card;
+}
+
+function setHoveredCard(card) {
+  if (pointer.hoveredCard === card) return;
+  pointer.hoveredCard?.classList.remove('is-pointer-over');
+  pointer.hoveredCard = card;
+  pointer.hoveredCard?.classList.add('is-pointer-over');
+}
+
 function resetCard(card, immediate = false) {
   const state = stateFor(card);
 
@@ -65,7 +83,7 @@ function resetCard(card, immediate = false) {
   card.style.setProperty('--tilt-y', '0px');
   card.style.setProperty('--panel-shine-x', '50%');
   card.style.setProperty('--panel-shine-y', '50%');
-  card.classList.remove('is-tilt-pressed');
+  card.classList.remove('is-tilt-pressed', 'is-pointer-over');
 }
 
 function registerCards() {
@@ -73,7 +91,7 @@ function registerCards() {
 
   for (const card of cards) {
     if (!nextCards.includes(card)) {
-      card.classList.remove('tracker-tilt-card', 'is-tilt-pressed');
+      card.classList.remove('tracker-tilt-card', 'is-tilt-pressed', 'is-pointer-over');
       resetCard(card, true);
     }
   }
@@ -84,6 +102,10 @@ function registerCards() {
     stateFor(card);
     card.classList.toggle('tracker-tilt-card', motionEnabled);
     if (!motionEnabled) resetCard(card, true);
+  }
+
+  if (motionEnabled && pointer.active) {
+    setHoveredCard(cardAtPoint(pointer.x, pointer.y));
   }
 }
 
@@ -97,16 +119,21 @@ function scheduleRefresh() {
 
 function releasePress() {
   pointer.down = false;
-  if (pointer.pressedCard) pointer.pressedCard.classList.remove('is-tilt-pressed');
+  pointer.pressedCard?.classList.remove('is-tilt-pressed');
   pointer.pressedCard = null;
+}
+
+function clearPointer() {
+  releasePress();
+  pointer.active = false;
+  setHoveredCard(null);
 }
 
 function configureMotion() {
   const nextEnabled = motionMedia.matches && !reducedMotionMedia.matches;
 
   if (nextEnabled !== motionEnabled) {
-    releasePress();
-    pointer.active = false;
+    clearPointer();
     motionEnabled = nextEnabled;
     document.documentElement.classList.toggle('tracker-motion-enabled', motionEnabled);
   }
@@ -123,6 +150,7 @@ function updateCard(card) {
   const state = stateFor(card);
   const pressed = pointer.down && pointer.pressedCard === card;
   const active = pointer.active;
+  const hovered = pointer.hoveredCard === card;
 
   let targetRotateX = 0;
   let targetRotateY = 0;
@@ -145,9 +173,13 @@ function updateCard(card) {
     targetRotateY = normalizedX * strengthY * pressBoost;
     targetShiftX = normalizedX * (large ? 0.85 : 0.46);
     targetShiftY = normalizedY * (large ? 0.58 : 0.32) + (pressed ? 1.15 : 0);
+  }
 
-    card.style.setProperty('--panel-shine-x', `${clamp(50 + normalizedX * 34, 12, 88).toFixed(1)}%`);
-    card.style.setProperty('--panel-shine-y', `${clamp(50 + normalizedY * 34, 12, 88).toFixed(1)}%`);
+  if (hovered) {
+    const localX = clamp((pointer.x - rect.left) / rect.width, 0, 1);
+    const localY = clamp((pointer.y - rect.top) / rect.height, 0, 1);
+    card.style.setProperty('--panel-shine-x', `${(localX * 100).toFixed(1)}%`);
+    card.style.setProperty('--panel-shine-y', `${(localY * 100).toFixed(1)}%`);
   } else {
     card.style.setProperty('--panel-shine-x', '50%');
     card.style.setProperty('--panel-shine-y', '50%');
@@ -185,6 +217,7 @@ window.addEventListener('pointermove', (event) => {
   pointer.x = event.clientX;
   pointer.y = event.clientY;
   pointer.active = true;
+  setHoveredCard(cardAtPoint(event.clientX, event.clientY));
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
@@ -194,21 +227,20 @@ window.addEventListener('pointerdown', (event) => {
   pointer.y = event.clientY;
   pointer.active = true;
   pointer.down = true;
-  pointer.pressedCard = event.target.closest(CARD_SELECTOR);
+  setHoveredCard(cardAtPoint(event.clientX, event.clientY));
+  pointer.pressedCard = pointer.hoveredCard;
   pointer.pressedCard?.classList.add('is-tilt-pressed');
 }, { passive: true });
 
 window.addEventListener('pointerup', releasePress, { passive: true });
-window.addEventListener('pointercancel', releasePress, { passive: true });
+window.addEventListener('pointercancel', clearPointer, { passive: true });
+window.addEventListener('pointerleave', clearPointer, { passive: true });
+window.addEventListener('blur', clearPointer, { passive: true });
 
-window.addEventListener('pointerleave', () => {
-  releasePress();
-  pointer.active = false;
-}, { passive: true });
-
-window.addEventListener('blur', () => {
-  releasePress();
-  pointer.active = false;
+window.addEventListener('scroll', () => {
+  if (motionEnabled && pointer.active && !pointer.down) {
+    setHoveredCard(cardAtPoint(pointer.x, pointer.y));
+  }
 }, { passive: true });
 
 window.addEventListener('resize', configureMotion, { passive: true });
