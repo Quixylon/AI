@@ -28,7 +28,6 @@ const pointer = {
 
 const panelStates = new WeakMap();
 let panels = [];
-let refreshQueued = false;
 
 function stateFor(panel) {
   if (!panelStates.has(panel)) {
@@ -63,25 +62,22 @@ function ensureStage(panel) {
 function syncStage(panel) {
   const stage = ensureStage(panel);
   if (stage.hidden !== panel.hidden) stage.hidden = panel.hidden;
-  stage.style.setProperty('--stage-rx', '0deg');
-  stage.style.setProperty('--stage-ry', '0deg');
-  stage.style.setProperty('--stage-x', '0px');
-  stage.style.setProperty('--stage-y', '0px');
-  stage.style.setProperty('--stage-scale', '1');
-  panel.classList.add('tracker-motion-panel');
-  stateFor(panel);
+
+  if (stage.dataset.motionReady !== 'true') {
+    stage.dataset.motionReady = 'true';
+    stage.style.setProperty('--stage-rx', '0deg');
+    stage.style.setProperty('--stage-ry', '0deg');
+    stage.style.setProperty('--stage-x', '0px');
+    stage.style.setProperty('--stage-y', '0px');
+    stage.style.setProperty('--stage-scale', '1');
+    panel.classList.add('tracker-motion-panel');
+    stateFor(panel);
+  }
 }
 
 function refreshPanels() {
-  refreshQueued = false;
   panels = [...document.querySelectorAll(PANEL_SELECTOR)];
   panels.forEach(syncStage);
-}
-
-function queueRefresh() {
-  if (refreshQueued) return;
-  refreshQueued = true;
-  requestAnimationFrame(refreshPanels);
 }
 
 function panelAtPoint(x, y) {
@@ -229,6 +225,12 @@ window.addEventListener('pointerdown', (event) => {
 window.addEventListener('pointerup', releasePress, { passive: true });
 window.addEventListener('pointercancel', releasePress, { passive: true });
 
+window.addEventListener('scroll', () => {
+  if (finePointer && pointer.active && !pointer.down) {
+    pointer.hoveredPanel = panelAtPoint(pointer.x, pointer.y);
+  }
+}, { passive: true });
+
 window.addEventListener('pointerleave', () => {
   releasePress();
   pointer.active = false;
@@ -242,19 +244,19 @@ window.addEventListener('blur', () => {
 }, { passive: true });
 
 const observer = new MutationObserver((mutations) => {
-  const relevant = mutations.some((mutation) => {
-    if (mutation.type === 'childList') return true;
-    return mutation.type === 'attributes' &&
+  for (const mutation of mutations) {
+    if (
+      mutation.type === 'attributes' &&
       mutation.attributeName === 'hidden' &&
       mutation.target instanceof Element &&
-      mutation.target.matches(PANEL_SELECTOR);
-  });
-
-  if (relevant) queueRefresh();
+      mutation.target.matches(PANEL_SELECTOR)
+    ) {
+      syncStage(mutation.target);
+    }
+  }
 });
 
 observer.observe(document.body, {
-  childList: true,
   subtree: true,
   attributes: true,
   attributeFilter: ['hidden']
