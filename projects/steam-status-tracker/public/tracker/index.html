@@ -7,7 +7,8 @@
     <meta name="description" content="Steam-трекер Qu’lon: статус, история сети и запущенных игр." />
     <title>Qu’lon Tracker</title>
     <link rel="stylesheet" href="./tracker.css?v=2" />
-    <link rel="stylesheet" href="./tracker-glass.css?v=1" />
+    <link rel="stylesheet" href="./tracker-glass.css?v=2" />
+    <link rel="stylesheet" href="./tracker-lists.css?v=1" />
   </head>
   <body>
     <canvas id="tracker-background" aria-hidden="true"></canvas>
@@ -57,9 +58,6 @@
           <span>CSRep</span>
           <span class="csrep-button-arrow" aria-hidden="true">↗</span>
         </a>
-        <p id="csrep-message" hidden aria-live="polite"></p>
-        <div id="csrep-metrics" hidden></div>
-        <p id="csrep-updated" hidden></p>
       </div>
 
       <section id="games-panel" class="panel section-panel glass-panel" hidden aria-labelledby="games-title">
@@ -89,7 +87,7 @@
       </footer>
     </main>
 
-    <script type="module" src="./tracker-background.js?v=1"></script>
-    <script type="module" src="./tracker.js?v=2"></script>
+    <script type="module" src="./tracker-background.js?v=2"></script>
+    <script type="module" src="./tracker.js?v=3"></script>
   </body>
 </html>
