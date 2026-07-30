@@ -13,7 +13,8 @@ const INTERACTIVE_SELECTOR = [
   '[role="link"]'
 ].join(', ');
 
-const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const motionMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 769px)');
+const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const pointer = {
   x: window.innerWidth / 2,
@@ -28,6 +29,7 @@ const pointer = {
 
 const panelStates = new WeakMap();
 let panels = [];
+let motionEnabled = false;
 
 function stateFor(panel) {
   if (!panelStates.has(panel)) {
@@ -41,6 +43,31 @@ function stateFor(panel) {
   }
 
   return panelStates.get(panel);
+}
+
+function resetState(panel) {
+  const state = stateFor(panel);
+  state.rotateX = 0;
+  state.rotateY = 0;
+  state.shiftX = 0;
+  state.shiftY = 0;
+  state.scale = 1;
+
+  const stage = panel.parentElement?.classList.contains('tracker-panel-stage')
+    ? panel.parentElement
+    : null;
+
+  if (stage) {
+    stage.style.setProperty('--stage-rx', '0deg');
+    stage.style.setProperty('--stage-ry', '0deg');
+    stage.style.setProperty('--stage-x', '0px');
+    stage.style.setProperty('--stage-y', '0px');
+    stage.style.setProperty('--stage-scale', '1');
+    stage.classList.remove('is-pressed');
+  }
+
+  panel.style.setProperty('--panel-shine-x', '50%');
+  panel.style.setProperty('--panel-shine-y', '50%');
 }
 
 function ensureStage(panel) {
@@ -59,34 +86,51 @@ function ensureStage(panel) {
   return stage;
 }
 
+function unwrapPanel(panel) {
+  const stage = panel.parentElement?.classList.contains('tracker-panel-stage')
+    ? panel.parentElement
+    : null;
+
+  resetState(panel);
+  panel.classList.remove('tracker-motion-panel');
+
+  if (!stage) return;
+  stage.before(panel);
+  stage.remove();
+}
+
 function syncStage(panel) {
   const stage = ensureStage(panel);
-  if (stage.hidden !== panel.hidden) stage.hidden = panel.hidden;
+  stage.hidden = panel.hidden;
+  panel.classList.add('tracker-motion-panel');
 
   if (stage.dataset.motionReady !== 'true') {
     stage.dataset.motionReady = 'true';
-    stage.style.setProperty('--stage-rx', '0deg');
-    stage.style.setProperty('--stage-ry', '0deg');
-    stage.style.setProperty('--stage-x', '0px');
-    stage.style.setProperty('--stage-y', '0px');
-    stage.style.setProperty('--stage-scale', '1');
-    panel.classList.add('tracker-motion-panel');
-    stateFor(panel);
+    resetState(panel);
   }
 }
 
 function refreshPanels() {
   panels = [...document.querySelectorAll(PANEL_SELECTOR)];
-  panels.forEach(syncStage);
+
+  if (motionEnabled) {
+    panels.forEach(syncStage);
+  } else {
+    panels.forEach(unwrapPanel);
+  }
 }
 
 function panelAtPoint(x, y) {
+  if (!motionEnabled) return null;
   const target = document.elementFromPoint(x, y);
   return target instanceof Element ? target.closest(PANEL_SELECTOR) : null;
 }
 
 function layoutBounds(panel) {
-  const stage = panel.parentElement;
+  const stage = panel.parentElement?.classList.contains('tracker-panel-stage')
+    ? panel.parentElement
+    : null;
+
   if (!shell || !stage) return null;
 
   const shellBounds = shell.getBoundingClientRect();
@@ -106,21 +150,34 @@ function releasePress() {
   }
 
   pointer.pressedPanel = null;
+}
 
-  if (!finePointer) {
-    pointer.active = false;
-    pointer.hoveredPanel = null;
+function configureMotion() {
+  const nextEnabled = motionMedia.matches && !reducedMotionMedia.matches;
+
+  if (nextEnabled === motionEnabled && panels.length) {
+    refreshPanels();
+    return;
   }
+
+  releasePress();
+  pointer.active = false;
+  pointer.hoveredPanel = null;
+  motionEnabled = nextEnabled;
+  document.documentElement.classList.toggle('tracker-motion-enabled', motionEnabled);
+  refreshPanels();
 }
 
 function updatePanel(panel) {
+  if (!motionEnabled) return;
+
   const stage = panel.parentElement;
   const bounds = layoutBounds(panel);
   if (!stage || !bounds || !bounds.width || !bounds.height || panel.hidden || stage.hidden) return;
 
   const state = stateFor(panel);
   const pressed = pointer.down && pointer.pressedPanel === panel;
-  const hovered = finePointer && pointer.active && pointer.hoveredPanel === panel;
+  const hovered = pointer.active && pointer.hoveredPanel === panel;
   const engaged = pressed || hovered;
 
   let targetRotateX = 0;
@@ -157,8 +214,7 @@ function updatePanel(panel) {
     panel.style.setProperty('--panel-shine-y', '50%');
   }
 
-  // Быстрый отклик без желейной задержки, но с мягким возвратом.
-  const response = pressed ? 0.46 : engaged ? 0.34 : 0.2;
+  const response = pressed ? 0.52 : engaged ? 0.4 : 0.24;
   state.rotateX += (targetRotateX - state.rotateX) * response;
   state.rotateY += (targetRotateY - state.rotateY) * response;
   state.shiftX += (targetShiftX - state.shiftX) * response;
@@ -181,32 +237,23 @@ function updatePanel(panel) {
 }
 
 function animate() {
-  panels.forEach(updatePanel);
+  if (motionEnabled) panels.forEach(updatePanel);
   requestAnimationFrame(animate);
 }
 
 window.addEventListener('pointermove', (event) => {
-  if (!finePointer && !pointer.down) return;
+  if (!motionEnabled || event.pointerType === 'touch') return;
 
   pointer.x = event.clientX;
   pointer.y = event.clientY;
   pointer.active = true;
-
-  if (pointer.down && event.pointerType === 'touch') {
-    const movement = Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY);
-    if (movement > 10) {
-      releasePress();
-      return;
-    }
-  }
-
   pointer.hoveredPanel = pointer.down
     ? pointer.pressedPanel
     : panelAtPoint(event.clientX, event.clientY);
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
-  if (!(event.target instanceof Element)) return;
+  if (!motionEnabled || event.pointerType === 'touch' || !(event.target instanceof Element)) return;
 
   pointer.x = event.clientX;
   pointer.y = event.clientY;
@@ -226,7 +273,7 @@ window.addEventListener('pointerup', releasePress, { passive: true });
 window.addEventListener('pointercancel', releasePress, { passive: true });
 
 window.addEventListener('scroll', () => {
-  if (finePointer && pointer.active && !pointer.down) {
+  if (motionEnabled && pointer.active && !pointer.down) {
     pointer.hoveredPanel = panelAtPoint(pointer.x, pointer.y);
   }
 }, { passive: true });
@@ -251,7 +298,7 @@ const observer = new MutationObserver((mutations) => {
       mutation.target instanceof Element &&
       mutation.target.matches(PANEL_SELECTOR)
     ) {
-      syncStage(mutation.target);
+      if (motionEnabled) syncStage(mutation.target);
     }
   }
 });
@@ -262,10 +309,14 @@ observer.observe(document.body, {
   attributeFilter: ['hidden']
 });
 
+motionMedia.addEventListener?.('change', configureMotion);
+reducedMotionMedia.addEventListener?.('change', configureMotion);
+window.addEventListener('resize', configureMotion, { passive: true });
+
 if (shell) {
   shell.classList.remove('tracker-shell-motion');
   shell.style.transform = 'none';
 }
 
-refreshPanels();
+configureMotion();
 requestAnimationFrame(animate);
