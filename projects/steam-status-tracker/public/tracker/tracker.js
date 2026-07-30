@@ -48,6 +48,52 @@ function entryDuration(entry) {
   return Math.max(0, Math.round((endedAt - startedAt) / 1000));
 }
 
+function formatHistoryPoint(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'неизвестно';
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date).replace(' г.', '');
+}
+
+function formatHistoryRange(entry) {
+  const start = new Date(entry.startedAt);
+  const end = entry.endedAt ? new Date(entry.endedAt) : null;
+  if (Number.isNaN(start.getTime())) return 'Время неизвестно';
+
+  const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+  const timeFormatter = new Intl.DateTimeFormat('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const startDate = dateFormatter.format(start).replace(' г.', '');
+  const startTime = timeFormatter.format(start);
+
+  if (!end || Number.isNaN(end.getTime())) {
+    return `${startDate}, ${startTime} — сейчас`;
+  }
+
+  const sameDay = start.getFullYear() === end.getFullYear()
+    && start.getMonth() === end.getMonth()
+    && start.getDate() === end.getDate();
+
+  if (sameDay) {
+    return `${startDate}, ${startTime} — ${timeFormatter.format(end)}`;
+  }
+
+  return `${formatHistoryPoint(start)} — ${formatHistoryPoint(end)}`;
+}
+
 function showMessage(text) {
   $('#message-panel').textContent = text;
   $('#message-panel').hidden = false;
@@ -194,10 +240,21 @@ function renderGames(history) {
   limitScrollableList(list);
 }
 
+function networkStatus(entry) {
+  if (entry?.status === 'offline' || entry?.personaState === 'offline') return 'offline';
+  if (entry?.gameName || entry?.status === 'in-game') return entry?.personaState || 'online';
+  return entry?.status || entry?.personaState || 'unknown';
+}
+
 function normalizeNetworkEntries(history) {
   const source = (Array.isArray(history) ? history : [])
-    .filter((entry) => entry?.startedAt && !entry.gameName)
-    .map((entry) => ({ ...entry }))
+    .filter((entry) => entry?.startedAt)
+    .map((entry) => ({
+      ...entry,
+      status: networkStatus(entry),
+      gameName: null,
+      gameId: null
+    }))
     .sort((first, second) => new Date(first.startedAt) - new Date(second.startedAt));
 
   const merged = [];
@@ -207,7 +264,7 @@ function normalizeNetworkEntries(history) {
     const previousEnd = previous?.endedAt ? new Date(previous.endedAt).getTime() : Number.POSITIVE_INFINITY;
     const currentStart = new Date(entry.startedAt).getTime();
     const sameStatus = previous && previous.status === entry.status;
-    const overlapsOrTouches = sameStatus && currentStart <= previousEnd + 5 * 60 * 1000;
+    const overlapsOrTouches = sameStatus && currentStart <= previousEnd + 15 * 60 * 1000;
 
     if (!overlapsOrTouches) {
       merged.push(entry);
@@ -243,9 +300,13 @@ function renderNetworkHistory(history) {
     const card = document.createElement('article');
     card.className = `history-entry ${entry.status || 'unknown'}`;
 
+    const markerWrap = document.createElement('span');
+    markerWrap.className = 'history-marker-wrap';
+    markerWrap.setAttribute('aria-hidden', 'true');
+
     const marker = document.createElement('span');
     marker.className = 'history-marker';
-    marker.setAttribute('aria-hidden', 'true');
+    markerWrap.append(marker);
 
     const content = document.createElement('div');
     content.className = 'history-content';
@@ -260,17 +321,23 @@ function renderNetworkHistory(history) {
     badge.className = `history-badge${current ? ' current' : ''}`;
     badge.textContent = current ? 'Сейчас' : 'Завершено';
 
-    const facts = document.createElement('dl');
-    facts.className = 'session-facts history-facts';
-    facts.append(
-      createFact('Начало', formatDate(entry.startedAt)),
-      createFact('Окончание', entry.endedAt ? formatDate(entry.endedAt) : 'Сессия идёт сейчас'),
-      createFact(current ? 'Прошло' : 'Длительность', formatDuration(entryDuration(entry)), true)
-    );
+    const period = document.createElement('p');
+    period.className = 'history-period';
+    period.textContent = formatHistoryRange(entry);
 
+    const duration = document.createElement('div');
+    duration.className = 'history-duration-row';
+
+    const durationLabel = document.createElement('span');
+    durationLabel.textContent = current ? 'Уже в сети' : 'Длительность';
+
+    const durationValue = document.createElement('strong');
+    durationValue.textContent = formatDuration(entryDuration(entry));
+
+    duration.append(durationLabel, durationValue);
     top.append(title, badge);
-    content.append(top, facts);
-    card.append(marker, content);
+    content.append(top, period, duration);
+    card.append(markerWrap, content);
     list.append(card);
   });
 
