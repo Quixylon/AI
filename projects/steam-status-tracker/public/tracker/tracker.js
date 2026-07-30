@@ -53,20 +53,39 @@ function showMessage(text) {
   $('#message-panel').hidden = false;
 }
 
-function createMetric(label, value) {
-  const card = document.createElement('article');
-  card.className = 'detail-card liquid-tile';
+function createFact(label, value, emphasized = false) {
+  const item = document.createElement('div');
+  item.className = `session-fact${emphasized ? ' emphasized' : ''}`;
 
-  const labelElement = document.createElement('p');
-  labelElement.className = 'detail-label';
-  labelElement.textContent = label;
+  const term = document.createElement('dt');
+  term.textContent = label;
 
-  const valueElement = document.createElement('p');
-  valueElement.className = 'detail-value';
-  valueElement.textContent = value;
+  const description = document.createElement('dd');
+  description.textContent = value;
 
-  card.append(labelElement, valueElement);
-  return card;
+  item.append(term, description);
+  return item;
+}
+
+function limitScrollableList(list) {
+  requestAnimationFrame(() => {
+    const items = [...list.children];
+    const shouldScroll = items.length > 3;
+    list.classList.toggle('is-scrollable', shouldScroll);
+
+    if (!shouldScroll) {
+      list.style.maxHeight = '';
+      return;
+    }
+
+    const styles = getComputedStyle(list);
+    const gap = Number.parseFloat(styles.rowGap || styles.gap) || 0;
+    const visibleHeight = items
+      .slice(0, 3)
+      .reduce((total, item) => total + item.getBoundingClientRect().height, 0) + gap * 2 + 2;
+
+    list.style.maxHeight = `${Math.ceil(visibleHeight)}px`;
+  });
 }
 
 function renderPlayer(data) {
@@ -77,45 +96,10 @@ function renderPlayer(data) {
   $('#profile-link').href = player.profileUrl;
   $('#status-pill').className = `status-pill ${player.status}`;
   $('#status-pill').textContent = statusNames[player.status] || statusNames.unknown;
-  $('#current-game').textContent = player.gameName || statusNames[player.status] || 'Не играет';
+  $('#current-game').textContent = player.gameName || 'Нет запущенной игры';
   $('#last-logoff').textContent = formatDate(player.lastLogoff);
   $('#last-checked').textContent = formatDate(data.checkedAt, 'Ещё не проверялось');
   $('#profile-card').hidden = false;
-}
-
-function renderCsrep(data) {
-  const metrics = $('#csrep-metrics');
-  metrics.replaceChildren();
-  $('#csrep-link').href = data?.profileUrl || 'https://csrep.gg/player/76561199524001992';
-
-  if (!data?.available || !data?.stats) {
-    metrics.hidden = true;
-    $('#csrep-message').textContent = data?.error || 'Автоматическая статистика CSRep сейчас недоступна.';
-    $('#csrep-updated').textContent = data?.lastAttemptAt
-      ? `Последняя попытка: ${formatDate(data.lastAttemptAt)}`
-      : '';
-    return;
-  }
-
-  const source = data.stats.metrics || {};
-  const values = [
-    ['Trust Rating', data.stats.trustRating == null ? null : `${data.stats.trustRating}%`],
-    ['K/D', source.kd],
-    ['ADR', source.adr],
-    ['HLTV Rating 2.0', source.hltvRating],
-    ['Reaction Time', source.reactionMs == null ? null : `${source.reactionMs} мс`],
-    ['Проанализировано игр', data.stats.gamesAnalyzed]
-  ];
-
-  for (const [label, value] of values) {
-    if (value !== null && value !== undefined && value !== '') {
-      metrics.append(createMetric(label, String(value)));
-    }
-  }
-
-  metrics.hidden = !metrics.childElementCount;
-  $('#csrep-message').textContent = 'Показаны последние доступные показатели.';
-  $('#csrep-updated').textContent = data.checkedAt ? `Данные: ${formatDate(data.checkedAt)}` : '';
 }
 
 function renderGames(history) {
@@ -189,24 +173,57 @@ function renderGames(history) {
     const title = document.createElement('h3');
     title.textContent = session.gameName;
 
-    const timing = document.createElement('p');
-    timing.className = 'game-session-time';
-    timing.textContent = `${formatDate(session.startedAt)} → ${session.endedAt ? formatDate(session.endedAt) : 'сейчас'}`;
-
-    const duration = document.createElement('p');
-    duration.className = 'game-session-duration';
-    duration.textContent = `${current ? 'Игра запущена' : 'Время в игре'} · ${formatDuration(session.calculatedDuration)}`;
+    const facts = document.createElement('dl');
+    facts.className = 'session-facts';
+    facts.append(
+      createFact('Начало', formatDate(session.startedAt)),
+      createFact('Окончание', session.endedAt ? formatDate(session.endedAt) : 'Игра идёт сейчас'),
+      createFact(current ? 'Прошло' : 'Время в игре', formatDuration(session.calculatedDuration), true)
+    );
 
     const badge = document.createElement('span');
     badge.className = `game-badge${current ? ' current' : ''}`;
     badge.textContent = current ? 'Сейчас' : 'Завершено';
 
-    copy.append(title, timing, duration);
+    copy.append(title, facts);
     card.append(icon, copy, badge);
     list.append(card);
   });
 
   panel.hidden = false;
+  limitScrollableList(list);
+}
+
+function normalizeNetworkEntries(history) {
+  const source = (Array.isArray(history) ? history : [])
+    .filter((entry) => entry?.startedAt && !entry.gameName)
+    .map((entry) => ({ ...entry }))
+    .sort((first, second) => new Date(first.startedAt) - new Date(second.startedAt));
+
+  const merged = [];
+
+  for (const entry of source) {
+    const previous = merged.at(-1);
+    const previousEnd = previous?.endedAt ? new Date(previous.endedAt).getTime() : Number.POSITIVE_INFINITY;
+    const currentStart = new Date(entry.startedAt).getTime();
+    const sameStatus = previous && previous.status === entry.status;
+    const overlapsOrTouches = sameStatus && currentStart <= previousEnd + 5 * 60 * 1000;
+
+    if (!overlapsOrTouches) {
+      merged.push(entry);
+      continue;
+    }
+
+    if (!previous.endedAt || !entry.endedAt) {
+      previous.endedAt = null;
+    } else if (new Date(entry.endedAt) > new Date(previous.endedAt)) {
+      previous.endedAt = entry.endedAt;
+    }
+
+    delete previous.durationSeconds;
+  }
+
+  return merged.slice(-30).reverse();
 }
 
 function renderNetworkHistory(history) {
@@ -214,18 +231,15 @@ function renderNetworkHistory(history) {
   const list = $('#history-list');
   list.replaceChildren();
 
-  const entries = (Array.isArray(history) ? history : [])
-    .filter((entry) => entry?.startedAt && !entry.gameName)
-    .slice(-30)
-    .reverse();
+  const entries = normalizeNetworkEntries(history);
 
   if (!entries.length) {
     panel.hidden = true;
     return;
   }
 
-  entries.forEach((entry, index) => {
-    const current = index === 0 && !entry.endedAt;
+  entries.forEach((entry) => {
+    const current = !entry.endedAt;
     const card = document.createElement('article');
     card.className = `history-entry ${entry.status || 'unknown'}`;
 
@@ -243,24 +257,25 @@ function renderNetworkHistory(history) {
     title.textContent = statusNames[entry.status] || statusNames.unknown;
 
     const badge = document.createElement('span');
-    badge.className = 'history-badge';
-    badge.textContent = 'Статус';
+    badge.className = `history-badge${current ? ' current' : ''}`;
+    badge.textContent = current ? 'Сейчас' : 'Завершено';
 
-    const timing = document.createElement('p');
-    timing.className = 'history-timing';
-    timing.textContent = `${formatDate(entry.startedAt)} → ${entry.endedAt ? formatDate(entry.endedAt) : 'сейчас'}`;
-
-    const duration = document.createElement('p');
-    duration.className = 'history-duration';
-    duration.textContent = `${current ? 'Сессия идёт' : 'Длительность'} · ${formatDuration(entryDuration(entry))}`;
+    const facts = document.createElement('dl');
+    facts.className = 'session-facts history-facts';
+    facts.append(
+      createFact('Начало', formatDate(entry.startedAt)),
+      createFact('Окончание', entry.endedAt ? formatDate(entry.endedAt) : 'Сессия идёт сейчас'),
+      createFact(current ? 'Прошло' : 'Длительность', formatDuration(entryDuration(entry)), true)
+    );
 
     top.append(title, badge);
-    content.append(top, timing, duration);
+    content.append(top, facts);
     card.append(marker, content);
     list.append(card);
   });
 
   panel.hidden = false;
+  limitScrollableList(list);
 }
 
 async function fetchJson(path, fallback = null) {
@@ -272,13 +287,10 @@ async function load() {
   $('#message-panel').hidden = true;
 
   try {
-    const [status, history, csrep] = await Promise.all([
+    const [status, history] = await Promise.all([
       fetchJson('../data/status.json'),
-      fetchJson('../data/history.json', []),
-      fetchJson('../data/csrep.json')
+      fetchJson('../data/history.json', [])
     ]);
-
-    renderCsrep(csrep);
 
     if (!status?.configured || !status?.player) {
       $('#profile-card').hidden = true;
@@ -295,6 +307,15 @@ async function load() {
     showMessage(error.message || 'Не удалось загрузить данные мониторинга.');
   }
 }
+
+let resizeTimer = 0;
+window.addEventListener('resize', () => {
+  window.clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(() => {
+    limitScrollableList($('#games-list'));
+    limitScrollableList($('#history-list'));
+  }, 120);
+}, { passive: true });
 
 load();
 window.setInterval(load, 15_000);
