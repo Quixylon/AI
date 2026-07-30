@@ -1,57 +1,116 @@
-.tracker-motion-item {
-  --tracker-lag-x: 0px;
-  --tracker-lag-y: 0px;
-  --tracker-lag-rx: 0deg;
-  --tracker-lag-ry: 0deg;
-  --tracker-motion-scale: 1;
+.shell {
+  perspective: 1500px;
+  transform-style: preserve-3d;
+}
+
+.tracker-tilt-card {
+  --card-x: 0px;
+  --card-y: 0px;
+  --card-rx: 0deg;
+  --card-ry: 0deg;
+  --card-scale: 1;
+  --card-shine-x: 50%;
+  --card-shine-y: 50%;
+  transform:
+    perspective(1400px)
+    translate3d(var(--card-x), var(--card-y), 0)
+    rotateX(var(--card-rx))
+    rotateY(var(--card-ry))
+    scale(var(--card-scale)) !important;
+  transform-origin: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.tracker-tilt-card:hover {
+  --card-scale: 1.006;
+  filter: brightness(1.025);
+}
+
+#profile-card.tracker-tilt-card,
+#games-panel.tracker-tilt-card,
+#history-panel.tracker-tilt-card,
+#message-panel.tracker-tilt-card {
+  transform-origin: center center;
+}
+
+.tracker-tilt-card > .profile-top,
+.tracker-tilt-card > .details-grid,
+.tracker-tilt-card > .panel-heading,
+.tracker-tilt-card > .games-summary,
+.tracker-tilt-card > .games-list,
+.tracker-tilt-card > .history-list {
+  transform: translateZ(12px);
+  transform-style: preserve-3d;
+}
+
+.detail-card.tracker-tilt-card,
+.game-summary-card.tracker-tilt-card,
+.game-session.tracker-tilt-card,
+.history-content.tracker-tilt-card {
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.21),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.tracker-motion-control {
+  --control-x: 0px;
+  --control-y: 0px;
+  --control-rx: 0deg;
+  --control-ry: 0deg;
+  --control-scale: 1;
   --interaction-x: 50%;
   --interaction-y: 50%;
   transform:
-    perspective(900px)
-    translate3d(var(--tracker-lag-x), var(--tracker-lag-y), 0)
-    rotateX(var(--tracker-lag-rx))
-    rotateY(var(--tracker-lag-ry))
-    scale(var(--tracker-motion-scale));
+    perspective(950px)
+    translate3d(var(--control-x), var(--control-y), 18px)
+    rotateX(var(--control-rx))
+    rotateY(var(--control-ry))
+    scale(var(--control-scale)) !important;
   transform-origin: center;
   transform-style: preserve-3d;
   will-change: transform;
 }
 
-.tracker-motion-item:hover {
-  --tracker-motion-scale: 1.018;
-  filter: brightness(1.055);
+.tracker-motion-control:hover {
+  --control-scale: 1.025;
+  filter: brightness(1.065);
 }
 
-.tracker-motion-item.is-pressed,
-.tracker-motion-item:active {
-  --tracker-motion-scale: 0.985;
+.tracker-motion-control.is-pressed,
+.tracker-motion-control:active {
+  --control-scale: 0.98;
 }
 
-.tracker-motion-item.back-link:hover,
-.tracker-motion-item.csrep-button:hover {
+.tracker-motion-control.back-link:hover,
+.tracker-motion-control.csrep-button:hover {
   transform:
-    perspective(900px)
-    translate3d(var(--tracker-lag-x), calc(var(--tracker-lag-y) - 2px), 0)
-    rotateX(var(--tracker-lag-rx))
-    rotateY(var(--tracker-lag-ry))
-    scale(var(--tracker-motion-scale));
+    perspective(950px)
+    translate3d(var(--control-x), calc(var(--control-y) - 2px), 18px)
+    rotateX(var(--control-rx))
+    rotateY(var(--control-ry))
+    scale(var(--control-scale)) !important;
 }
 
-.avatar.tracker-motion-item {
+.avatar.tracker-motion-control {
   box-shadow:
-    0 20px 42px rgba(0, 0, 0, 0.38),
-    0 0 30px rgba(139, 124, 255, 0.16);
+    0 22px 46px rgba(0, 0, 0, 0.4),
+    0 0 32px rgba(139, 124, 255, 0.18);
 }
 
-.status-pill.tracker-motion-item,
-.detail-card.tracker-motion-item,
-.csrep-button.tracker-motion-item,
-.game-summary-card.tracker-motion-item,
-.game-session-icon.tracker-motion-item,
-.game-badge.tracker-motion-item,
-.history-marker.tracker-motion-item,
-.history-badge.tracker-motion-item,
-.back-link.tracker-motion-item {
+.status-pill.tracker-motion-control,
+.csrep-button.tracker-motion-control,
+.game-session-icon.tracker-motion-control,
+.game-badge.tracker-motion-control,
+.history-badge.tracker-motion-control,
+.back-link.tracker-motion-control {
+  position: relative;
+  isolation: isolate;
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
@@ -59,26 +118,12 @@
     background 180ms ease;
 }
 
-.status-pill.tracker-motion-item,
-.detail-card.tracker-motion-item,
-.csrep-button.tracker-motion-item,
-.game-summary-card.tracker-motion-item,
-.game-session-icon.tracker-motion-item,
-.game-badge.tracker-motion-item,
-.history-badge.tracker-motion-item,
-.back-link.tracker-motion-item {
-  position: relative;
-  isolation: isolate;
-}
-
-.status-pill.tracker-motion-item::after,
-.detail-card.tracker-motion-item::after,
-.csrep-button.tracker-motion-item::after,
-.game-summary-card.tracker-motion-item::after,
-.game-session-icon.tracker-motion-item::after,
-.game-badge.tracker-motion-item::after,
-.history-badge.tracker-motion-item::after,
-.back-link.tracker-motion-item::after {
+.status-pill.tracker-motion-control::after,
+.csrep-button.tracker-motion-control::after,
+.game-session-icon.tracker-motion-control::after,
+.game-badge.tracker-motion-control::after,
+.history-badge.tracker-motion-control::after,
+.back-link.tracker-motion-control::after {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -86,61 +131,60 @@
   background:
     radial-gradient(
       circle at var(--interaction-x) var(--interaction-y),
-      rgba(255, 255, 255, 0.18),
-      rgba(190, 181, 255, 0.065) 28%,
-      transparent 58%
+      rgba(255, 255, 255, 0.2),
+      rgba(190, 181, 255, 0.07) 29%,
+      transparent 60%
     );
-  opacity: 0.42;
+  opacity: 0.45;
   content: "";
   pointer-events: none;
   transition: opacity 180ms ease;
 }
 
-.status-pill.tracker-motion-item:hover::after,
-.detail-card.tracker-motion-item:hover::after,
-.csrep-button.tracker-motion-item:hover::after,
-.game-summary-card.tracker-motion-item:hover::after,
-.game-session-icon.tracker-motion-item:hover::after,
-.game-badge.tracker-motion-item:hover::after,
-.history-badge.tracker-motion-item:hover::after,
-.back-link.tracker-motion-item:hover::after {
-  opacity: 0.95;
+.status-pill.tracker-motion-control:hover::after,
+.csrep-button.tracker-motion-control:hover::after,
+.game-session-icon.tracker-motion-control:hover::after,
+.game-badge.tracker-motion-control:hover::after,
+.history-badge.tracker-motion-control:hover::after,
+.back-link.tracker-motion-control:hover::after {
+  opacity: 1;
 }
 
-.status-pill.tracker-motion-item > *,
-.detail-card.tracker-motion-item > *,
-.csrep-button.tracker-motion-item > *,
-.game-summary-card.tracker-motion-item > *,
-.game-session-icon.tracker-motion-item > *,
-.game-badge.tracker-motion-item > *,
-.history-badge.tracker-motion-item > *,
-.back-link.tracker-motion-item > * {
+.status-pill.tracker-motion-control > *,
+.csrep-button.tracker-motion-control > *,
+.game-session-icon.tracker-motion-control > *,
+.game-badge.tracker-motion-control > *,
+.history-badge.tracker-motion-control > *,
+.back-link.tracker-motion-control > * {
   position: relative;
   z-index: 1;
 }
 
-.history-marker.tracker-motion-item {
+.history-marker.tracker-motion-control {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.1),
     0 0 15px rgba(143, 132, 255, 0.18);
 }
 
-.history-entry.online .history-marker.tracker-motion-item,
-.history-entry.in-game .history-marker.tracker-motion-item {
+.history-entry.online .history-marker.tracker-motion-control,
+.history-entry.in-game .history-marker.tracker-motion-control {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.12),
     0 0 22px rgba(100, 236, 173, 0.58);
 }
 
 @media (hover: none) {
-  .tracker-motion-item:hover {
-    --tracker-motion-scale: 1;
+  .tracker-tilt-card:hover,
+  .tracker-motion-control:hover {
+    --card-scale: 1;
+    --control-scale: 1;
     filter: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tracker-motion-item {
+  .tracker-tilt-card,
+  .tracker-motion-control {
     transform: none !important;
     will-change: auto;
   }
