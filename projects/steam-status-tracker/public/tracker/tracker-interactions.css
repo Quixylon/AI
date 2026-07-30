@@ -3,48 +3,48 @@ body {
   perspective: 1500px;
 }
 
-.tracker-shell-motion {
-  --shell-rx: 0deg;
-  --shell-ry: 0deg;
-  --shell-x: 0px;
-  --shell-y: 0px;
-  --shell-scale: 1;
-  --shell-shine-x: 50%;
-  --shell-shine-y: 50%;
+.shell {
+  transform: none !important;
+  transform-style: preserve-3d;
+}
+
+.tracker-tilt-panel {
+  --panel-rx: 0deg;
+  --panel-ry: 0deg;
+  --panel-x: 0px;
+  --panel-y: 0px;
+  --panel-scale: 1;
+  --panel-shine-x: 50%;
+  --panel-shine-y: 50%;
   transform:
     perspective(1500px)
-    translate3d(var(--shell-x), var(--shell-y), 0)
-    rotateX(var(--shell-rx))
-    rotateY(var(--shell-ry))
-    scale(var(--shell-scale));
-  transform-origin: 50% 30vh;
+    translate3d(var(--panel-x), var(--panel-y), 0)
+    rotateX(var(--panel-rx))
+    rotateY(var(--panel-ry))
+    scale(var(--panel-scale)) !important;
+  transform-origin: center;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   will-change: transform;
-  transition: filter 180ms ease;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
 }
 
-.tracker-shell-motion.is-pressed {
+.tracker-tilt-panel:hover {
+  filter: brightness(1.012);
+}
+
+.tracker-tilt-panel.is-pressed {
   filter: brightness(0.99);
 }
 
-/* All panels are now fixed parts of one moving tracker, not separate tilt objects. */
-.tracker-shell-motion .glass-panel,
-.tracker-shell-motion .detail-card,
-.tracker-shell-motion .game-summary-card,
-.tracker-shell-motion .game-session,
-.tracker-shell-motion .history-content {
-  transform: none !important;
-  will-change: auto;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.tracker-shell-motion .glass-panel::before {
+.tracker-tilt-panel.glass-panel::before {
   background:
     radial-gradient(
-      560px circle at var(--shell-shine-x) var(--shell-shine-y),
+      560px circle at var(--panel-shine-x) var(--panel-shine-y),
       rgba(255, 255, 255, 0.11),
       rgba(168, 151, 255, 0.04) 30%,
       transparent 58%
@@ -54,12 +54,17 @@ body {
   mix-blend-mode: screen;
 }
 
-.avatar,
-.status-pill,
-.game-session-icon,
-.game-badge,
-.history-marker,
-.history-badge {
+/* Внутренние карточки остаются неподвижными внутри своей большой панели. */
+.tracker-tilt-panel .detail-card,
+.tracker-tilt-panel .game-summary-card,
+.tracker-tilt-panel .game-session,
+.tracker-tilt-panel .history-content,
+.tracker-tilt-panel .avatar,
+.tracker-tilt-panel .status-pill,
+.tracker-tilt-panel .game-session-icon,
+.tracker-tilt-panel .game-badge,
+.tracker-tilt-panel .history-marker,
+.tracker-tilt-panel .history-badge {
   transform: none !important;
   will-change: auto;
 }
@@ -75,6 +80,10 @@ body {
 }
 
 @media (hover: none) {
+  .tracker-tilt-panel:hover {
+    filter: none;
+  }
+
   .csrep-button:hover,
   .back-link:hover {
     transform: none;
@@ -82,7 +91,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tracker-shell-motion {
+  .tracker-tilt-panel {
     transform: none !important;
     will-change: auto;
   }
