@@ -55,8 +55,6 @@ body {
 .glass-panel:active {
   opacity: 1 !important;
   filter: none !important;
-  backdrop-filter: inherit;
-  -webkit-backdrop-filter: inherit;
 }
 
 .tracker-tilt-card.is-tilt-pressed {
