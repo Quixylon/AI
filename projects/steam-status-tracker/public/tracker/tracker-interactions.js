@@ -1,16 +1,7 @@
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
-const CARD_SELECTOR = [
-  '#message-panel',
-  '#profile-card',
-  '#games-panel',
-  '#history-panel',
-  '.detail-card',
-  '.game-summary-card',
-  '.game-session',
-  '.history-content'
-].join(', ');
-
+const shell = document.querySelector('.shell');
+const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const INTERACTIVE_SELECTOR = [
   'a',
   'button',
@@ -22,224 +13,156 @@ const INTERACTIVE_SELECTOR = [
   '[role="link"]'
 ].join(', ');
 
-const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
   active: false,
   down: false,
-  id: null,
+  pointerType: 'mouse',
   startX: 0,
-  startY: 0,
-  hoverCard: null,
-  activeCard: null
+  startY: 0
 };
 
-let cards = [];
-const states = new WeakMap();
+const state = {
+  rotateX: 0,
+  rotateY: 0,
+  shiftX: 0,
+  shiftY: 0,
+  scale: 1,
+  velocityRotateX: 0,
+  velocityRotateY: 0,
+  velocityShiftX: 0,
+  velocityShiftY: 0,
+  velocityScale: 0
+};
 
-function stateFor(card) {
-  if (!states.has(card)) {
-    states.set(card, {
-      rotateX: 0,
-      rotateY: 0,
-      scale: 1,
-      pressY: 0,
-      velocityX: 0,
-      velocityY: 0,
-      velocityScale: 0,
-      velocityPressY: 0
-    });
-  }
-
-  return states.get(card);
-}
-
-function refreshCards() {
-  cards = [...document.querySelectorAll(CARD_SELECTOR)];
-
-  for (const card of cards) {
-    card.classList.add('tracker-tilt-card');
-    card.style.setProperty('--card-rx', '0deg');
-    card.style.setProperty('--card-ry', '0deg');
-    card.style.setProperty('--card-scale', '1');
-    card.style.setProperty('--card-press-y', '0px');
-    card.style.setProperty('--card-shine-x', '50%');
-    card.style.setProperty('--card-shine-y', '50%');
-    stateFor(card);
-  }
-}
-
-function isLargeCard(card) {
-  return card.matches('#message-panel, #profile-card, #games-panel, #history-panel');
-}
-
-function cardAtPoint(x, y) {
-  const element = document.elementFromPoint(x, y);
-  return element instanceof Element ? element.closest(CARD_SELECTOR) : null;
-}
-
-function normalizedPoint(card, bounds) {
-  return {
-    x: clamp((pointer.x - (bounds.left + bounds.width / 2)) / Math.max(bounds.width / 2, 1), -1, 1),
-    y: clamp((pointer.y - (bounds.top + bounds.height / 2)) / Math.max(bounds.height / 2, 1), -1, 1)
-  };
-}
-
-function updateCard(card) {
-  const state = stateFor(card);
-  const bounds = card.getBoundingClientRect();
-  if (!bounds.width || !bounds.height || card.hidden) return;
-
-  const pressed = pointer.down && pointer.activeCard === card;
-  const hovered = finePointer && pointer.active && pointer.hoverCard === card;
-  const engaged = pressed || hovered;
-  const large = isLargeCard(card);
-
-  let targetRotateX = 0;
-  let targetRotateY = 0;
-  let targetScale = 1;
-  let targetPressY = 0;
-
-  if (engaged) {
-    const normalized = normalizedPoint(card, bounds);
-    const strength = pressed
-      ? (large ? 3.05 : 3.55)
-      : (large ? 1.8 : 2.2);
-
-    targetRotateX = -normalized.y * strength;
-    targetRotateY = normalized.x * strength;
-    targetScale = pressed ? (large ? 0.992 : 0.987) : 1.003;
-    targetPressY = pressed ? 1.25 : -0.25;
-
-    card.style.setProperty('--card-shine-x', `${((normalized.x + 1) * 50).toFixed(1)}%`);
-    card.style.setProperty('--card-shine-y', `${((normalized.y + 1) * 50).toFixed(1)}%`);
-  } else {
-    card.style.setProperty('--card-shine-x', '50%');
-    card.style.setProperty('--card-shine-y', '50%');
-  }
-
-  const spring = pressed ? 0.105 : 0.065;
-  const damping = pressed ? 0.7 : 0.76;
-
-  state.velocityX += (targetRotateX - state.rotateX) * spring;
-  state.velocityY += (targetRotateY - state.rotateY) * spring;
-  state.velocityScale += (targetScale - state.scale) * spring;
-  state.velocityPressY += (targetPressY - state.pressY) * spring;
-
-  state.velocityX *= damping;
-  state.velocityY *= damping;
-  state.velocityScale *= damping;
-  state.velocityPressY *= damping;
-
-  state.rotateX += state.velocityX;
-  state.rotateY += state.velocityY;
-  state.scale += state.velocityScale;
-  state.pressY += state.velocityPressY;
-
-  card.style.setProperty('--card-rx', `${state.rotateX.toFixed(3)}deg`);
-  card.style.setProperty('--card-ry', `${state.rotateY.toFixed(3)}deg`);
-  card.style.setProperty('--card-scale', state.scale.toFixed(4));
-  card.style.setProperty('--card-press-y', `${state.pressY.toFixed(2)}px`);
-}
-
-function animate() {
-  for (const card of cards) updateCard(card);
-  requestAnimationFrame(animate);
-}
-
-function beginPress(event) {
-  if (!(event.target instanceof Element)) return;
-
-  // Never capture clicks that belong to a real link or control. Pointer capture on
-  // the surrounding card can cancel the browser's normal click/navigation event.
-  if (event.target.closest(INTERACTIVE_SELECTOR)) {
-    pointer.down = false;
-    pointer.activeCard = null;
-    return;
-  }
-
-  const card = event.target.closest(CARD_SELECTOR);
-  if (!card) return;
-
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
+function setPointer(clientX, clientY) {
+  pointer.x = clientX;
+  pointer.y = clientY;
   pointer.active = true;
-  pointer.down = true;
-  pointer.id = event.pointerId;
-  pointer.startX = event.clientX;
-  pointer.startY = event.clientY;
-  pointer.activeCard = card;
-  pointer.hoverCard = card;
-  card.classList.add('is-pressed');
-
-  try {
-    card.setPointerCapture(event.pointerId);
-  } catch {
-    // Pointer capture may be unavailable in some browsers.
-  }
 }
 
-function endPress() {
+function releasePress() {
   pointer.down = false;
-  pointer.id = null;
-
-  if (pointer.activeCard) {
-    pointer.activeCard.classList.remove('is-pressed');
-  }
-
-  pointer.activeCard = null;
+  shell?.classList.remove('is-pressed');
 
   if (!finePointer) {
     pointer.active = false;
-    pointer.hoverCard = null;
   }
 }
 
-window.addEventListener('pointerdown', beginPress, { passive: true });
+function animate(timestamp = 0) {
+  if (!shell) return;
+
+  let targetRotateX = 0;
+  let targetRotateY = 0;
+  let targetShiftX = 0;
+  let targetShiftY = 0;
+  let targetScale = 1;
+
+  if (pointer.active && (finePointer || pointer.down)) {
+    const normalizedX = clamp((pointer.x / Math.max(window.innerWidth, 1) - 0.5) * 2, -1, 1);
+    const normalizedY = clamp((pointer.y / Math.max(window.innerHeight, 1) - 0.5) * 2, -1, 1);
+    const strengthX = pointer.down ? 2.05 : 1.45;
+    const strengthY = pointer.down ? 2.45 : 1.8;
+
+    targetRotateX = -normalizedY * strengthX;
+    targetRotateY = normalizedX * strengthY;
+    targetShiftX = normalizedX * (pointer.down ? 1.7 : 1.2);
+    targetShiftY = normalizedY * (pointer.down ? 1.2 : 0.8) + (pointer.down ? 1.15 : 0);
+    targetScale = pointer.down ? 0.995 : 1;
+
+    shell.style.setProperty('--shell-shine-x', `${((normalizedX + 1) * 50).toFixed(1)}%`);
+    shell.style.setProperty('--shell-shine-y', `${((normalizedY + 1) * 50).toFixed(1)}%`);
+  } else if (finePointer) {
+    targetRotateX = Math.sin(timestamp * 0.00028) * 0.1;
+    targetRotateY = Math.cos(timestamp * 0.00024) * 0.14;
+    targetShiftY = Math.sin(timestamp * 0.00032) * -0.14;
+    shell.style.setProperty('--shell-shine-x', '50%');
+    shell.style.setProperty('--shell-shine-y', '50%');
+  }
+
+  const spring = pointer.down ? 0.095 : 0.055;
+  const damping = pointer.down ? 0.72 : 0.78;
+
+  state.velocityRotateX += (targetRotateX - state.rotateX) * spring;
+  state.velocityRotateY += (targetRotateY - state.rotateY) * spring;
+  state.velocityShiftX += (targetShiftX - state.shiftX) * spring;
+  state.velocityShiftY += (targetShiftY - state.shiftY) * spring;
+  state.velocityScale += (targetScale - state.scale) * spring;
+
+  state.velocityRotateX *= damping;
+  state.velocityRotateY *= damping;
+  state.velocityShiftX *= damping;
+  state.velocityShiftY *= damping;
+  state.velocityScale *= damping;
+
+  state.rotateX += state.velocityRotateX;
+  state.rotateY += state.velocityRotateY;
+  state.shiftX += state.velocityShiftX;
+  state.shiftY += state.velocityShiftY;
+  state.scale += state.velocityScale;
+
+  shell.style.setProperty('--shell-rx', `${state.rotateX.toFixed(3)}deg`);
+  shell.style.setProperty('--shell-ry', `${state.rotateY.toFixed(3)}deg`);
+  shell.style.setProperty('--shell-x', `${state.shiftX.toFixed(2)}px`);
+  shell.style.setProperty('--shell-y', `${state.shiftY.toFixed(2)}px`);
+  shell.style.setProperty('--shell-scale', state.scale.toFixed(4));
+
+  requestAnimationFrame(animate);
+}
 
 window.addEventListener('pointermove', (event) => {
-  if (event.pointerType === 'touch' && !pointer.down) return;
+  if (!finePointer && !pointer.down) return;
 
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
-  pointer.active = true;
-
-  if (pointer.down && event.pointerId === pointer.id) {
+  if (pointer.down && event.pointerType === 'touch') {
     const movement = Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY);
-
-    if (event.pointerType === 'touch' && movement > 13) {
-      endPress();
+    if (movement > 13) {
+      releasePress();
       return;
     }
-
-    pointer.hoverCard = pointer.activeCard;
-    return;
   }
 
-  if (finePointer) {
-    pointer.hoverCard = cardAtPoint(event.clientX, event.clientY);
-  }
+  setPointer(event.clientX, event.clientY);
 }, { passive: true });
 
-window.addEventListener('pointerup', endPress, { passive: true });
-window.addEventListener('pointercancel', endPress, { passive: true });
+window.addEventListener('pointerdown', (event) => {
+  if (!shell || !(event.target instanceof Element) || !shell.contains(event.target)) return;
+
+  pointer.pointerType = event.pointerType;
+  setPointer(event.clientX, event.clientY);
+
+  // Real links and controls keep their normal click behaviour. The whole tracker
+  // still follows the cursor, but no pointer capture is used anywhere.
+  if (event.target.closest(INTERACTIVE_SELECTOR)) return;
+
+  pointer.down = true;
+  pointer.startX = event.clientX;
+  pointer.startY = event.clientY;
+  shell.classList.add('is-pressed');
+}, { passive: true });
+
+window.addEventListener('pointerup', releasePress, { passive: true });
+window.addEventListener('pointercancel', releasePress, { passive: true });
 
 window.addEventListener('pointerleave', () => {
-  endPress();
+  releasePress();
   pointer.active = false;
-  pointer.hoverCard = null;
 }, { passive: true });
 
 window.addEventListener('blur', () => {
-  endPress();
+  releasePress();
   pointer.active = false;
-  pointer.hoverCard = null;
 }, { passive: true });
 
-const observer = new MutationObserver(refreshCards);
-observer.observe(document.body, { childList: true, subtree: true });
+window.addEventListener('resize', () => {
+  pointer.x = window.innerWidth / 2;
+  pointer.y = window.innerHeight / 2;
+}, { passive: true });
 
-refreshCards();
-requestAnimationFrame(animate);
+if (shell) {
+  shell.classList.add('tracker-shell-motion');
+  shell.style.setProperty('--shell-shine-x', '50%');
+  shell.style.setProperty('--shell-shine-y', '50%');
+  requestAnimationFrame(animate);
+}
