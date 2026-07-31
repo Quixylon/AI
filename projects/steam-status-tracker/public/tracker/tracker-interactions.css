@@ -15,7 +15,7 @@ body {
   --tilt-y: 0px;
   --panel-shine-x: 50%;
   --panel-shine-y: 50%;
-  --pointer-light-size: 230px;
+  --pointer-light-size: 220px;
   --pointer-light-opacity: 0;
   position: relative;
   isolation: isolate;
@@ -30,18 +30,23 @@ body {
   transform-style: flat !important;
   backface-visibility: visible !important;
   -webkit-backface-visibility: visible !important;
-  will-change: transform;
+  will-change: auto;
   transition:
+    transform 95ms cubic-bezier(0.2, 0.75, 0.2, 1),
     border-color 150ms ease,
     box-shadow 150ms ease,
     background-color 150ms ease !important;
+}
+
+.tracker-tilt-card.is-tilt-visible {
+  will-change: transform;
 }
 
 #message-panel.tracker-tilt-card,
 #profile-card.tracker-tilt-card,
 #games-panel.tracker-tilt-card,
 #history-panel.tracker-tilt-card {
-  --pointer-light-size: 390px;
+  --pointer-light-size: 350px;
 }
 
 .tracker-tilt-card > * {
@@ -60,9 +65,9 @@ body {
   background:
     radial-gradient(
       circle var(--pointer-light-size) at var(--panel-shine-x) var(--panel-shine-y),
-      rgba(255, 255, 255, 0.13) 0%,
-      rgba(174, 157, 255, 0.055) 30%,
-      rgba(92, 174, 255, 0.025) 49%,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(174, 157, 255, 0.05) 30%,
+      rgba(92, 174, 255, 0.02) 49%,
       transparent 72%
     ) !important;
   content: "" !important;
@@ -71,11 +76,10 @@ body {
   transform: none !important;
   animation: none !important;
   pointer-events: none;
-  mix-blend-mode: screen;
+  mix-blend-mode: normal;
+  transition: opacity 125ms ease-out !important;
 }
 
-/* Свет родительской панели расположен над вложенными карточками, поэтому не
-   исчезает при наведении на иконку или внутреннюю плитку. */
 #message-panel.tracker-tilt-card::after,
 #profile-card.tracker-tilt-card::after,
 #games-panel.tracker-tilt-card::after,
@@ -84,20 +88,18 @@ body {
   background:
     radial-gradient(
       circle var(--pointer-light-size) at var(--panel-shine-x) var(--panel-shine-y),
-      rgba(255, 255, 255, 0.095) 0%,
-      rgba(174, 157, 255, 0.04) 31%,
-      rgba(92, 174, 255, 0.018) 50%,
+      rgba(255, 255, 255, 0.085) 0%,
+      rgba(174, 157, 255, 0.035) 31%,
+      rgba(92, 174, 255, 0.015) 50%,
       transparent 73%
     ) !important;
 }
 
-/* Убираем старую постоянную подсветку стеклянных панелей. */
 .glass-panel.tracker-tilt-card::before {
   display: none !important;
   content: none !important;
 }
 
-/* Непрозрачная подложка не даёт стеклу исчезать при трансформации. */
 .glass-panel.tracker-tilt-card {
   background-color: rgba(13, 16, 29, 0.86) !important;
 }
@@ -128,7 +130,6 @@ body {
     inset 0 -1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* Маленькие иконки и бейджи остаются жёсткими внутри карточек. */
 .tracker-tilt-card .avatar,
 .tracker-tilt-card .status-pill,
 .tracker-tilt-card .game-session-icon,
@@ -139,7 +140,6 @@ body {
   will-change: auto;
 }
 
-/* Старые диагональные блики остаются отключёнными. */
 .detail-card::before,
 .game-summary-card::before,
 .game-session::before,
@@ -164,6 +164,7 @@ body {
 @media (max-width: 768px), (pointer: coarse), (hover: none) {
   .tracker-tilt-card {
     transform: none !important;
+    transition: none !important;
     will-change: auto;
   }
 
