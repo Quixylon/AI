@@ -9,9 +9,13 @@ function updateCurrentStatusLabels() {
 
     if (!currentBadge || !durationLabel) return;
 
-    durationLabel.textContent = entry.classList.contains('offline')
+    const nextLabel = entry.classList.contains('offline')
       ? 'Не в сети уже'
       : 'Уже в сети';
+
+    if (durationLabel.textContent !== nextLabel) {
+      durationLabel.textContent = nextLabel;
+    }
   });
 }
 
