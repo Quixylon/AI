@@ -14,39 +14,39 @@ const CARD_SELECTOR = [
 
 const motionMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 769px)');
 const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
-const HOVER_EXIT_MARGIN = 14;
 
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
   active: false,
   down: false,
-  hoveredCards: [],
   pressedCard: null
 };
 
-const states = new WeakMap();
-const layoutRects = new WeakMap();
 let cards = [];
 let motionEnabled = false;
-let refreshFrame = 0;
+let pointerFrame = 0;
 let measureFrame = 0;
+let refreshFrame = 0;
 
-function stateFor(card) {
-  if (!states.has(card)) {
-    states.set(card, {
-      rotateX: 0,
-      rotateY: 0,
-      shiftX: 0,
-      shiftY: 0,
-      lightX: 50,
-      lightY: 50,
-      lightOpacity: 0
-    });
-  }
+const visibleCards = new Set();
+const litCards = new Set();
+const layoutRects = new WeakMap();
 
-  return states.get(card);
-}
+const visibilityObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        entry.target.classList.toggle('is-tilt-visible', entry.isIntersecting);
+
+        if (entry.isIntersecting) {
+          visibleCards.add(entry.target);
+          layoutRects.set(entry.target, layoutRectFor(entry.target));
+        } else {
+          visibleCards.delete(entry.target);
+        }
+      }
+    }, { rootMargin: '140px 0px' })
+  : null;
 
 function isLargeCard(card) {
   return card.matches('#message-panel, #profile-card, #games-panel, #history-panel');
@@ -90,136 +90,203 @@ function layoutRectFor(element) {
   };
 }
 
-function measureCards() {
+function measureVisibleCards() {
   measureFrame = 0;
 
-  for (const card of cards) {
+  const targets = visibilityObserver ? [...visibleCards] : cards;
+  for (const card of targets) {
     if (card.hidden || card.closest('[hidden]')) continue;
     const rect = layoutRectFor(card);
     if (rect.width && rect.height) layoutRects.set(card, rect);
   }
 
-  if (motionEnabled && pointer.active) {
-    setHoveredCards(cardsAtPoint(pointer.x, pointer.y));
-  }
+  scheduleTilt();
 }
 
 function scheduleMeasure() {
   if (measureFrame) return;
-  measureFrame = requestAnimationFrame(measureCards);
+  measureFrame = requestAnimationFrame(measureVisibleCards);
 }
 
-function pointInside(rect, x, y, margin = 0) {
-  return (
-    x >= rect.left - margin &&
-    x <= rect.right + margin &&
-    y >= rect.top - margin &&
-    y <= rect.bottom + margin
-  );
-}
-
-function cardsAtPoint(x, y) {
-  if (!motionEnabled) return [];
-
-  const previous = new Set(pointer.hoveredCards);
-  const matching = cards.filter((card) => {
-    if (card.hidden || card.closest('[hidden]')) return false;
-    const rect = layoutRects.get(card) || layoutRectFor(card);
-    layoutRects.set(card, rect);
-    return pointInside(rect, x, y, previous.has(card) ? HOVER_EXIT_MARGIN : 0);
-  });
-
-  matching.sort((first, second) => {
-    if (first.contains(second)) return 1;
-    if (second.contains(first)) return -1;
-
-    const firstRect = layoutRects.get(first);
-    const secondRect = layoutRects.get(second);
-    const firstArea = (firstRect?.width || 0) * (firstRect?.height || 0);
-    const secondArea = (secondRect?.width || 0) * (secondRect?.height || 0);
-    return firstArea - secondArea;
-  });
-
-  return matching;
-}
-
-function setHoveredCards(nextCards) {
-  const nextSet = new Set(nextCards);
-
-  for (const card of pointer.hoveredCards) {
-    if (!nextSet.has(card)) card.classList.remove('is-pointer-over');
-  }
-
-  for (const card of nextCards) {
-    card.classList.add('is-pointer-over');
-  }
-
-  pointer.hoveredCards = nextCards;
-}
-
-function resetCard(card, immediate = false) {
-  const state = stateFor(card);
-
-  if (immediate) {
-    state.rotateX = 0;
-    state.rotateY = 0;
-    state.shiftX = 0;
-    state.shiftY = 0;
-    state.lightX = 50;
-    state.lightY = 50;
-    state.lightOpacity = 0;
-  }
-
+function resetTilt(card) {
   card.style.setProperty('--tilt-rx', '0deg');
   card.style.setProperty('--tilt-ry', '0deg');
   card.style.setProperty('--tilt-x', '0px');
   card.style.setProperty('--tilt-y', '0px');
-  card.style.setProperty('--panel-shine-x', '50%');
-  card.style.setProperty('--panel-shine-y', '50%');
+}
+
+function updateLight(card, clientX, clientY) {
+  const rect = layoutRects.get(card) || layoutRectFor(card);
+  if (!rect.width || !rect.height) return;
+
+  layoutRects.set(card, rect);
+
+  const localX = clamp((clientX - rect.left) / rect.width, 0, 1) * 100;
+  const localY = clamp((clientY - rect.top) / rect.height, 0, 1) * 100;
+
+  card.style.setProperty('--panel-shine-x', `${localX.toFixed(2)}%`);
+  card.style.setProperty('--panel-shine-y', `${localY.toFixed(2)}%`);
+  card.style.setProperty('--pointer-light-opacity', '1');
+}
+
+function lightOn(event) {
+  if (!motionEnabled || event.pointerType === 'touch') return;
+
+  const card = event.currentTarget;
+  litCards.add(card);
+  card.classList.add('is-pointer-over');
+  updateLight(card, event.clientX, event.clientY);
+}
+
+function lightMove(event) {
+  if (!motionEnabled || event.pointerType === 'touch') return;
+  updateLight(event.currentTarget, event.clientX, event.clientY);
+}
+
+function lightOff(event) {
+  const card = event.currentTarget;
+  litCards.delete(card);
+  card.classList.remove('is-pointer-over');
   card.style.setProperty('--pointer-light-opacity', '0');
-  card.classList.remove('is-tilt-pressed', 'is-pointer-over');
+}
+
+function attachCard(card) {
+  if (card.dataset.trackerMotionReady === 'true') return;
+  card.dataset.trackerMotionReady = 'true';
+
+  card.addEventListener('pointerenter', lightOn, { passive: true });
+  card.addEventListener('pointermove', lightMove, { passive: true });
+  card.addEventListener('pointerleave', lightOff, { passive: true });
+
+  if (visibilityObserver) {
+    visibilityObserver.observe(card);
+  } else {
+    visibleCards.add(card);
+    card.classList.add('is-tilt-visible');
+  }
 }
 
 function registerCards() {
   const nextCards = [...document.querySelectorAll(CARD_SELECTOR)];
+  const nextSet = new Set(nextCards);
 
   for (const card of cards) {
-    if (!nextCards.includes(card)) {
-      card.classList.remove('tracker-tilt-card', 'is-tilt-pressed', 'is-pointer-over');
-      resetCard(card, true);
-      layoutRects.delete(card);
-    }
+    if (nextSet.has(card)) continue;
+
+    visibilityObserver?.unobserve(card);
+    visibleCards.delete(card);
+    litCards.delete(card);
+    layoutRects.delete(card);
+    card.classList.remove(
+      'tracker-tilt-card',
+      'is-tilt-visible',
+      'is-pointer-over',
+      'is-tilt-pressed'
+    );
   }
 
   cards = nextCards;
 
   for (const card of cards) {
-    stateFor(card);
+    attachCard(card);
     card.classList.toggle('tracker-tilt-card', motionEnabled);
-    if (!motionEnabled) resetCard(card, true);
+
+    if (!motionEnabled) {
+      resetTilt(card);
+      card.style.setProperty('--pointer-light-opacity', '0');
+      card.classList.remove('is-pointer-over', 'is-tilt-pressed');
+    }
   }
 
-  measureCards();
+  scheduleMeasure();
 }
 
 function scheduleRefresh() {
   if (refreshFrame) return;
+
   refreshFrame = requestAnimationFrame(() => {
     refreshFrame = 0;
     registerCards();
   });
 }
 
+function applyTilt() {
+  pointerFrame = 0;
+
+  const targets = visibilityObserver ? [...visibleCards] : cards;
+  const measurements = [];
+
+  for (const card of targets) {
+    if (!motionEnabled || card.hidden || card.closest('[hidden]')) continue;
+
+    const rect = layoutRects.get(card) || layoutRectFor(card);
+    if (!rect.width || !rect.height) continue;
+
+    layoutRects.set(card, rect);
+    measurements.push({ card, rect });
+  }
+
+  for (const { card, rect } of measurements) {
+    if (!pointer.active) {
+      resetTilt(card);
+      continue;
+    }
+
+    const horizontalRange = Math.max(rect.width * 1.2, window.innerWidth * 0.48, 360);
+    const verticalRange = Math.max(rect.height * 1.2, window.innerHeight * 0.48, 300);
+    const normalizedX = clamp(
+      (pointer.x - (rect.left + rect.width / 2)) / horizontalRange,
+      -1,
+      1
+    );
+    const normalizedY = clamp(
+      (pointer.y - (rect.top + rect.height / 2)) / verticalRange,
+      -1,
+      1
+    );
+
+    const large = isLargeCard(card);
+    const action = isActionCard(card);
+    const pressed = pointer.down && pointer.pressedCard === card;
+    const strengthX = large ? 1.35 : action ? 0.95 : 0.72;
+    const strengthY = large ? 1.55 : action ? 1.08 : 0.82;
+    const pressBoost = pressed ? 1.18 : 1;
+
+    const rotateX = -normalizedY * strengthX * pressBoost;
+    const rotateY = normalizedX * strengthY * pressBoost;
+    const shiftX = normalizedX * (large ? 0.72 : 0.36);
+    const shiftY = normalizedY * (large ? 0.48 : 0.24) + (pressed ? 0.85 : 0);
+
+    card.style.setProperty('--tilt-rx', `${rotateX.toFixed(3)}deg`);
+    card.style.setProperty('--tilt-ry', `${rotateY.toFixed(3)}deg`);
+    card.style.setProperty('--tilt-x', `${shiftX.toFixed(2)}px`);
+    card.style.setProperty('--tilt-y', `${shiftY.toFixed(2)}px`);
+  }
+}
+
+function scheduleTilt() {
+  if (pointerFrame) return;
+  pointerFrame = requestAnimationFrame(applyTilt);
+}
+
 function releasePress() {
   pointer.down = false;
   pointer.pressedCard?.classList.remove('is-tilt-pressed');
   pointer.pressedCard = null;
+  scheduleTilt();
 }
 
 function clearPointer() {
   releasePress();
   pointer.active = false;
-  setHoveredCards([]);
+
+  for (const card of litCards) {
+    card.classList.remove('is-pointer-over');
+    card.style.setProperty('--pointer-light-opacity', '0');
+  }
+
+  litCards.clear();
+  scheduleTilt();
 }
 
 function configureMotion() {
@@ -234,101 +301,25 @@ function configureMotion() {
   registerCards();
 }
 
-function updateCard(card) {
-  if (!motionEnabled || card.hidden || card.closest('[hidden]')) return;
+window.addEventListener('pointermove', (event) => {
+  if (!motionEnabled || event.pointerType === 'touch') return;
 
-  const rect = layoutRects.get(card) || layoutRectFor(card);
-  if (!rect.width || !rect.height) return;
-
-  const state = stateFor(card);
-  const pressed = pointer.down && pointer.pressedCard === card;
-  const active = pointer.active;
-  const hovered = pointer.hoveredCards.includes(card);
-
-  let targetRotateX = 0;
-  let targetRotateY = 0;
-  let targetShiftX = 0;
-  let targetShiftY = 0;
-
-  if (active) {
-    const horizontalRange = Math.max(rect.width * 1.15, window.innerWidth * 0.42, 320);
-    const verticalRange = Math.max(rect.height * 1.15, window.innerHeight * 0.42, 260);
-    const normalizedX = clamp((pointer.x - (rect.left + rect.width / 2)) / horizontalRange, -1, 1);
-    const normalizedY = clamp((pointer.y - (rect.top + rect.height / 2)) / verticalRange, -1, 1);
-
-    const large = isLargeCard(card);
-    const action = isActionCard(card);
-    const strengthX = large ? 1.45 : action ? 1.05 : 0.82;
-    const strengthY = large ? 1.7 : action ? 1.2 : 0.96;
-    const pressBoost = pressed ? 1.22 : 1;
-
-    targetRotateX = -normalizedY * strengthX * pressBoost;
-    targetRotateY = normalizedX * strengthY * pressBoost;
-    targetShiftX = normalizedX * (large ? 0.85 : 0.46);
-    targetShiftY = normalizedY * (large ? 0.58 : 0.32) + (pressed ? 1.15 : 0);
-  }
-
-  if (hovered) {
-    const targetLightX = clamp((pointer.x - rect.left) / rect.width, 0, 1) * 100;
-    const targetLightY = clamp((pointer.y - rect.top) / rect.height, 0, 1) * 100;
-    state.lightX += (targetLightX - state.lightX) * 0.58;
-    state.lightY += (targetLightY - state.lightY) * 0.58;
-  }
-
-  const targetLightOpacity = hovered ? 1 : 0;
-  state.lightOpacity += (targetLightOpacity - state.lightOpacity) * (hovered ? 0.46 : 0.14);
-
-  const response = pressed ? 0.58 : active ? 0.34 : 0.22;
-  state.rotateX += (targetRotateX - state.rotateX) * response;
-  state.rotateY += (targetRotateY - state.rotateY) * response;
-  state.shiftX += (targetShiftX - state.shiftX) * response;
-  state.shiftY += (targetShiftY - state.shiftY) * response;
-
-  if (!active && Math.abs(state.rotateX) < 0.002 && Math.abs(state.rotateY) < 0.002) {
-    state.rotateX = 0;
-    state.rotateY = 0;
-    state.shiftX = 0;
-    state.shiftY = 0;
-  }
-
-  if (!hovered && state.lightOpacity < 0.002) state.lightOpacity = 0;
-
-  card.style.setProperty('--tilt-rx', `${state.rotateX.toFixed(3)}deg`);
-  card.style.setProperty('--tilt-ry', `${state.rotateY.toFixed(3)}deg`);
-  card.style.setProperty('--tilt-x', `${state.shiftX.toFixed(2)}px`);
-  card.style.setProperty('--tilt-y', `${state.shiftY.toFixed(2)}px`);
-  card.style.setProperty('--panel-shine-x', `${state.lightX.toFixed(2)}%`);
-  card.style.setProperty('--panel-shine-y', `${state.lightY.toFixed(2)}%`);
-  card.style.setProperty('--pointer-light-opacity', state.lightOpacity.toFixed(3));
-}
-
-function animate() {
-  if (motionEnabled) {
-    for (const card of cards) updateCard(card);
-  }
-
-  requestAnimationFrame(animate);
-}
-
-function updatePointer(event) {
   pointer.x = event.clientX;
   pointer.y = event.clientY;
   pointer.active = true;
-  setHoveredCards(cardsAtPoint(pointer.x, pointer.y));
-}
-
-window.addEventListener('pointermove', (event) => {
-  if (!motionEnabled || event.pointerType === 'touch') return;
-  updatePointer(event);
+  scheduleTilt();
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
   if (!motionEnabled || event.pointerType === 'touch' || !(event.target instanceof Element)) return;
 
-  updatePointer(event);
+  pointer.x = event.clientX;
+  pointer.y = event.clientY;
+  pointer.active = true;
   pointer.down = true;
-  pointer.pressedCard = pointer.hoveredCards[0] || null;
+  pointer.pressedCard = event.target.closest(CARD_SELECTOR);
   pointer.pressedCard?.classList.add('is-tilt-pressed');
+  scheduleTilt();
 }, { passive: true });
 
 window.addEventListener('pointerup', releasePress, { passive: true });
@@ -338,7 +329,7 @@ window.addEventListener('blur', clearPointer, { passive: true });
 
 document.addEventListener('scroll', () => {
   if (!motionEnabled) return;
-  measureCards();
+  scheduleMeasure();
 }, { passive: true, capture: true });
 
 window.addEventListener('resize', () => {
@@ -346,16 +337,24 @@ window.addEventListener('resize', () => {
   scheduleMeasure();
 }, { passive: true });
 
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearPointer();
+  } else {
+    scheduleMeasure();
+  }
+});
+
 motionMedia.addEventListener?.('change', configureMotion);
 reducedMotionMedia.addEventListener?.('change', configureMotion);
 
-const observer = new MutationObserver((mutations) => {
+const mutationObserver = new MutationObserver((mutations) => {
   if (mutations.some((mutation) => mutation.type === 'childList' || mutation.attributeName === 'hidden')) {
     scheduleRefresh();
   }
 });
 
-observer.observe(document.body, {
+mutationObserver.observe(document.body, {
   subtree: true,
   childList: true,
   attributes: true,
@@ -363,4 +362,3 @@ observer.observe(document.body, {
 });
 
 configureMotion();
-requestAnimationFrame(animate);
