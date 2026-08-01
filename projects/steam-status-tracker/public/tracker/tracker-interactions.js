@@ -22,7 +22,9 @@ const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
-  active: false
+  active: false,
+  down: false,
+  pressedCard: null
 };
 
 let cards = [];
@@ -34,21 +36,6 @@ let refreshFrame = 0;
 const visibleCards = new Set();
 const litCards = new Set();
 const layoutRects = new WeakMap();
-
-const visibilityObserver = 'IntersectionObserver' in window
-  ? new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        entry.target.classList.toggle('is-tilt-visible', entry.isIntersecting);
-
-        if (entry.isIntersecting) {
-          visibleCards.add(entry.target);
-          layoutRects.set(entry.target, layoutRectFor(entry.target));
-        } else {
-          visibleCards.delete(entry.target);
-        }
-      }
-    }, { rootMargin: '140px 0px' })
-  : null;
 
 function isLargeCard(card) {
   return card.matches(LARGE_CARD_SELECTOR);
@@ -88,6 +75,29 @@ function layoutRectFor(element) {
   };
 }
 
+const visibilityObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        entry.target.classList.toggle('is-tilt-visible', entry.isIntersecting);
+
+        if (entry.isIntersecting) {
+          visibleCards.add(entry.target);
+          layoutRects.set(entry.target, layoutRectFor(entry.target));
+        } else {
+          visibleCards.delete(entry.target);
+        }
+      }
+    }, { rootMargin: '140px 0px' })
+  : null;
+
+function resetGeometry(card) {
+  card.style.setProperty('--tilt-rx', '0deg');
+  card.style.setProperty('--tilt-ry', '0deg');
+  card.style.setProperty('--tilt-x', '0px');
+  card.style.setProperty('--tilt-y', '0px');
+  card.classList.remove('is-tilt-pressed', 'is-local-tilt');
+}
+
 function measureVisibleCards() {
   measureFrame = 0;
 
@@ -104,14 +114,6 @@ function measureVisibleCards() {
 function scheduleMeasure() {
   if (measureFrame) return;
   measureFrame = requestAnimationFrame(measureVisibleCards);
-}
-
-function resetTilt(card) {
-  card.style.setProperty('--tilt-rx', '0deg');
-  card.style.setProperty('--tilt-ry', '0deg');
-  card.style.setProperty('--tilt-x', '0px');
-  card.style.setProperty('--tilt-y', '0px');
-  card.classList.remove('is-tilt-pressed');
 }
 
 function updateLight(card, clientX, clientY) {
@@ -176,13 +178,8 @@ function registerCards() {
     visibleCards.delete(card);
     litCards.delete(card);
     layoutRects.delete(card);
-    card.classList.remove(
-      'tracker-tilt-card',
-      'is-tilt-visible',
-      'is-pointer-over',
-      'is-tilt-pressed',
-      'is-local-tilt'
-    );
+    resetGeometry(card);
+    card.classList.remove('tracker-tilt-card', 'is-tilt-visible', 'is-pointer-over');
   }
 
   cards = nextCards;
@@ -190,12 +187,14 @@ function registerCards() {
   for (const card of cards) {
     attachCard(card);
     card.classList.toggle('tracker-tilt-card', motionEnabled);
-    card.classList.remove('is-tilt-pressed');
+
+    /* Внутренние карточки подсвечиваются, но никогда не наклоняются. */
+    if (!isLargeCard(card)) resetGeometry(card);
 
     if (!motionEnabled) {
-      resetTilt(card);
+      resetGeometry(card);
       card.style.setProperty('--pointer-light-opacity', '0');
-      card.classList.remove('is-pointer-over', 'is-local-tilt');
+      card.classList.remove('is-pointer-over');
     }
   }
 
@@ -217,10 +216,15 @@ function applyTilt() {
   const targets = visibilityObserver ? [...visibleCards] : cards;
 
   for (const card of targets) {
-    if (!motionEnabled || !isLargeCard(card) || card.hidden || card.closest('[hidden]')) continue;
+    if (!motionEnabled || card.hidden || card.closest('[hidden]')) continue;
+
+    if (!isLargeCard(card)) {
+      resetGeometry(card);
+      continue;
+    }
 
     if (!pointer.active) {
-      resetTilt(card);
+      resetGeometry(card);
       continue;
     }
 
@@ -241,11 +245,22 @@ function applyTilt() {
       1
     );
 
-    const rotateX = -normalizedY * 1.35;
-    const rotateY = normalizedX * 1.55;
+    let rotateX = -normalizedY * 1.35;
+    let rotateY = normalizedX * 1.55;
     const shiftX = normalizedX * 0.72;
     const shiftY = normalizedY * 0.48;
+    const pressed = pointer.down && pointer.pressedCard === card;
 
+    if (pressed) {
+      const localX = clamp(((pointer.x - rect.left) / rect.width - 0.5) * 2, -1, 1);
+      const localY = clamp(((pointer.y - rect.top) / rect.height - 0.5) * 2, -1, 1);
+
+      /* Нажатие лишь чуть сильнее наклоняет родительский блок к точке клика. */
+      rotateX += -localY * 0.42;
+      rotateY += localX * 0.52;
+    }
+
+    card.classList.toggle('is-tilt-pressed', pressed);
     card.style.setProperty('--tilt-rx', `${rotateX.toFixed(3)}deg`);
     card.style.setProperty('--tilt-ry', `${rotateY.toFixed(3)}deg`);
     card.style.setProperty('--tilt-x', `${shiftX.toFixed(2)}px`);
@@ -258,16 +273,20 @@ function scheduleTilt() {
   pointerFrame = requestAnimationFrame(applyTilt);
 }
 
+function releasePress() {
+  pointer.down = false;
+  pointer.pressedCard?.classList.remove('is-tilt-pressed');
+  pointer.pressedCard = null;
+  scheduleTilt();
+}
+
 function clearPointer() {
+  releasePress();
   pointer.active = false;
 
   for (const card of litCards) {
     card.classList.remove('is-pointer-over');
     card.style.setProperty('--pointer-light-opacity', '0');
-  }
-
-  for (const card of cards) {
-    card.classList.remove('is-tilt-pressed');
   }
 
   litCards.clear();
@@ -295,14 +314,19 @@ window.addEventListener('pointermove', (event) => {
   scheduleTilt();
 }, { passive: true });
 
-/* Нажатие не меняет геометрию карточек. */
-window.addEventListener('pointerdown', () => {
-  for (const card of cards) card.classList.remove('is-tilt-pressed');
+window.addEventListener('pointerdown', (event) => {
+  if (!motionEnabled || event.pointerType === 'touch' || !(event.target instanceof Element)) return;
+
+  pointer.x = event.clientX;
+  pointer.y = event.clientY;
+  pointer.active = true;
+  pointer.down = true;
+  pointer.pressedCard = event.target.closest(LARGE_CARD_SELECTOR);
+  pointer.pressedCard?.classList.add('is-tilt-pressed');
+  scheduleTilt();
 }, { passive: true });
 
-window.addEventListener('pointerup', () => {
-  for (const card of cards) card.classList.remove('is-tilt-pressed');
-}, { passive: true });
+window.addEventListener('pointerup', releasePress, { passive: true });
 window.addEventListener('pointercancel', clearPointer, { passive: true });
 window.addEventListener('pointerleave', clearPointer, { passive: true });
 window.addEventListener('blur', clearPointer, { passive: true });
