@@ -11,31 +11,10 @@ const SMALL_CARD_SELECTOR = [
 const motionMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 769px)');
 const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-const pointer = {
-  x: window.innerWidth / 2,
-  y: window.innerHeight / 2
-};
-
-const states = new WeakMap();
+let pointerX = window.innerWidth / 2;
+let pointerY = window.innerHeight / 2;
 let activeCard = null;
-let animationFrame = 0;
-
-function stateFor(card) {
-  if (!states.has(card)) {
-    states.set(card, {
-      rotateX: 0,
-      rotateY: 0,
-      shiftX: 0,
-      shiftY: 0,
-      targetRotateX: 0,
-      targetRotateY: 0,
-      targetShiftX: 0,
-      targetShiftY: 0
-    });
-  }
-
-  return states.get(card);
-}
+let updateFrame = 0;
 
 function layoutRectFor(element) {
   let left = 0;
@@ -66,11 +45,18 @@ function layoutRectFor(element) {
   };
 }
 
-function cardAtPoint(x, y, eventTarget = null) {
-  const target = eventTarget instanceof Element
-    ? eventTarget
-    : document.elementFromPoint(x, y);
+function resetCard(card) {
+  if (!card) return;
 
+  card.style.setProperty('--tilt-rx', '0deg');
+  card.style.setProperty('--tilt-ry', '0deg');
+  card.style.setProperty('--tilt-x', '0px');
+  card.style.setProperty('--tilt-y', '0px');
+  card.classList.remove('is-local-tilt', 'is-tilt-pressed');
+}
+
+function cardAtPoint() {
+  const target = document.elementFromPoint(pointerX, pointerY);
   if (!(target instanceof Element)) return null;
 
   const card = target.closest(SMALL_CARD_SELECTOR);
@@ -78,146 +64,95 @@ function cardAtPoint(x, y, eventTarget = null) {
   return card;
 }
 
-function tiltStrength(card) {
-  if (card.matches('.game-summary-card')) return { x: 5.2, y: 6.2 };
-  if (card.matches('.detail-card')) return { x: 4.8, y: 5.8 };
-  if (card.matches('.csrep-button')) return { x: 3.4, y: 4.2 };
-  return { x: 4.2, y: 5.1 };
+function strengthFor(card) {
+  if (card.matches('.detail-card')) return { x: 3.1, y: 3.7 };
+  if (card.matches('.game-summary-card')) return { x: 3.3, y: 3.9 };
+  if (card.matches('.csrep-button')) return { x: 2.4, y: 2.8 };
+  return { x: 2.8, y: 3.4 };
 }
 
-function removePressEffect(card) {
-  card?.classList.remove('is-tilt-pressed');
-}
+function applyLocalTilt() {
+  updateFrame = 0;
 
-function setActiveCard(card) {
-  if (activeCard === card) return;
-
-  removePressEffect(activeCard);
-  activeCard?.classList.remove('is-local-tilt');
-  activeCard = card;
-  activeCard?.classList.add('is-local-tilt');
-  removePressEffect(activeCard);
-}
-
-function updateTargets(card) {
-  const rect = layoutRectFor(card);
-  if (!rect.width || !rect.height) return;
-
-  const normalizedX = clamp(((pointer.x - rect.left) / rect.width - 0.5) * 2, -1, 1);
-  const normalizedY = clamp(((pointer.y - rect.top) / rect.height - 0.5) * 2, -1, 1);
-  const strength = tiltStrength(card);
-  const state = stateFor(card);
-
-  state.targetRotateX = -normalizedY * strength.x;
-  state.targetRotateY = normalizedX * strength.y;
-  state.targetShiftX = normalizedX * 0.75;
-  state.targetShiftY = normalizedY * 0.52;
-}
-
-function needsAnotherFrame(state) {
-  return (
-    Math.abs(state.targetRotateX - state.rotateX) > 0.006 ||
-    Math.abs(state.targetRotateY - state.rotateY) > 0.006 ||
-    Math.abs(state.targetShiftX - state.shiftX) > 0.006 ||
-    Math.abs(state.targetShiftY - state.shiftY) > 0.006
-  );
-}
-
-function animateLocalTilt() {
-  animationFrame = 0;
-
-  if (!activeCard || !activeCard.isConnected || !motionMedia.matches || reducedMotionMedia.matches) {
-    setActiveCard(null);
-    return;
-  }
-
-  removePressEffect(activeCard);
-
-  const state = stateFor(activeCard);
-  const response = 0.42;
-
-  state.rotateX += (state.targetRotateX - state.rotateX) * response;
-  state.rotateY += (state.targetRotateY - state.rotateY) * response;
-  state.shiftX += (state.targetShiftX - state.shiftX) * response;
-  state.shiftY += (state.targetShiftY - state.shiftY) * response;
-
-  activeCard.style.setProperty('--tilt-rx', `${state.rotateX.toFixed(3)}deg`);
-  activeCard.style.setProperty('--tilt-ry', `${state.rotateY.toFixed(3)}deg`);
-  activeCard.style.setProperty('--tilt-x', `${state.shiftX.toFixed(2)}px`);
-  activeCard.style.setProperty('--tilt-y', `${state.shiftY.toFixed(2)}px`);
-
-  if (needsAnotherFrame(state)) scheduleAnimation();
-}
-
-function scheduleAnimation() {
-  if (animationFrame) return;
-  animationFrame = requestAnimationFrame(animateLocalTilt);
-}
-
-function updateFromPointer(eventTarget = null) {
   if (!motionMedia.matches || reducedMotionMedia.matches) {
-    setActiveCard(null);
+    resetCard(activeCard);
+    activeCard = null;
     return;
   }
 
-  const card = cardAtPoint(pointer.x, pointer.y, eventTarget);
-  setActiveCard(card);
+  const nextCard = cardAtPoint();
 
-  if (!card) return;
-  removePressEffect(card);
-  updateTargets(card);
-  scheduleAnimation();
+  if (nextCard !== activeCard) {
+    resetCard(activeCard);
+    activeCard = nextCard;
+  }
+
+  if (!activeCard) return;
+
+  const rect = layoutRectFor(activeCard);
+  if (!rect.width || !rect.height) {
+    resetCard(activeCard);
+    activeCard = null;
+    return;
+  }
+
+  const normalizedX = clamp(((pointerX - rect.left) / rect.width - 0.5) * 2, -1, 1);
+  const normalizedY = clamp(((pointerY - rect.top) / rect.height - 0.5) * 2, -1, 1);
+  const strength = strengthFor(activeCard);
+
+  activeCard.classList.add('is-local-tilt');
+  activeCard.classList.remove('is-tilt-pressed');
+  activeCard.style.setProperty('--tilt-rx', `${(-normalizedY * strength.x).toFixed(3)}deg`);
+  activeCard.style.setProperty('--tilt-ry', `${(normalizedX * strength.y).toFixed(3)}deg`);
+
+  /* Маленькие карточки только вращаются — никакого сдвига или прожатия. */
+  activeCard.style.setProperty('--tilt-x', '0px');
+  activeCard.style.setProperty('--tilt-y', '0px');
+}
+
+function scheduleUpdate() {
+  if (updateFrame) return;
+  updateFrame = requestAnimationFrame(applyLocalTilt);
 }
 
 window.addEventListener('pointermove', (event) => {
   if (event.pointerType === 'touch') return;
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
-  updateFromPointer(event.target);
+  pointerX = event.clientX;
+  pointerY = event.clientY;
+  scheduleUpdate();
 }, { passive: true });
 
-window.addEventListener('pointerdown', (event) => {
-  if (event.pointerType === 'touch') return;
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
-  updateFromPointer(event.target);
-  removePressEffect(activeCard);
+/* Клик намеренно не влияет на угол, позицию, масштаб или тень. */
+window.addEventListener('pointerdown', () => {
+  activeCard?.classList.remove('is-tilt-pressed');
 }, { passive: true });
 
-window.addEventListener('pointerup', (event) => {
-  if (event.pointerType === 'touch') return;
-  pointer.x = event.clientX;
-  pointer.y = event.clientY;
-  requestAnimationFrame(() => updateFromPointer());
+window.addEventListener('pointerup', () => {
+  activeCard?.classList.remove('is-tilt-pressed');
 }, { passive: true });
 
 window.addEventListener('pointercancel', () => {
-  removePressEffect(activeCard);
-  setActiveCard(null);
+  resetCard(activeCard);
+  activeCard = null;
 }, { passive: true });
 
 window.addEventListener('pointerleave', () => {
-  removePressEffect(activeCard);
-  setActiveCard(null);
+  resetCard(activeCard);
+  activeCard = null;
 }, { passive: true });
 
 window.addEventListener('blur', () => {
-  removePressEffect(activeCard);
-  setActiveCard(null);
+  resetCard(activeCard);
+  activeCard = null;
 }, { passive: true });
 
-document.addEventListener('scroll', () => {
-  if (!activeCard) return;
-  requestAnimationFrame(() => updateFromPointer());
-}, { passive: true, capture: true });
-
-window.addEventListener('resize', () => {
-  requestAnimationFrame(() => updateFromPointer());
-}, { passive: true });
-
-motionMedia.addEventListener?.('change', () => setActiveCard(null));
-reducedMotionMedia.addEventListener?.('change', () => setActiveCard(null));
+document.addEventListener('scroll', scheduleUpdate, { passive: true, capture: true });
+window.addEventListener('resize', scheduleUpdate, { passive: true });
+motionMedia.addEventListener?.('change', scheduleUpdate);
+reducedMotionMedia.addEventListener?.('change', scheduleUpdate);
 
 new MutationObserver(() => {
-  if (activeCard && !activeCard.isConnected) setActiveCard(null);
+  if (activeCard && !activeCard.isConnected) {
+    activeCard = null;
+  }
 }).observe(document.body, { childList: true, subtree: true });
