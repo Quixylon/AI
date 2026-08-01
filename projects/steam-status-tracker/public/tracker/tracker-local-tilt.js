@@ -13,8 +13,7 @@ const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
 
 const pointer = {
   x: window.innerWidth / 2,
-  y: window.innerHeight / 2,
-  down: false
+  y: window.innerHeight / 2
 };
 
 const states = new WeakMap();
@@ -86,12 +85,18 @@ function tiltStrength(card) {
   return { x: 4.2, y: 5.1 };
 }
 
+function removePressEffect(card) {
+  card?.classList.remove('is-tilt-pressed');
+}
+
 function setActiveCard(card) {
   if (activeCard === card) return;
 
+  removePressEffect(activeCard);
   activeCard?.classList.remove('is-local-tilt');
   activeCard = card;
   activeCard?.classList.add('is-local-tilt');
+  removePressEffect(activeCard);
 }
 
 function updateTargets(card) {
@@ -102,12 +107,11 @@ function updateTargets(card) {
   const normalizedY = clamp(((pointer.y - rect.top) / rect.height - 0.5) * 2, -1, 1);
   const strength = tiltStrength(card);
   const state = stateFor(card);
-  const pressBoost = pointer.down ? 1.08 : 1;
 
-  state.targetRotateX = -normalizedY * strength.x * pressBoost;
-  state.targetRotateY = normalizedX * strength.y * pressBoost;
+  state.targetRotateX = -normalizedY * strength.x;
+  state.targetRotateY = normalizedX * strength.y;
   state.targetShiftX = normalizedX * 0.75;
-  state.targetShiftY = normalizedY * 0.52 + (pointer.down ? 0.72 : 0);
+  state.targetShiftY = normalizedY * 0.52;
 }
 
 function needsAnotherFrame(state) {
@@ -127,8 +131,10 @@ function animateLocalTilt() {
     return;
   }
 
+  removePressEffect(activeCard);
+
   const state = stateFor(activeCard);
-  const response = pointer.down ? 0.58 : 0.42;
+  const response = 0.42;
 
   state.rotateX += (state.targetRotateX - state.rotateX) * response;
   state.rotateY += (state.targetRotateY - state.rotateY) * response;
@@ -158,6 +164,7 @@ function updateFromPointer(eventTarget = null) {
   setActiveCard(card);
 
   if (!card) return;
+  removePressEffect(card);
   updateTargets(card);
   scheduleAnimation();
 }
@@ -173,31 +180,29 @@ window.addEventListener('pointerdown', (event) => {
   if (event.pointerType === 'touch') return;
   pointer.x = event.clientX;
   pointer.y = event.clientY;
-  pointer.down = true;
   updateFromPointer(event.target);
+  removePressEffect(activeCard);
 }, { passive: true });
 
 window.addEventListener('pointerup', (event) => {
-  pointer.down = false;
-  if (event.pointerType !== 'touch') {
-    pointer.x = event.clientX;
-    pointer.y = event.clientY;
-    requestAnimationFrame(() => updateFromPointer());
-  }
+  if (event.pointerType === 'touch') return;
+  pointer.x = event.clientX;
+  pointer.y = event.clientY;
+  requestAnimationFrame(() => updateFromPointer());
 }, { passive: true });
 
 window.addEventListener('pointercancel', () => {
-  pointer.down = false;
+  removePressEffect(activeCard);
   setActiveCard(null);
 }, { passive: true });
 
 window.addEventListener('pointerleave', () => {
-  pointer.down = false;
+  removePressEffect(activeCard);
   setActiveCard(null);
 }, { passive: true });
 
 window.addEventListener('blur', () => {
-  pointer.down = false;
+  removePressEffect(activeCard);
   setActiveCard(null);
 }, { passive: true });
 
