@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta content="#080a10" name="theme-color"/>
+<meta content="dark" name="color-scheme"/>
+<title>Qu’lon — GitHub Pages preview</title>
+<style>
+    :root {
+      --bg-0: #05060a;
+      --bg-1: #080a10;
+      --bg-2: #0d1018;
+      --panel: rgba(15, 18, 28, 0.67);
+      --panel-strong: rgba(16, 20, 31, 0.87);
+      --panel-soft: rgba(255, 255, 255, 0.035);
+      --text: #f5f7fb;
+      --muted: #9ca9bd;
+      --muted-2: #6f7a8c;
+      --border: rgba(255, 255, 255, 0.105);
+      --border-strong: rgba(255, 255, 255, 0.17);
+      --accent: #86a8ff;
+      --accent-2: #aa8cff;
+      --online: #77c99a;
+      --offline: #808795;
+      --error: #d97982;
+      --warning: #d5b76e;
+      --steam: #7ba6cf;
+      --discord: #9a8dea;
+      --telegram: #6ebee0;
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --shadow-lg: 0 28px 90px rgba(0, 0, 0, 0.42);
+      --shadow-md: 0 16px 42px rgba(0, 0, 0, 0.28);
+      --safe-top: max(18px, env(safe-area-inset-top));
+      --safe-right: max(18px, env(safe-area-inset-right));
+      --safe-bottom: max(18px, env(safe-area-inset-bottom));
+      --safe-left: max(18px, env(safe-area-inset-left));
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: var(--bg-0);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(105, 128, 195, 0.12), transparent 36%),
+        radial-gradient(circle at 82% 14%, rgba(131, 92, 191, 0.10), transparent 34%),
+        linear-gradient(145deg, var(--bg-0), var(--bg-1) 48%, var(--bg-2));
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.84' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    button,
+    a,
+    input,
+    summary { font: inherit; }
+
+    button,
+    a { -webkit-tap-highlight-color: transparent; }
+
+    button { color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    [hidden] { display: none !important; }
+
+    :focus-visible {
+      outline: 2px solid rgba(134, 168, 255, 0.9);
+      outline-offset: 3px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    #particleCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .ambient {
+      position: fixed;
+      z-index: -2;
+      width: 34rem;
+      height: 34rem;
+      border-radius: 50%;
+      filter: blur(92px);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    .ambient--one { top: -15rem; left: -10rem; background: #6c8ed6; }
+    .ambient--two { right: -14rem; bottom: -15rem; background: #865fc5; }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+    }
+
+    .screen {
+      width: min(100%, 1180px);
+      min-height: calc(100vh - var(--safe-top) - var(--safe-bottom));
+      min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 250ms ease, transform 250ms ease;
+    }
+
+    .screen.is-active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #profileScreen {
+      display: grid;
+      place-items: center;
+    }
+
+    .glass {
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(150deg, rgba(255, 255, 255, 0.055), transparent 22%),
+        var(--panel);
+      box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(22px) saturate(118%);
+      -webkit-backdrop-filter: blur(22px) saturate(118%);
+    }
+
+    .profile-card {
+      --rotate-x: 0deg;
+      --rotate-y: 0deg;
+      --shine-x: 50%;
+      --shine-y: 50%;
+      position: relative;
+      width: min(100%, 520px);
+      padding: 28px;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      transform: perspective(1000px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+      transform-style: preserve-3d;
+      transition: transform 160ms ease-out, border-color 180ms ease;
+    }
+
+    .profile-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: var(--shine-opacity, 0);
+      background: radial-gradient(circle at var(--shine-x) var(--shine-y), rgba(255,255,255,.13), transparent 32%);
+      transition: opacity 180ms ease;
+      mix-blend-mode: screen;
+    }
+
+    .profile-card:hover { border-color: var(--border-strong); }
+
+    .profile-card__content { position: relative; z-index: 1; }
+
+    .profile-header { text-align: center; }
+
+    .avatar-shell {
+      position: relative;
+      width: 94px;
+      height: 94px;
+      margin: 0 auto 14px;
+    }
+
+    .avatar-frame,
+    .small-avatar-frame {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.15);
+      background: linear-gradient(145deg, rgba(134,168,255,.35), rgba(170,140,255,.14));
+      box-shadow: 0 0 0 4px rgba(134,168,255,.10), 0 16px 34px rgba(51,67,111,.26), inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+
+    .avatar-frame { width: 94px; height: 94px; border-radius: 28px; }
+    .small-avatar-frame { width: 58px; height: 58px; border-radius: 17px; flex: 0 0 auto; }
+    .small-avatar-frame.round { border-radius: 50%; }
+
+    .avatar-image,
+    .small-avatar-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 1;
+      transition: opacity 150ms ease;
+    }
+
+    .avatar-placeholder {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 2.25rem;
+      font-weight: 750;
+      background:
+        radial-gradient(circle at 72% 22%, rgba(255,255,255,.12), transparent 35%),
+        linear-gradient(145deg, #385d76, #242842 65%, #4a386c);
+    }
+
+    .small-avatar-frame .avatar-placeholder { font-size: 1.4rem; }
+
+    .presence-dot {
+      position: absolute;
+      right: -1px;
+      bottom: 5px;
+      width: 17px;
+      height: 17px;
+      border: 4px solid #111521;
+      border-radius: 50%;
+      background: var(--offline);
+      box-shadow: 0 0 0 2px rgba(255,255,255,.06);
+    }
+
+    .presence-dot[data-state="online"],
+    .presence-dot[data-state="in-game"] { background: var(--online); }
+    .presence-dot[data-state="away"],
+    .presence-dot[data-state="idle"] { background: var(--warning); }
+    .presence-dot[data-state="busy"],
+    .presence-dot[data-state="dnd"] { background: var(--error); }
+
+    .profile-name {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 3.25rem);
+      line-height: 1;
+      letter-spacing: -0.055em;
+      background: linear-gradient(100deg, #fff 15%, #c8d2ed 43%, #fff 57%, #ccd8ff 84%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: name-shimmer 8s ease-in-out infinite, name-breathe 6s ease-in-out infinite;
+    }
+
+    .profile-handle { margin: 8px 0 0; color: var(--muted); font-size: 1rem; }
+
+    .status-pill,
+    .state-pill,
+    .timeline-entry__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .status-pill { margin-top: 14px; padding: 7px 11px; color: #dfe5f0; font-size: .86rem; }
+    .status-pill__dot,
+    .state-pill__dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--offline);
+      box-shadow: 0 0 14px rgba(128,135,149,.35);
+    }
+
+    .status-pill[data-state="online"] .status-pill__dot,
+    .status-pill[data-state="in-game"] .status-pill__dot,
+    .state-pill[data-state="online"] .state-pill__dot { background: var(--online); }
+    .status-pill[data-state="away"] .status-pill__dot,
+    .status-pill[data-state="idle"] .status-pill__dot,
+    .state-pill[data-state="warning"] .state-pill__dot { background: var(--warning); }
+    .status-pill[data-state="busy"] .status-pill__dot,
+    .status-pill[data-state="dnd"] .status-pill__dot,
+    .state-pill[data-state="error"] .state-pill__dot { background: var(--error); }
+
+    .hello-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0 0;
+    }
+
+    .hello-title { margin: 0; font-size: 1.4rem; }
+
+    .cat-wrap { position: relative; }
+    .cat-button {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 45px;
+      padding: 0;
+      border: 0;
+      border-radius: 14px;
+      color: #e9edf8;
+      background: transparent;
+      cursor: pointer;
+      transform-origin: center bottom;
+    }
+
+    .cat-button.is-meowing { animation: cat-hop 520ms cubic-bezier(.2,.8,.2,1); }
+    .cat-svg { width: 48px; height: 40px; overflow: visible; }
+    .cat-svg path { fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+    .cat-eye { stroke-width: 4 !important; }
+    .cat-hint {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted-2);
+      font-size: .68rem;
+      white-space: nowrap;
+      animation: hint-pulse 2s ease-in-out infinite;
+    }
+
+    .profile-description {
+      margin: 21px auto 0;
+      max-width: 43ch;
+      color: #b5bfce;
+      text-align: center;
+      line-height: 1.65;
+    }
+
+    .description-word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(4px);
+      animation: word-in 420ms ease forwards;
+    }
+
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 22px;
+    }
+
+    .social-link,
+    .action-button,
+    .ghost-button,
+    .copy-button,
+    .filter-button,
+    .refresh-button,
+    .back-link,
+    .retry-button {
+      border: 1px solid var(--border);
+      transition: border-color 160ms ease, background 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
+    }
+
+    .social-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      min-height: 48px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      color: #edf1f9;
+      background: rgba(255,255,255,.028);
+    }
+
+    .social-link:hover,
+    .ghost-button:hover,
+    .copy-button:hover,
+    .retry-button:hover,
+    .filter-button:hover { border-color: var(--border-strong); background: rgba(255,255,255,.055); }
+    .social-link:active,
+    .action-button:active,
+    .ghost-button:active,
+    .copy-button:active,
+    .refresh-button:active,
+    .retry-button:active { translate: 0 1px; }
+
+    .social-link__icon,
+    .social-link__arrow,
+    .button-icon,
+    .platform-logo { flex: 0 0 auto; }
+
+    .social-link__icon { width: 20px; height: 20px; color: #bac8e0; }
+    .social-link__icon svg,
+    .button-icon svg,
+    .platform-logo svg { width: 100%; height: 100%; display: block; }
+    .social-link__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+    .social-link__arrow { margin-left: auto; color: var(--muted-2); }
+
+    .discord-link-indicator {
+      width: 8px;
+      height: 8px;
+      margin-left: auto;
+      border-radius: 50%;
+      background: var(--offline);
+      box-shadow: 0 0 12px rgba(128,135,149,.45);
+    }
+    .discord-link-indicator[data-state="online"] { background: var(--online); }
+    .discord-link-indicator[data-state="idle"] { background: var(--warning); }
+    .discord-link-indicator[data-state="dnd"] { background: var(--error); }
+
+    .tracker-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 52px;
+      margin-top: 13px;
+      border-color: rgba(134,168,255,.30);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(104,130,198,.19), rgba(125,92,181,.13));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+      font-weight: 750;
+    }
+
+    .tracker-cta:hover { border-color: rgba(134,168,255,.48); background: linear-gradient(135deg, rgba(104,130,198,.26), rgba(125,92,181,.19)); }
+
+    .profile-footer {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 17px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+
+    .profile-footer__item { min-width: 0; text-align: center; }
+    .profile-footer__item small { display: block; color: var(--muted-2); font-size: .64rem; text-transform: uppercase; letter-spacing: .11em; }
+    .profile-footer__item span { display: block; margin-top: 7px; overflow: hidden; color: #d9dfeb; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+
+    #trackerScreen { padding: 22px 0 80px; }
+
+    .tracker-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 9px 13px;
+      border-radius: 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,.025);
+    }
+
+    .tracker-heading { flex: 1; min-width: 0; }
+    .tracker-eyebrow { margin: 3px 0 6px; color: var(--accent); font-size: .7rem; font-weight: 750; letter-spacing: .16em; }
+    .tracker-heading h1 { margin: 0; font-size: clamp(1.9rem, 5vw, 3.2rem); letter-spacing: -.045em; }
+    .tracker-heading p:last-child { margin: 8px 0 0; color: var(--muted); }
+
+    .refresh-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 44px;
+      padding: 9px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.035);
+      cursor: pointer;
+    }
+
+    .refresh-icon { width: 18px; height: 18px; }
+    .refresh-button[aria-busy="true"] .refresh-icon { animation: spin .85s linear infinite; }
+
+    .tracker-statusbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 13px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .state-pill { padding: 6px 10px; color: #d9dfeb; }
+    .sync-text { text-align: right; }
+
+    .tracker-tabs-wrap {
+      margin-bottom: 17px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tracker-tabs-wrap::-webkit-scrollbar { display: none; }
+    .tracker-tabs {
+      display: inline-flex;
+      min-width: max-content;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .tab-link {
+      display: grid;
+      place-items: center;
+      min-width: 96px;
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .tab-link[aria-selected="true"] {
+      color: #fff;
+      background: rgba(255,255,255,.075);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .tracker-view { display: none; }
+    .tracker-view.is-active { display: block; animation: view-in 220ms ease both; }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .platform-card,
+    .detail-card,
+    .stats-card,
+    .history-panel {
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.035), transparent 25%),
+        var(--panel-strong);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.025);
+      backdrop-filter: blur(17px);
+      -webkit-backdrop-filter: blur(17px);
+    }
+
+    .platform-card {
+      --local-accent: var(--accent);
+      position: relative;
+      min-width: 0;
+      padding: 18px;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+    .platform-card[data-platform="steam"] { --local-accent: var(--steam); }
+    .platform-card[data-platform="discord"] { --local-accent: var(--discord); }
+    .platform-card[data-platform="telegram"] { --local-accent: var(--telegram); }
+    .platform-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background: radial-gradient(circle at 12% 2%, var(--local-accent), transparent 42%);
+    }
+    .platform-card > * { position: relative; z-index: 1; }
+
+    .platform-card__top { display: flex; align-items: center; gap: 9px; }
+    .platform-logo { width: 22px; height: 22px; color: var(--local-accent); }
+    .platform-name { font-weight: 800; }
+    .platform-status-mini { margin-left: auto; color: var(--muted); font-size: .76rem; }
+
+    .platform-card__identity { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+    .platform-card__copy { min-width: 0; }
+    .platform-card__copy h2 { margin: 0; overflow: hidden; font-size: 1.1rem; text-overflow: ellipsis; white-space: nowrap; }
+    .platform-card__copy p { margin: 5px 0 0; overflow: hidden; color: var(--muted); font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
+
+    .platform-main-status { margin: 18px 0 0; font-size: 1rem; font-weight: 760; }
+    .platform-activity { min-height: 42px; margin: 8px 0 0; color: #aeb8c8; font-size: .86rem; line-height: 1.45; }
+    .platform-updated { margin-top: 14px; color: var(--muted-2); font-size: .75rem; }
+    .platform-inline-state { min-height: 18px; margin-top: 8px; color: var(--warning); font-size: .75rem; }
+
+    .platform-actions,
+    .detail-actions,
+    .history-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .action-button,
+    .ghost-button,
+    .copy-button,
+    .retry-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 11px;
+      cursor: pointer;
+    }
+
+    .action-button { border-color: rgba(134,168,255,.24); background: rgba(112,133,194,.12); color: #ecf1ff; }
+    .ghost-button,
+    .copy-button,
+    .retry-button { background: rgba(255,255,255,.025); color: var(--muted); }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(260px, .8fr);
+      gap: 14px;
+    }
+
+    .motion-panel {
+      --rotate-x: 0deg;
+      --rotate-y: 0deg;
+      --shine-x: 50%;
+      --shine-y: 50%;
+      transform: perspective(1200px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+      transition: transform 180ms ease-out, border-color 170ms ease;
+    }
+
+    .detail-card,
+    .stats-card,
+    .history-panel { border-radius: 21px; }
+    .detail-card { padding: 20px; }
+    .stats-card { padding: 18px; }
+    .history-panel { margin-top: 14px; padding: 18px; }
+
+    .detail-hero { display: flex; align-items: center; gap: 14px; }
+    .detail-avatar { width: 74px; height: 74px; }
+    .detail-title { min-width: 0; }
+    .detail-title__platform { color: var(--muted); font-size: .77rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .detail-title h2 { margin: 6px 0 0; overflow-wrap: anywhere; font-size: clamp(1.25rem, 4vw, 2rem); }
+    .detail-title p { margin: 5px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+
+    .detail-status-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      background: rgba(255,255,255,.025);
+    }
+    .detail-status-banner__copy strong { display: block; }
+    .detail-status-banner__copy p { margin: 6px 0 0; color: var(--muted); }
+    .status-orb { width: 13px; height: 13px; flex: 0 0 auto; border-radius: 50%; background: var(--offline); box-shadow: 0 0 18px rgba(128,135,149,.35); }
+    .status-orb[data-state="online"], .status-orb[data-state="in-game"] { background: var(--online); box-shadow: 0 0 18px rgba(119,201,154,.35); }
+    .status-orb[data-state="idle"], .status-orb[data-state="away"], .status-orb[data-state="recently"] { background: var(--warning); }
+    .status-orb[data-state="dnd"], .status-orb[data-state="busy"] { background: var(--error); }
+
+    .error-banner,
+    .stale-banner,
+    .empty-state {
+      display: none;
+      margin-top: 13px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      font-size: .84rem;
+      line-height: 1.45;
+    }
+    .error-banner.is-visible { display: block; border: 1px solid rgba(217,121,130,.25); color: #e7a4aa; background: rgba(217,121,130,.07); }
+    .stale-banner.is-visible { display: block; border: 1px solid rgba(213,183,110,.24); color: #dfca98; background: rgba(213,183,110,.06); }
+    .empty-state.is-visible { display: block; border: 1px dashed var(--border); color: var(--muted); background: rgba(255,255,255,.02); }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .data-item {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.065);
+      border-radius: 13px;
+      background: rgba(255,255,255,.022);
+    }
+    .data-item__label { display: block; color: var(--muted-2); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+    .data-item__value-row { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+    .data-item__value { min-width: 0; overflow: hidden; color: #e3e8f2; font-size: .86rem; text-overflow: ellipsis; overflow-wrap: anywhere; }
+    .copy-button { min-height: 32px; margin-left: auto; padding: 5px 9px; font-size: .75rem; }
+
+    .activity-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid rgba(154,141,234,.16);
+      border-radius: 15px;
+      background: rgba(154,141,234,.055);
+    }
+    .activity-copy { min-width: 0; flex: 1; }
+    .activity-copy small { color: var(--discord); }
+    .activity-copy h3 { margin: 6px 0 0; overflow-wrap: anywhere; }
+    .activity-copy p { margin: 6px 0 0; color: var(--muted); line-height: 1.4; }
+    .activity-image { width: 76px; height: 76px; flex: 0 0 auto; border-radius: 14px; object-fit: cover; }
+
+    .panel-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .panel-title h3 { margin: 0; font-size: 1.06rem; }
+    .panel-title p { margin: 6px 0 0; color: var(--muted); font-size: .81rem; }
+
+    .stats-list { margin-top: 12px; }
+    .stat-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.055); }
+    .stat-row:last-child { border-bottom: 0; }
+    .stat-row span { color: var(--muted); }
+    .stat-row strong { text-align: right; overflow-wrap: anywhere; }
+
+    .history-panel-title { align-items: center; }
+    .history-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+    .filter-button {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.022);
+      cursor: pointer;
+    }
+    .filter-button.is-active { border-color: rgba(134,168,255,.3); color: #eff3ff; background: rgba(134,168,255,.10); }
+
+    .timeline { position: relative; margin-top: 16px; }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      left: 7px;
+      width: 1px;
+      background: linear-gradient(to bottom, rgba(134,168,255,.45), rgba(255,255,255,.05));
+    }
+
+    .timeline-entry {
+      position: relative;
+      margin-left: 26px;
+      padding: 0 0 17px 2px;
+    }
+    .timeline-entry:last-child { padding-bottom: 0; }
+    .timeline-entry::before {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: -24px;
+      width: 9px;
+      height: 9px;
+      border: 2px solid #151a27;
+      border-radius: 50%;
+      background: var(--offline);
+      box-shadow: 0 0 0 2px rgba(255,255,255,.05);
+    }
+    .timeline-entry[data-kind="online"]::before,
+    .timeline-entry[data-kind="in-game"]::before { background: var(--online); }
+    .timeline-entry[data-kind="idle"]::before,
+    .timeline-entry[data-kind="away"]::before,
+    .timeline-entry[data-kind="recently"]::before { background: var(--warning); }
+    .timeline-entry[data-kind="dnd"]::before,
+    .timeline-entry[data-kind="busy"]::before { background: var(--error); }
+
+    .timeline-entry__head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .timeline-entry__head strong { overflow-wrap: anywhere; }
+    .timeline-entry__head > span { flex: 0 0 auto; color: var(--muted-2); font-size: .75rem; }
+    .timeline-entry__meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 6px; color: var(--muted); font-size: .8rem; }
+    .timeline-entry__details { margin: 7px 0 0; color: #b5bfce; font-size: .84rem; }
+    .timeline-entry__badge { padding: 3px 7px; color: var(--muted); font-size: .68rem; }
+    .timeline-entry__badge.is-current { color: var(--online); }
+    .timeline-entry__badge.is-approximate { color: var(--warning); }
+
+    .timeline-empty { padding: 24px 0; color: var(--muted); text-align: center; }
+
+    .tech-details { margin-top: 16px; border-top: 1px solid rgba(255,255,255,.06); }
+    .tech-details summary { padding: 14px 0 0; color: var(--muted); cursor: pointer; }
+    .json-preview {
+      max-height: 340px;
+      margin: 12px 0 0;
+      padding: 13px;
+      overflow: auto;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 13px;
+      color: #b7c6df;
+      background: rgba(0,0,0,.22);
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      color: transparent !important;
+      border-radius: 6px;
+      background: rgba(255,255,255,.055) !important;
+    }
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      translate: -100% 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+      animation: skeleton-wave 1.25s ease-in-out infinite;
+    }
+
+    .toast-region {
+      position: fixed;
+      z-index: 30;
+      right: var(--safe-right);
+      bottom: var(--safe-bottom);
+      display: grid;
+      gap: 8px;
+      width: min(360px, calc(100vw - var(--safe-left) - var(--safe-right)));
+      pointer-events: none;
+    }
+    .toast {
+      padding: 12px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 13px;
+      color: #eef2f9;
+      background: rgba(17,21,32,.94);
+      box-shadow: 0 18px 50px rgba(0,0,0,.36);
+      animation: toast-in 220ms ease both;
+    }
+    .toast[data-type="error"] { border-color: rgba(217,121,130,.34); }
+    .toast.is-leaving { animation: toast-out 200ms ease both; }
+
+    @keyframes name-shimmer { 0%, 65%, 100% { background-position: 100% 50%; } 35% { background-position: 0 50%; } }
+    @keyframes name-breathe { 0%,100% { filter: drop-shadow(0 0 10px rgba(134,168,255,.08)); transform: scale(1); } 50% { filter: drop-shadow(0 0 14px rgba(134,168,255,.16)); transform: scale(1.005); } }
+    @keyframes cat-hop { 0%,100% { transform: translateY(0) rotate(0); } 35% { transform: translateY(-8px) rotate(-8deg); } 65% { transform: translateY(-2px) rotate(6deg); } }
+    @keyframes hint-pulse { 0%,100% { opacity: .45; } 50% { opacity: .95; } }
+    @keyframes word-in { to { opacity: 1; transform: translateY(0); } }
+    @keyframes skeleton-wave { to { translate: 100% 0; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes view-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+    @keyframes toast-out { to { opacity: 0; transform: translateY(6px); } }
+
+    @media (max-width: 900px) {
+      .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .platform-card:last-child { grid-column: 1 / -1; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .tracker-header { flex-wrap: wrap; }
+      .tracker-heading { order: -1; flex-basis: 100%; }
+    }
+
+    @media (max-width: 620px) {
+      :root {
+        --safe-top: max(12px, env(safe-area-inset-top));
+        --safe-right: max(12px, env(safe-area-inset-right));
+        --safe-bottom: max(12px, env(safe-area-inset-bottom));
+        --safe-left: max(12px, env(safe-area-inset-left));
+      }
+      .profile-card { border-radius: 24px; padding: 21px 17px; }
+      .avatar-shell { width: 84px; height: 84px; }
+      .avatar-frame { width: 84px; height: 84px; border-radius: 24px; }
+      .links-grid { grid-template-columns: 1fr; }
+      .profile-footer { grid-template-columns: 1fr; gap: 12px; }
+      .profile-footer__item { display: flex; align-items: center; justify-content: space-between; gap: 14px; text-align: left; }
+      .profile-footer__item span { margin: 0; white-space: normal; text-align: right; }
+      #trackerScreen { padding-top: 8px; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .platform-card:last-child { grid-column: auto; }
+      .tracker-statusbar { align-items: flex-start; flex-direction: column; }
+      .sync-text { text-align: left; }
+      .tracker-tabs { width: max-content; }
+      .tab-link { min-width: 88px; }
+      .data-grid { grid-template-columns: 1fr; }
+      .history-panel-title { align-items: flex-start; flex-direction: column; }
+      .history-filters { justify-content: flex-start; }
+      .timeline-entry__head { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .timeline-entry__head > span { flex: auto; }
+      .activity-card { align-items: flex-start; }
+      .activity-image { width: 64px; height: 64px; }
+    }
+
+    @media (max-width: 360px) {
+      .profile-card { padding: 19px 14px; }
+      .social-link { padding-inline: 11px; }
+      .tracker-header { gap: 10px; }
+      .back-link,
+      .refresh-button { padding-inline: 10px; }
+      .refresh-button span { display: none; }
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      .profile-card,
+      .motion-panel { transform: none !important; }
+      .profile-card::after { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+      .screen { transform: none; }
+      .profile-card,
+      .motion-panel { transform: none !important; }
+    }
+
+    @media (prefers-contrast: more) {
+      :root { --border: rgba(255,255,255,.28); --border-strong: rgba(255,255,255,.45); --muted: #c0c7d2; --muted-2: #aab2c0; }
+      .glass,
+      .platform-card,
+      .detail-card,
+      .stats-card,
+      .history-panel { background-color: rgba(5,7,12,.94); }
+    }
+
+    @media (min-width:621px) and (max-height:800px) {
+      .profile-card { padding:20px 28px; }
+      .avatar-shell { width:76px; height:76px; margin-bottom:10px; }
+      .avatar-frame { width:76px; height:76px; border-radius:22px; }
+      .avatar-placeholder { font-size:1.9rem; }
+      .profile-name { font-size:2rem; }
+      .profile-handle { margin-top:5px; }
+      .status-pill { margin-top:10px; padding:7px 11px; }
+      .hello-row { margin-bottom:12px; }
+      .profile-description { margin-top:14px; line-height:1.5; }
+      .links-grid { margin-top:16px; gap:8px; }
+      .social-link { min-height:42px; }
+      .tracker-cta { min-height:46px; margin-top:11px; }
+      .profile-footer { margin-top:14px; padding-top:14px; }
+    }
+
+    .preview-note { margin:8px 0 0; color:var(--muted-2); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; }
+    .preview-banner { display:flex; align-items:flex-start; gap:10px; margin:16px 0 22px; padding:12px 14px; border:1px solid rgba(134,168,255,.18); border-radius:14px; color:var(--muted); background:rgba(86,104,162,.08); font-size:.88rem; line-height:1.45; }
+    .preview-banner strong { color:var(--text); }
+    .source-chip { display:inline-flex; align-items:center; min-height:24px; padding:3px 8px; border:1px solid var(--border); border-radius:999px; color:var(--muted); background:rgba(255,255,255,.035); font-size:.69rem; letter-spacing:.08em; text-transform:uppercase; vertical-align:middle; white-space:nowrap; }
+    .source-chip--live { color:var(--online); border-color:rgba(119,201,154,.28); }
+    @media (max-width:520px) { .preview-banner { font-size:.82rem; } }
+
+</style>
+</head>
+<body>
+<canvas aria-hidden="true" id="particleCanvas"></canvas>
+<div aria-hidden="true" class="ambient ambient--one"></div>
+<div aria-hidden="true" class="ambient ambient--two"></div>
+<div aria-live="polite" class="sr-only" id="appStatusLive"></div><main class="app-shell">
+<section aria-hidden="false" aria-labelledby="profileName" class="screen is-active" id="profileScreen">
+<article class="profile-card glass" data-motion-max="1.9" data-motion-panel="1" id="profileCard">
+<div class="profile-card__content">
+<header class="profile-header">
+<div class="avatar-shell">
+<div class="avatar-frame">
+<div aria-hidden="true" class="avatar-placeholder" id="profileAvatarPlaceholder">Q</div>
+<img alt="Аватар Qu’lon" class="avatar-image" hidden="" id="profileAvatar"/>
+</div>
+<span aria-hidden="true" class="presence-dot" data-state="offline" id="profilePresenceDot"></span>
+</div>
+<h1 class="profile-name" id="profileName">Qu’lon</h1>
+<p class="profile-handle" id="profileHandle">@quixylon</p>
+<p class="preview-note">GitHub Pages preview · Steam live</p>
+<div aria-live="polite" class="status-pill" data-state="offline" id="profileStatusPill">
+<span aria-hidden="true" class="status-pill__dot"></span>
+<span id="profileStatusText">Загрузка статуса…</span>
+</div>
+</header>
+<div class="hello-row">
+<h2 class="hello-title">Привет</h2>
+<div class="cat-wrap">
+<button aria-describedby="catHint" aria-label="Мяукнуть" class="cat-button" id="catButton" type="button">
+<svg aria-hidden="true" class="cat-svg" viewbox="0 0 96 72">
+<path class="cat-ear" d="M20 27 25 8l17 13M76 27 71 8 54 21"></path>
+<path class="cat-head" d="M18 31c0-16 13-25 30-25s30 9 30 25v12c0 15-13 25-30 25S18 58 18 43Z"></path>
+<path class="cat-eye" d="M34 38h1M61 38h1"></path>
+<path class="cat-mouth" d="M43 48c2 3 4 4 5 4s3-1 5-4M48 44v8"></path>
+<path class="cat-whisker" d="M8 43h22M10 51l20-3M88 43H66M86 51l-20-3"></path>
+</svg>
+</button>
+<span class="cat-hint" id="catHint">нажми</span>
+</div>
+</div>
+
+<p class="profile-description" id="profileDescription">Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.</p>
+<nav aria-label="Ссылки профиля" class="links-grid" id="profileLinks"></nav>
+<a aria-label="Открыть трекер активности" class="action-button tracker-cta" href="#tracker/overview">
+<span>Открыть трекер</span>
+<span aria-hidden="true">→</span>
+</a>
+<footer class="profile-footer">
+<div class="profile-footer__item"><small>Статус</small><span id="profileFooterSteam">Steam: загрузка…</span></div>
+<div class="profile-footer__item"><small>Обновлено</small><span id="profileFooterUpdated">—</span></div>
+<div class="profile-footer__item"><small>Посетители</small><span id="visitorCount">—</span></div>
+</footer>
+</div>
+</article>
+</section>
+<section aria-hidden="true" aria-labelledby="trackerTitle" class="screen" id="trackerScreen">
+<header class="tracker-header">
+<a class="back-link" href="#profile">← Назад к профилю</a>
+<div class="tracker-heading"><p class="tracker-eyebrow" id="trackerEyebrow">QUIXYLON TRACKER · PREVIEW</p>
+<h1 id="trackerTitle">Трекер активности</h1>
+<p id="trackerLastUpdate">Последнее общее обновление: —</p>
+</div>
+<button aria-busy="false" aria-label="Обновить все данные" class="refresh-button" id="refreshAllButton" title="Обновить данные" type="button"><span aria-hidden="true" class="refresh-spinner"></span>
+<svg aria-hidden="true" class="refresh-icon" fill="none" viewbox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+<span>Обновить</span>
+</button>
+</header>
+<div aria-live="polite" class="tracker-statusbar">
+<div class="state-pill" data-state="warning" id="overallFetchState">
+<span aria-hidden="true" class="state-pill__dot"></span>
+<span id="overallFetchStateText">Подготовка данных</span>
+</div>
+<span class="sync-text" id="syncText">Синхронизация ещё не выполнялась</span>
+</div>
+<nav aria-label="Разделы трекера" class="tracker-tabs-wrap">
+<div aria-label="Платформы трекера" class="tracker-tabs" role="tablist">
+<a aria-controls="trackerOverviewView" aria-selected="true" class="tab-link" data-route="tracker" data-tab="overview" href="#tracker/overview" id="tab-overview" role="tab" tabindex="0">Обзор</a>
+<a aria-controls="steamView" aria-selected="false" class="tab-link" data-route="tracker-steam" data-tab="steam" href="#tracker/steam" id="tab-steam" role="tab" tabindex="-1">Steam</a>
+<a aria-controls="discordView" aria-selected="false" class="tab-link" data-route="tracker-discord" data-tab="discord" href="#tracker/discord" id="tab-discord" role="tab" tabindex="-1">Discord</a>
+<a aria-controls="telegramView" aria-selected="false" class="tab-link" data-route="tracker-telegram" data-tab="telegram" href="#tracker/telegram" id="tab-telegram" role="tab" tabindex="-1">Telegram</a>
+</div>
+</nav>
+<div class="preview-banner"><span class="source-chip source-chip--live">Live</span><span><strong>Steam</strong> загружается из рабочего JSON первого проекта. Discord и Telegram сейчас показывают демонстрационные данные — для реального присутствия им понадобится серверная интеграция.</span></div>
+<section aria-label="Обзор платформ" aria-labelledby="tab-overview" class="tracker-view is-active" id="trackerOverviewView" role="tabpanel" tabindex="0">
+<div class="overview-grid">
+<article aria-busy="true" class="platform-card" data-motion-max="0.7" data-motion-panel="1" data-platform="steam">
+<div class="platform-card__top">
+<span aria-hidden="true" class="platform-logo" data-icon="steam"></span>
+<span class="platform-name">Steam</span>
+<span class="platform-status-mini" id="steamOverviewStatusMini">Загрузка</span>
+</div>
+<div class="platform-card__identity">
+<div class="small-avatar-frame round">
+<div aria-hidden="true" class="avatar-placeholder" id="steamOverviewAvatarPlaceholder">Q</div>
+<img alt="Steam-аватар" hidden="" id="steamOverviewAvatar"/>
+</div>
+<div class="platform-card__copy">
+<h2 id="steamOverviewName">—</h2>
+<p id="steamOverviewIdentity">—</p>
+</div>
+</div>
+<p class="platform-main-status" id="steamOverviewMainStatus">Получение данных…</p>
+<p class="platform-activity" id="steamOverviewActivity">Steam ещё не ответил.</p>
+<div class="platform-updated" id="steamOverviewUpdated">Обновлено: —</div>
+<div aria-live="polite" class="platform-inline-state" id="steamOverviewState"></div><div class="platform-actions">
+<a class="action-button" href="#tracker-steam">Подробнее</a>
+<a class="ghost-button" href="#" id="steamOverviewProfileLink" rel="noopener noreferrer" target="_blank">Профиль</a>
+</div>
+</article>
+<article aria-busy="true" class="platform-card" data-motion-max="0.7" data-motion-panel="1" data-platform="discord">
+<div class="platform-card__top">
+<span aria-hidden="true" class="platform-logo" data-icon="discord"></span>
+<span class="platform-name">Discord</span>
+<span class="platform-status-mini" id="discordOverviewStatusMini">Загрузка</span>
+</div>
+<div class="platform-card__identity">
+<div class="small-avatar-frame round">
+<div aria-hidden="true" class="avatar-placeholder" id="discordOverviewAvatarPlaceholder">Q</div>
+<img alt="Discord-аватар" hidden="" id="discordOverviewAvatar"/>
+</div>
+<div class="platform-card__copy">
+<h2 id="discordOverviewName">—</h2>
+<p id="discordOverviewIdentity">—</p>
+</div>
+</div>
+<p class="platform-main-status" id="discordOverviewMainStatus">Получение данных…</p>
+<p class="platform-activity" id="discordOverviewActivity">Discord ещё не ответил.</p>
+<div class="platform-updated" id="discordOverviewUpdated">Обновлено: —</div>
+<div aria-live="polite" class="platform-inline-state" id="discordOverviewState"></div><div class="platform-actions">
+<a class="action-button" href="#tracker-discord">Подробнее</a>
+</div>
+</article>
+<article aria-busy="true" class="platform-card" data-motion-max="0.7" data-motion-panel="1" data-platform="telegram">
+<div class="platform-card__top">
+<span aria-hidden="true" class="platform-logo" data-icon="telegram"></span>
+<span class="platform-name">Telegram</span>
+<span class="platform-status-mini" id="telegramOverviewStatusMini">Загрузка</span>
+</div>
+<div class="platform-card__identity">
+<div class="small-avatar-frame round">
+<div aria-hidden="true" class="avatar-placeholder" id="telegramOverviewAvatarPlaceholder">Q</div>
+<img alt="Telegram-аватар" hidden="" id="telegramOverviewAvatar"/>
+</div>
+<div class="platform-card__copy">
+<h2 id="telegramOverviewName">—</h2>
+<p id="telegramOverviewIdentity">—</p>
+</div>
+</div>
+<p class="platform-main-status" id="telegramOverviewMainStatus">Получение данных…</p>
+<p class="platform-activity" id="telegramOverviewActivity">Telegram ещё не ответил.</p>
+<div class="platform-updated" id="telegramOverviewUpdated">Обновлено: —</div>
+<div aria-live="polite" class="platform-inline-state" id="telegramOverviewState"></div><div class="platform-actions">
+<a class="action-button" href="#tracker-telegram">Подробнее</a>
+<a class="ghost-button" href="#" id="telegramOverviewProfileLink" rel="noopener noreferrer" target="_blank">Профиль</a>
+</div>
+</article>
+</div>
+</section>
+<section aria-label="Подробный Steam-трекер" aria-labelledby="tab-steam" class="tracker-view" id="steamView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="steamDetailAvatarPlaceholder">Q</div>
+<img alt="Steam-аватар" hidden="" id="steamDetailAvatar"/>
+</div>
+<div class="detail-title">
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="steam" style="width:18px;height:18px;color:var(--steam)"></span> Steam</div>
+<h2 id="steamDetailName">—</h2>
+<p id="steamDetailSteamId">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="steamDetailMainStatus">Получение статуса…</strong>
+<p id="steamDetailSubStatus">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="steamDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="steamErrorBanner"></div>
+<div class="stale-banner" id="steamStaleBanner">Данные могут быть устаревшими.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">SteamID64</span><div class="data-item__value-row"><span class="data-item__value" id="steamIdValue">—</span><button class="copy-button" data-copy-target="steamIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">personaState</span><div class="data-item__value-row"><span class="data-item__value" id="steamPersonaState">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Текущая игра</span><div class="data-item__value-row"><span class="data-item__value" id="steamGameName">—</span></div></div>
+<div class="data-item"><span class="data-item__label">App ID</span><div class="data-item__value-row"><span class="data-item__value" id="steamAppId">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Статус с</span><div class="data-item__value-row"><span class="data-item__value" id="steamStatusSince">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последний выход</span><div class="data-item__value-row"><span class="data-item__value" id="steamLastLogoff">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Длительность сессии</span><div class="data-item__value-row"><span class="data-item__value" data-start-time="" id="steamSessionDuration">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="steamDetailUpdated">—</span></div></div>
+</div>
+<div class="detail-actions">
+<a class="action-button" href="#" id="steamProfileButton" rel="noopener noreferrer" target="_blank">Открыть Steam-профиль</a>
+<button class="retry-button" id="retrySteamButton" type="button">Повторить запрос</button>
+</div>
+<details class="tech-details">
+<summary>Технические данные</summary>
+<pre class="json-preview" id="steamJson">{}</pre>
+</details>
+</article>
+<aside class="stats-card">
+<div class="panel-title"><div><h3>Сегодня</h3><p>Рассчитано по тестовой истории</p></div></div>
+<div class="stats-list">
+<div class="stat-row"><span>Онлайн</span><strong id="steamStatOnline">—</strong></div>
+<div class="stat-row"><span>В играх</span><strong id="steamStatGames">—</strong></div>
+<div class="stat-row"><span>Запусков игр</span><strong id="steamStatLaunches">—</strong></div>
+<div class="stat-row"><span>Последняя игра</span><strong id="steamStatLastGame">—</strong></div>
+<div class="stat-row"><span>В играх за 7 дней</span><strong id="steamStatGames7d">—</strong></div><div class="stat-row"><span>Уникальных игр</span><strong id="steamStatUniqueGames">—</strong></div><div class="stat-row"><span>Чаще запускается</span><strong id="steamStatMostLaunched">—</strong></div><div class="stat-row"><span>Больше всего времени</span><strong id="steamStatLongestGame">—</strong></div></div>
+</aside>
+</div>
+
+
+<section aria-labelledby="steamGamesHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title history-panel-title">
+<div><h3 id="steamGamesHistoryTitle">История игр</h3><p>Запуски и игровые сессии Steam</p></div>
+<div aria-label="Фильтр истории Steam" class="history-filters" role="group">
+<button class="filter-button is-active" data-history-filter="all" data-history-platform="steam" type="button">Всё</button>
+<button class="filter-button" data-history-filter="games" data-history-platform="steam" type="button">Игры</button>
+<button class="filter-button" data-history-filter="online" data-history-platform="steam" type="button">Онлайн</button>
+<button class="filter-button" data-history-filter="offline" data-history-platform="steam" type="button">Офлайн</button>
+</div>
+</div>
+<div aria-live="polite" class="timeline" id="steamGameTimeline"></div>
+<div class="history-controls"><button class="ghost-button" data-history-more="steamGames" id="steamGameMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="steamGames" hidden="" id="steamGameCollapse" type="button">Свернуть</button></div>
+</section>
+<section aria-labelledby="steamPresenceHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title"><div><h3 id="steamPresenceHistoryTitle">История сети</h3><p>Периоды онлайна и офлайна</p></div></div>
+<div aria-live="polite" class="timeline" id="steamPresenceTimeline"></div>
+<div class="history-controls"><button class="ghost-button" data-history-more="steamPresence" id="steamPresenceMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="steamPresence" hidden="" id="steamPresenceCollapse" type="button">Свернуть</button></div>
+</section>
+</section>
+<section aria-label="Подробный Discord-трекер" aria-labelledby="tab-discord" class="tracker-view" id="discordView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="discordDetailAvatarPlaceholder">Q</div>
+<img alt="Discord-аватар" hidden="" id="discordDetailAvatar"/>
+</div>
+<div class="detail-title">
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="discord" style="width:18px;height:18px;color:var(--discord)"></span> Discord</div>
+<h2 id="discordDetailName">—</h2>
+<p id="discordDetailUsername">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="discordDetailMainStatus">Получение статуса…</strong>
+<p id="discordCustomStatus">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="discordDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="discordErrorBanner"></div>
+<div class="stale-banner" id="discordStaleBanner">Данные могут быть устаревшими.</div>
+<div class="activity-card" id="discordActivityCard">
+<div class="activity-copy">
+<small id="discordActivityType">Активность</small>
+<h3 id="discordActivityName">—</h3>
+<p id="discordActivityDetails">Нет текущей активности.</p>
+<p data-start-time="" id="discordActivityElapsed"></p>
+</div>
+<img alt="Изображение активности Discord" class="activity-image" hidden="" id="discordActivityImage"/>
+</div>
+<div class="empty-state" id="discordEmptyState">Сейчас активность не передаётся. Это нормальное состояние, а не ошибка.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">Discord ID</span><div class="data-item__value-row"><span class="data-item__value" id="discordIdValue">—</span><button class="copy-button" data-copy-target="discordIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">Username</span><div class="data-item__value-row"><span class="data-item__value" id="discordUsernameValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Начало активности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityStarted">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="discordDetailUpdated">—</span></div></div>
+</div>
+<button class="retry-button" id="retryDiscordButton" type="button">Повторить запрос</button>
+<details class="tech-details"><summary>Технические данные</summary><pre class="json-preview" id="discordJson">{}</pre></details>
+</article>
+<aside class="stats-card"><div class="panel-title"><div><h3>Статистика Discord</h3><p>Из известной истории</p></div></div><div class="stats-list"><div class="stat-row"><span>Online сегодня</span><strong id="discordStatOnline">—</strong></div><div class="stat-row"><span>Idle сегодня</span><strong id="discordStatIdle">—</strong></div><div class="stat-row"><span>DND сегодня</span><strong id="discordStatDnd">—</strong></div><div class="stat-row"><span>Изменений активности</span><strong id="discordStatChanges">—</strong></div><div class="stat-row"><span>Последняя активность</span><strong id="discordStatLastActivity">—</strong></div><div class="stat-row"><span>Долгий онлайн</span><strong id="discordStatLongest">—</strong></div></div></aside>
+</div>
+<section aria-labelledby="discordHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1"><div class="panel-title history-panel-title"><div><h3 id="discordHistoryTitle">История Discord</h3><p>Статусы и смена активностей</p></div><div class="history-filters" role="group" aria-label="Фильтр истории Discord"><button class="filter-button is-active" data-history-platform="discord" data-history-filter="all" type="button">Всё</button><button class="filter-button" data-history-platform="discord" data-history-filter="online" type="button">В сети</button><button class="filter-button" data-history-platform="discord" data-history-filter="idle" type="button">Неактивен</button><button class="filter-button" data-history-platform="discord" data-history-filter="dnd" type="button">Не беспокоить</button><button class="filter-button" data-history-platform="discord" data-history-filter="offline" type="button">Не в сети</button><button class="filter-button" data-history-platform="discord" data-history-filter="activities" type="button">Активности</button></div></div><div class="timeline" id="discordTimeline" aria-live="polite"></div><div class="history-controls"><button class="ghost-button" data-history-more="discord" id="discordMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="discord" hidden="" id="discordCollapse" type="button">Свернуть</button></div></section>
+</section>
+<section aria-label="Подробный Telegram-трекер" aria-labelledby="tab-telegram" class="tracker-view" id="telegramView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="telegramDetailAvatarPlaceholder">Q</div>
+<img alt="Telegram-аватар" hidden="" id="telegramDetailAvatar"/>
+</div>
+<div class="detail-title">
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="telegram" style="width:18px;height:18px;color:var(--telegram)"></span> Telegram</div>
+<h2 id="telegramDetailName">—</h2>
+<p id="telegramDetailUsername">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy"><strong id="telegramDetailMainStatus">Получение статуса…</strong><p id="telegramLastSeen">—</p></div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="telegramDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="telegramErrorBanner"></div>
+<div class="stale-banner" id="telegramStaleBanner">Данные могут быть устаревшими.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">Telegram ID</span><div class="data-item__value-row"><span class="data-item__value" id="telegramIdValue">—</span><button class="copy-button" data-copy-target="telegramIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">Username</span><div class="data-item__value-row"><span class="data-item__value" id="telegramUsernameValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Bio</span><div class="data-item__value-row"><span class="data-item__value" id="telegramBio">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="telegramDetailUpdated">—</span></div></div>
+</div>
+<div class="detail-actions"><a class="action-button" href="#" id="telegramProfileButton" rel="noopener noreferrer" target="_blank">Открыть Telegram</a><button class="retry-button" id="retryTelegramButton" type="button">Повторить запрос</button></div>
+<details class="tech-details"><summary>Технические данные</summary><pre class="json-preview" id="telegramJson">{}</pre></details>
+</article>
+<aside class="stats-card"><div class="panel-title"><div><h3>Статистика Telegram</h3><p>Только известные точные периоды</p></div></div><div class="stats-list"><div class="stat-row"><span>Online сегодня</span><strong id="telegramStatOnline">—</strong></div><div class="stat-row"><span>Входов сегодня</span><strong id="telegramStatEntries">—</strong></div><div class="stat-row"><span>Последний вход</span><strong id="telegramStatLastEntry">—</strong></div><div class="stat-row"><span>Последний выход</span><strong id="telegramStatLastExit">—</strong></div><div class="stat-row"><span>Текущая категория</span><strong id="telegramStatCategory">—</strong></div></div></aside>
+</div>
+<section aria-labelledby="telegramHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1"><div class="panel-title history-panel-title"><div><h3 id="telegramHistoryTitle">История Telegram</h3><p>Точные и приблизительные статусы</p></div><div class="history-filters" role="group" aria-label="Фильтр истории Telegram"><button class="filter-button is-active" data-history-platform="telegram" data-history-filter="all" type="button">Всё</button><button class="filter-button" data-history-platform="telegram" data-history-filter="online" type="button">В сети</button><button class="filter-button" data-history-platform="telegram" data-history-filter="offline" type="button">Не в сети</button><button class="filter-button" data-history-platform="telegram" data-history-filter="recently" type="button">Недавно</button><button class="filter-button" data-history-platform="telegram" data-history-filter="approximate" type="button">Приблизительные</button><button class="filter-button" data-history-platform="telegram" data-history-filter="hidden" type="button">Скрыто</button></div></div><div class="timeline" id="telegramTimeline" aria-live="polite"></div><div class="history-controls"><button class="ghost-button" data-history-more="telegram" id="telegramMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="telegram" hidden="" id="telegramCollapse" type="button">Свернуть</button></div></section>
+</section>
+<div class="history-panel"><details class="tech-details"><summary>Технические данные</summary><pre class="json-preview" id="technicalJson">{}</pre></details></div>
+</section>
+</main>
+<div aria-atomic="true" aria-live="polite" class="toast-region" id="toastRegion"></div>
+
+<script type="module">
+'use strict';
+
+/* =========================================================
+   1. Конфигурация
+   ========================================================= */
+const CONFIG = {
+  mode: 'github-pages-preview',
+  endpoints: {
+    profile: null,
+    steamStatus: '../data/status.json',
+    steamHistory: '../data/history.json',
+    discordStatus: null,
+    discordHistory: null,
+    telegramStatus: null,
+    telegramHistory: null,
+    visitors: null
+  },
+  refreshIntervals: {
+    profile: 5 * 60 * 1000,
+    steam: 60 * 1000,
+    discord: 30 * 1000,
+    telegram: 60 * 1000
+  },
+  staleAfter: {
+    steam: 3 * 60 * 1000,
+    discord: 2 * 60 * 1000,
+    telegram: 5 * 60 * 1000
+  },
+  history: {
+    initialVisibleEntries: 8,
+    loadMoreStep: 8,
+    maximumClientEntries: 200
+  },
+  interface: {
+    locale: 'ru-RU',
+    timeZone: null,
+    desktopParticleMaximum: 105,
+    mobileParticleMaximum: 55
+  },
+  requestTimeout: 12000
+};
+
+/* =========================================================
+   2. Константы и словари
+   ========================================================= */
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)');
+const COARSE_POINTER = window.matchMedia('(hover: none), (pointer: coarse)');
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+const MOCK_ANCHOR = Date.now();
+const approximateTelegramStatuses = new Set(['recently', 'last-week', 'last-month', 'hidden']);
+const statusSets = {
+  steam: new Set(['offline', 'online', 'busy', 'away', 'snooze', 'looking-to-trade', 'looking-to-play', 'in-game', 'unknown']),
+  discord: new Set(['online', 'idle', 'dnd', 'offline', 'unknown']),
+  telegram: new Set(['online', 'recently', 'last-week', 'last-month', 'offline', 'hidden', 'unknown'])
+};
+const activityTypes = new Set(['playing', 'streaming', 'listening', 'watching', 'custom', 'none']);
+const STEAM_STATUS = {
+  offline: 'Не в сети', online: 'В сети', busy: 'Занят', away: 'Отошёл', snooze: 'Спит',
+  'looking-to-trade': 'Ищет обмен', 'looking-to-play': 'Ищет игру', 'in-game': 'В игре', unknown: 'Неизвестно'
+};
+const DISCORD_STATUS = { online: 'В сети', idle: 'Неактивен', dnd: 'Не беспокоить', offline: 'Не в сети', unknown: 'Неизвестно' };
+const DISCORD_ACTIVITY = { playing: 'Играет', streaming: 'Стримит', listening: 'Слушает', watching: 'Смотрит', custom: 'Пользовательская активность', none: 'Нет активности' };
+const TELEGRAM_STATUS = {
+  online: 'В сети', recently: 'Был(а) недавно', 'last-week': 'Был(а) на этой неделе',
+  'last-month': 'Был(а) в этом месяце', offline: 'Не в сети', hidden: 'Время посещения скрыто', unknown: 'Неизвестно'
+};
+const STATE_TONE = {
+  online: 'online', 'in-game': 'online', idle: 'idle', away: 'idle', busy: 'danger', dnd: 'danger',
+  offline: 'offline', recently: 'idle', 'last-week': 'idle', 'last-month': 'idle', hidden: 'offline', unknown: 'warning'
+};
+const ICONS = {
+  telegram: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 4-3 16-6-4-3 3v-5l8-7-10 6-4-2 18-7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+  discord: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 7c3-2 7-2 10 0l2 8c-2 2-4 3-6 3l-1-2-1 2c-2 0-4-1-6-3l2-8Z" stroke="currentColor" stroke-width="1.7"/><path d="M9 12h.01M15 12h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
+  roblox: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 3 14 4-4 14L3 17 7 3Zm4 7-1 4 4 1 1-4-4-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+  tiktok: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 4v11a5 5 0 1 1-4-5M14 4c1 3 3 4 6 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  steam: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="16.5" cy="7.5" r="3.5" stroke="currentColor" stroke-width="1.7"/><circle cx="7" cy="16" r="2.5" stroke="currentColor" stroke-width="1.7"/><path d="m9 15 4.8-5M4.8 14.5 2 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  csrep: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  github: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 0 0-3 17.5v-2.2c-2 .4-2.5-.9-2.5-.9-.4-1-1-1.3-1-1.3-.8-.6.1-.6.1-.6.9.1 1.4 1 1.4 1 .8 1.4 2.1 1 2.6.8.1-.6.3-1 .6-1.2-1.6-.2-3.3-.8-3.3-3.6 0-.8.3-1.5.8-2-.1-.2-.4-1 .1-2 0 0 .7-.2 2.1.8a7 7 0 0 1 3.8 0c1.4-1 2.1-.8 2.1-.8.5 1 .2 1.8.1 2 .5.5.8 1.2.8 2 0 2.8-1.7 3.4-3.3 3.6.3.2.6.7.6 1.4v3A9 9 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+  external: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 13v6H5V6h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 8h10v11H9zM5 5h10v3M5 5v11h4" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+  warning: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4 3 20h18L12 4Z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+};
+
+function createAvatarDataUri(letter, from, to) {
+  const safeLetter = String(letter || 'Q').slice(0, 1).replace(/[<>&"']/g, '');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="18"/></filter></defs><rect width="256" height="256" rx="58" fill="url(#g)"/><circle cx="205" cy="48" r="74" fill="white" opacity=".13" filter="url(#b)"/><path d="M45 218c20-42 49-64 83-64 35 0 64 22 84 64" fill="white" opacity=".12"/><circle cx="128" cy="103" r="45" fill="white" opacity=".13"/><text x="128" y="150" text-anchor="middle" font-family="Arial,sans-serif" font-size="112" font-weight="700" fill="white" opacity=".93">${safeLetter}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+const ago = minutes => new Date(MOCK_ANCHOR - minutes * MINUTE).toISOString();
+
+/* =========================================================
+   3. Тестовые данные
+   ========================================================= */
+const mockData = {
+  profile: {
+    displayName: 'Qu’lon',
+    handle: '@quixylon',
+    description: 'Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.',
+    avatarUrl: null,
+    useSteamAvatar: true,
+    links: [
+      { id: 'telegram', label: 'Telegram', url: 'https://t.me/quixylon', icon: 'telegram' },
+      { id: 'discord', label: 'Discord', url: 'https://guns.lol/quixylon', icon: 'discord' },
+      { id: 'roblox', label: 'Roblox', url: 'https://roblox.com/users/1295717297/profile', icon: 'roblox' },
+      { id: 'tiktok', label: 'TikTok', url: 'https://tiktok.com/@quixylon', icon: 'tiktok' },
+      { id: 'steam', label: 'Steam', url: 'https://steamcommunity.com/id/quixylon/', icon: 'steam' },
+      { id: 'csrep', label: 'CSRep', url: 'https://csrep.gg/player/76561199524001992', icon: 'csrep' },
+      { id: 'github', label: 'GitHub', url: 'https://github.com/Quixylon/AI', icon: 'github' }
+    ]
+  },
+  steamStatus: {
+    configured: true,
+    checkedAt: ago(0.2),
+    player: {
+      steamId: '76561199524001992', name: 'Quixylon', profileUrl: 'https://steamcommunity.com/id/quixylon/',
+      avatar: createAvatarDataUri('Q', '#355873', '#1b2738'), avatarVersion: 'steam-avatar-2026-08-05',
+      status: 'in-game', personaState: 'online', gameName: 'Counter-Strike 2', gameId: '730',
+      lastLogoff: ago(980), statusStartedAt: ago(176), gameStartedAt: ago(94)
+    }
+  },
+  steamHistory: [
+    { id:'sg15', type:'game', status:'in-game', personaState:'online', gameName:'Counter-Strike 2', gameId:'730', startedAt:ago(94), endedAt:null, durationSeconds:null },
+    { id:'sp15', type:'presence', status:'in-game', personaState:'online', gameName:'Counter-Strike 2', gameId:'730', startedAt:ago(176), endedAt:null, durationSeconds:null },
+    { id:'sg14', type:'game', status:'in-game', personaState:'online', gameName:'Minecraft', gameId:'0', startedAt:ago(510), endedAt:ago(438), durationSeconds:4320 },
+    { id:'sp14', type:'presence', status:'online', personaState:'online', gameName:null, gameId:null, startedAt:ago(438), endedAt:ago(360), durationSeconds:4680 },
+    { id:'sp13', type:'presence', status:'offline', personaState:'offline', gameName:null, gameId:null, startedAt:ago(720), endedAt:ago(510), durationSeconds:12600 },
+    { id:'sg13', type:'game', status:'in-game', personaState:'online', gameName:'Voices of the Void', gameId:'2248040', startedAt:ago(1010), endedAt:ago(905), durationSeconds:6300 },
+    { id:'sp12', type:'presence', status:'away', personaState:'away', gameName:null, gameId:null, startedAt:ago(905), endedAt:ago(840), durationSeconds:3900 },
+    { id:'sp11', type:'presence', status:'online', personaState:'online', gameName:null, gameId:null, startedAt:ago(1100), endedAt:ago(1010), durationSeconds:5400 },
+    { id:'sg12', type:'game', status:'in-game', personaState:'online', gameName:'Counter-Strike 2', gameId:'730', startedAt:ago(1580), endedAt:ago(1490), durationSeconds:5400 },
+    { id:'sp10', type:'presence', status:'busy', personaState:'busy', gameName:null, gameId:null, startedAt:ago(1490), endedAt:ago(1430), durationSeconds:3600 },
+    { id:'sp09', type:'presence', status:'offline', personaState:'offline', gameName:null, gameId:null, startedAt:ago(1880), endedAt:ago(1580), durationSeconds:18000 },
+    { id:'sg11', type:'game', status:'in-game', personaState:'online', gameName:'Minecraft', gameId:'0', startedAt:ago(2210), endedAt:ago(2115), durationSeconds:5700 },
+    { id:'sp08', type:'presence', status:'online', personaState:'online', gameName:null, gameId:null, startedAt:ago(2320), endedAt:ago(2115), durationSeconds:12300 },
+    { id:'sg10', type:'game', status:'in-game', personaState:'online', gameName:'Counter-Strike 2', gameId:'730', startedAt:ago(3150), endedAt:ago(3040), durationSeconds:6600 },
+    { id:'sp07', type:'presence', status:'offline', personaState:'offline', gameName:null, gameId:null, startedAt:ago(3400), endedAt:ago(3150), durationSeconds:15000 },
+    { id:'sg09', type:'game', status:'in-game', personaState:'online', gameName:'Voices of the Void', gameId:'2248040', startedAt:ago(4780), endedAt:ago(4610), durationSeconds:10200 }
+  ],
+  discordStatus: {
+    configured: true,
+    checkedAt: ago(0.15),
+    user: { id:'1147161266515472495', displayName:'Qu’lon', username:'quixylon', avatar:createAvatarDataUri('Q','#655fa7','#2b294c'), avatarVersion:'discord-avatar-2026-08-05', status:'online', customStatus:'Не потерялся, просто занят.' },
+    activity: { type:'playing', name:'Minecraft', details:'Выживание в одиночном мире', state:'Строит базу', startedAt:ago(71), largeImageUrl:createAvatarDataUri('M','#527f5c','#253c2e'), smallImageUrl:null }
+  },
+  discordHistory: [
+    { id:'dh15', status:'online', activityType:'playing', activityName:'Minecraft', customStatus:'Не потерялся, просто занят.', startedAt:ago(71), endedAt:null, durationSeconds:null },
+    { id:'dh14', status:'online', activityType:'playing', activityName:'Counter-Strike 2', customStatus:'Не потерялся, просто занят.', startedAt:ago(132), endedAt:ago(71), durationSeconds:3660 },
+    { id:'dh13', status:'idle', activityType:'none', activityName:null, customStatus:'Не потерялся, просто занят.', startedAt:ago(183), endedAt:ago(132), durationSeconds:3060 },
+    { id:'dh12', status:'online', activityType:'listening', activityName:'Spotify', customStatus:null, startedAt:ago(245), endedAt:ago(183), durationSeconds:3720 },
+    { id:'dh11', status:'dnd', activityType:'playing', activityName:'Minecraft', customStatus:null, startedAt:ago(330), endedAt:ago(245), durationSeconds:5100 },
+    { id:'dh10', status:'offline', activityType:'none', activityName:null, customStatus:null, startedAt:ago(620), endedAt:ago(330), durationSeconds:17400 },
+    { id:'dh09', status:'online', activityType:'watching', activityName:'YouTube', customStatus:'Скоро вернусь', startedAt:ago(760), endedAt:ago(620), durationSeconds:8400 },
+    { id:'dh08', status:'online', activityType:'playing', activityName:'Voices of the Void', customStatus:'Скоро вернусь', startedAt:ago(930), endedAt:ago(760), durationSeconds:10200 },
+    { id:'dh07', status:'idle', activityType:'none', activityName:null, customStatus:null, startedAt:ago(1010), endedAt:ago(930), durationSeconds:4800 },
+    { id:'dh06', status:'offline', activityType:'none', activityName:null, customStatus:null, startedAt:ago(1450), endedAt:ago(1010), durationSeconds:26400 },
+    { id:'dh05', status:'online', activityType:'streaming', activityName:'OBS Studio', customStatus:null, startedAt:ago(1580), endedAt:ago(1450), durationSeconds:7800 },
+    { id:'dh04', status:'dnd', activityType:'playing', activityName:'Counter-Strike 2', customStatus:null, startedAt:ago(1710), endedAt:ago(1580), durationSeconds:7800 },
+    { id:'dh03', status:'online', activityType:'custom', activityName:'Работает над сайтом', customStatus:'Не отвлекать', startedAt:ago(2290), endedAt:ago(2180), durationSeconds:6600 },
+    { id:'dh02', status:'idle', activityType:'none', activityName:null, customStatus:null, startedAt:ago(2380), endedAt:ago(2290), durationSeconds:5400 },
+    { id:'dh01', status:'offline', activityType:'none', activityName:null, customStatus:null, startedAt:ago(3100), endedAt:ago(2380), durationSeconds:43200 }
+  ],
+  telegramStatus: {
+    configured: true,
+    checkedAt: ago(0.4),
+    user: { id:'748203615', displayName:'Qu’lon', username:'quixylon', avatar:createAvatarDataUri('Q','#3a89aa','#244559'), avatarVersion:'telegram-avatar-2026-08-05', bio:'Информационная безопасность, код и немного хаоса.', profileUrl:'https://t.me/quixylon', status:'recently', lastSeenAt:null }
+  },
+  telegramHistory: [
+    { id:'th15', status:'recently', startedAt:ago(18), endedAt:null, durationSeconds:null },
+    { id:'th14', status:'online', startedAt:ago(31), endedAt:ago(18), durationSeconds:780 },
+    { id:'th13', status:'offline', startedAt:ago(96), endedAt:ago(31), durationSeconds:3900 },
+    { id:'th12', status:'online', startedAt:ago(109), endedAt:ago(96), durationSeconds:780 },
+    { id:'th11', status:'recently', startedAt:ago(280), endedAt:ago(109), durationSeconds:null },
+    { id:'th10', status:'hidden', startedAt:ago(520), endedAt:ago(280), durationSeconds:null },
+    { id:'th09', status:'online', startedAt:ago(545), endedAt:ago(520), durationSeconds:1500 },
+    { id:'th08', status:'offline', startedAt:ago(840), endedAt:ago(545), durationSeconds:17700 },
+    { id:'th07', status:'recently', startedAt:ago(1210), endedAt:ago(840), durationSeconds:null },
+    { id:'th06', status:'last-week', startedAt:ago(2280), endedAt:ago(1210), durationSeconds:null },
+    { id:'th05', status:'online', startedAt:ago(2312), endedAt:ago(2280), durationSeconds:1920 },
+    { id:'th04', status:'offline', startedAt:ago(3050), endedAt:ago(2312), durationSeconds:44280 },
+    { id:'th03', status:'last-month', startedAt:ago(6200), endedAt:ago(3050), durationSeconds:null },
+    { id:'th02', status:'hidden', startedAt:ago(7800), endedAt:ago(6200), durationSeconds:null },
+    { id:'th01', status:'unknown', startedAt:ago(9800), endedAt:ago(7800), durationSeconds:null }
+  ],
+  visitors: { count: 1842 }
+};
+
+/* =========================================================
+   4. Состояние приложения
+   ========================================================= */
+const state = {
+  route: { screen: 'profile', trackerTab: 'overview' },
+  profile: { data:null, loading:false, refreshing:false, error:null, updatedAt:null },
+  steam: { status:null, history:[], loading:false, refreshing:false, error:null, updatedAt:null },
+  discord: { status:null, history:[], loading:false, refreshing:false, error:null, updatedAt:null },
+  telegram: { status:null, history:[], loading:false, refreshing:false, error:null, updatedAt:null },
+  visitors: { count:null, loading:false, error:null },
+  historyView: {
+    steam: { filter:'all', visible:CONFIG.history.initialVisibleEntries },
+    steamGames: { filter:'games', visible:CONFIG.history.initialVisibleEntries },
+    steamPresence: { filter:'all', visible:CONFIG.history.initialVisibleEntries },
+    discord: { filter:'all', visible:CONFIG.history.initialVisibleEntries },
+    telegram: { filter:'all', visible:CONFIG.history.initialVisibleEntries }
+  },
+  initialized:false,
+  firstProfileRender:true,
+  lastFullSyncAt:null
+};
+
+/* =========================================================
+   5. DOM-ссылки
+   ========================================================= */
+const byId = id => document.getElementById(id);
+const dom = {
+  profileScreen:byId('profileScreen'), trackerScreen:byId('trackerScreen'), profileCard:byId('profileCard'),
+  trackerTitle:byId('trackerTitle'), refreshAllButton:byId('refreshAllButton'), trackerLastUpdate:byId('trackerLastUpdate'),
+  overallFetchState:byId('overallFetchState'), overallFetchStateText:byId('overallFetchStateText'), syncText:byId('syncText'),
+  toastRegion:byId('toastRegion'), technicalJson:byId('technicalJson'), profileLinks:byId('profileLinks'),
+  appStatusLive:byId('appStatusLive'), catButton:byId('catButton'), catHint:byId('catHint')
+};
+
+/* =========================================================
+   6. Валидация и нормализация данных
+   ========================================================= */
+const deepClone = value => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+const cleanString = (value, fallback = '') => typeof value === 'string' && value.trim() ? value.trim() : fallback;
+const cleanNullableString = value => typeof value === 'string' && value.trim() ? value.trim() : null;
+const validDate = value => {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
+};
+function normalizeExternalUrl(value) {
+  try {
+    const url = new URL(String(value || ''), window.location.href);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+  } catch { return null; }
+}
+function normalizeProfile(raw = {}) {
+  const links = Array.isArray(raw.links) ? raw.links.slice(0, 20).map(item => ({
+    id:cleanString(item?.id, 'link'), label:cleanString(item?.label, 'Ссылка'),
+    url:normalizeExternalUrl(item?.url), icon:cleanString(item?.icon, 'external')
+  })).filter(item => item.url) : [];
+  return {
+    displayName:cleanString(raw.displayName, 'Qu’lon'), handle:cleanString(raw.handle, '@quixylon'),
+    description:cleanString(raw.description, 'Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.'),
+    avatarUrl:normalizeExternalUrl(raw.avatarUrl) || (typeof raw.avatarUrl === 'string' && raw.avatarUrl.startsWith('data:image/') ? raw.avatarUrl : null),
+    useSteamAvatar:raw.useSteamAvatar !== false, links
+  };
+}
+function normalizeSteamStatus(raw = {}) {
+  const player = raw && typeof raw.player === 'object' ? raw.player : {};
+  const status = statusSets.steam.has(player.status) ? player.status : 'unknown';
+  const personaState = statusSets.steam.has(player.personaState) ? player.personaState : 'unknown';
+  return { configured:raw.configured !== false, checkedAt:validDate(raw.checkedAt)?.toISOString() || null, player:{
+    steamId:cleanString(player.steamId, '—'), name:cleanString(player.name, 'Неизвестный профиль'),
+    profileUrl:normalizeExternalUrl(player.profileUrl), avatar:normalizeImageUrl(player.avatar), avatarVersion:cleanString(player.avatarVersion, cleanString(raw.checkedAt, 'steam')),
+    status, personaState, gameName:cleanNullableString(player.gameName), gameId:cleanNullableString(player.gameId),
+    lastLogoff:validDate(player.lastLogoff)?.toISOString() || null, statusStartedAt:validDate(player.statusStartedAt)?.toISOString() || null,
+    gameStartedAt:validDate(player.gameStartedAt)?.toISOString() || null
+  }};
+}
+function normalizeDiscordStatus(raw = {}) {
+  const user = raw && typeof raw.user === 'object' ? raw.user : {};
+  const activity = raw && typeof raw.activity === 'object' ? raw.activity : {};
+  const status = statusSets.discord.has(user.status) ? user.status : 'unknown';
+  const type = activityTypes.has(activity.type) ? activity.type : 'none';
+  return { configured:raw.configured !== false, checkedAt:validDate(raw.checkedAt)?.toISOString() || null, user:{
+    id:cleanString(user.id, '—'), displayName:cleanString(user.displayName, 'Qu’lon'), username:cleanString(user.username, 'quixylon'),
+    avatar:normalizeImageUrl(user.avatar), avatarVersion:cleanString(user.avatarVersion, cleanString(raw.checkedAt, 'discord')), status,
+    customStatus:cleanNullableString(user.customStatus)
+  }, activity:{
+    type, name:cleanNullableString(activity.name), details:cleanNullableString(activity.details), state:cleanNullableString(activity.state),
+    startedAt:validDate(activity.startedAt)?.toISOString() || null, largeImageUrl:normalizeImageUrl(activity.largeImageUrl), smallImageUrl:normalizeImageUrl(activity.smallImageUrl)
+  }};
+}
+function normalizeTelegramStatus(raw = {}) {
+  const user = raw && typeof raw.user === 'object' ? raw.user : {};
+  const status = statusSets.telegram.has(user.status) ? user.status : 'unknown';
+  return { configured:raw.configured !== false, checkedAt:validDate(raw.checkedAt)?.toISOString() || null, user:{
+    id:cleanString(user.id, '—'), displayName:cleanString(user.displayName, 'Qu’lon'), username:cleanString(user.username, 'quixylon'),
+    avatar:normalizeImageUrl(user.avatar), avatarVersion:cleanString(user.avatarVersion, cleanString(raw.checkedAt, 'telegram')), bio:cleanString(user.bio, 'Описание не указано'),
+    profileUrl:normalizeExternalUrl(user.profileUrl), status, lastSeenAt:validDate(user.lastSeenAt)?.toISOString() || null
+  }};
+}
+function normalizeImageUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  if (value.startsWith('data:image/')) return value;
+  return normalizeExternalUrl(value);
+}
+function historySignature(platform, entry) {
+  if (platform === 'steam') return [entry.type, entry.status, entry.personaState, entry.gameName || '', entry.gameId || ''].join('|');
+  if (platform === 'discord') return [entry.status, entry.activityType, entry.activityName || '', entry.customStatus || ''].join('|');
+  return entry.status;
+}
+function normalizeHistory(platform, rawRows) {
+  const rows = Array.isArray(rawRows) ? rawRows.slice(0, CONFIG.history.maximumClientEntries) : [];
+  const seen = new Set();
+  const futureLimit = Date.now() + 10 * MINUTE;
+  const normalized = [];
+  for (const raw of rows) {
+    if (!raw || typeof raw !== 'object') continue;
+    const id = cleanString(raw.id);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const start = validDate(raw.startedAt);
+    const end = raw.endedAt == null ? null : validDate(raw.endedAt);
+    if (!start || start.getTime() > futureLimit || (end && end < start)) continue;
+    const status = statusSets[platform].has(raw.status) ? raw.status : null;
+    if (!status) continue;
+    if (Number(raw.durationSeconds) < 0) continue;
+    const base = { id, status, startedAt:start.toISOString(), endedAt:end?.toISOString() || null, durationSeconds:end ? Math.max(0, Math.round((end - start) / 1000)) : null };
+    if (platform === 'steam') normalized.push({ ...base, type:raw.type === 'game' ? 'game' : 'presence', personaState:statusSets.steam.has(raw.personaState) ? raw.personaState : status, gameName:cleanNullableString(raw.gameName), gameId:cleanNullableString(raw.gameId) });
+    else if (platform === 'discord') normalized.push({ ...base, activityType:activityTypes.has(raw.activityType) ? raw.activityType : 'none', activityName:cleanNullableString(raw.activityName), customStatus:cleanNullableString(raw.customStatus) });
+    else normalized.push(base);
+  }
+  normalized.sort((a,b) => new Date(a.startedAt) - new Date(b.startedAt));
+  const openLatest = new Map();
+  for (const entry of normalized) {
+    if (!entry.endedAt) {
+      const key = platform === 'steam' ? entry.type : 'all';
+      const previous = openLatest.get(key);
+      if (!previous || new Date(entry.startedAt) > new Date(previous.startedAt)) openLatest.set(key, entry);
+    }
+  }
+  const safe = normalized.filter(entry => entry.endedAt || openLatest.get(platform === 'steam' ? entry.type : 'all') === entry);
+  const merged = [];
+  for (const entry of safe) {
+    const previous = merged.at(-1);
+    if (previous && previous.endedAt && historySignature(platform, previous) === historySignature(platform, entry)) {
+      const gap = new Date(entry.startedAt) - new Date(previous.endedAt);
+      if (gap >= -10000 && gap <= 10000) {
+        previous.endedAt = entry.endedAt;
+        previous.durationSeconds = previous.endedAt ? Math.max(0, Math.round((new Date(previous.endedAt) - new Date(previous.startedAt)) / 1000)) : null;
+        continue;
+      }
+    }
+    merged.push({ ...entry });
+  }
+  return merged.sort((a,b) => new Date(b.startedAt) - new Date(a.startedAt));
+}
+
+/* =========================================================
+   7. Транспортный слой
+   ========================================================= */
+const delay = (ms, signal) => new Promise((resolve, reject) => {
+  const timer = window.setTimeout(resolve, ms);
+  signal?.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); }, { once:true });
+});
+function combineSignals(signals) {
+  const valid = signals.filter(Boolean);
+  if (typeof AbortSignal.any === 'function') return AbortSignal.any(valid);
+  const controller = new AbortController();
+  for (const signal of valid) {
+    if (signal.aborted) controller.abort(signal.reason);
+    else signal.addEventListener('abort', () => controller.abort(signal.reason), { once:true });
+  }
+  return controller.signal;
+}
+async function fetchJson(url, { signal, method='GET', body } = {}) {
+  const timeoutController = new AbortController();
+  const timeout = window.setTimeout(() => timeoutController.abort(new DOMException('Request timeout', 'TimeoutError')), CONFIG.requestTimeout);
+  const combined = combineSignals([signal, timeoutController.signal]);
+  try {
+    const response = await fetch(url, {
+      method, signal:combined, cache:'no-store',
+      headers:body ? { 'Content-Type':'application/json', 'Accept':'application/json' } : { 'Accept':'application/json' },
+      body:body ? JSON.stringify(body) : undefined
+    });
+    if (response.status === 204) throw new Error('Сервер вернул пустой ответ');
+    if (!response.ok) throw new Error(`Сервер вернул HTTP ${response.status}`);
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) throw new Error('Сервер вернул ответ не в формате JSON');
+    const text = await response.text();
+    if (!text.trim()) throw new Error('Сервер вернул пустой JSON');
+    try { return JSON.parse(text); } catch { throw new Error('Сервер вернул некорректный JSON'); }
+  } finally { clearTimeout(timeout); }
+}
+async function mockFetch(key, signal) { await delay(260, signal); return deepClone(mockData[key]); }
+function canLoadPublishedData() { return location.protocol === 'http:' || location.protocol === 'https:'; }
+function adaptPublishedSteamHistory(rawRows) {
+  if (!Array.isArray(rawRows)) return [];
+  const result = [];
+  rawRows.forEach((row, index) => {
+    if (!row || typeof row !== 'object' || !row.startedAt) return;
+    const stable = `${row.startedAt}-${index}`;
+    result.push({ ...row, id:`presence-${stable}`, type:'presence' });
+    if (row.gameName) result.push({ ...row, id:`game-${stable}`, type:'game', status:'in-game' });
+  });
+  return result;
+}
+async function fetchProfileData({ signal } = {}) { return mockFetch('profile', signal); }
+async function fetchSteamStatus({ signal } = {}) {
+  if (!canLoadPublishedData()) return mockFetch('steamStatus', signal);
+  return fetchJson(CONFIG.endpoints.steamStatus, { signal });
+}
+async function fetchSteamHistory({ signal } = {}) {
+  if (!canLoadPublishedData()) return mockFetch('steamHistory', signal);
+  return adaptPublishedSteamHistory(await fetchJson(CONFIG.endpoints.steamHistory, { signal }));
+}
+async function fetchDiscordStatus({ signal } = {}) { return mockFetch('discordStatus', signal); }
+async function fetchDiscordHistory({ signal } = {}) { return mockFetch('discordHistory', signal); }
+// Telegram не предоставляет обычной веб-странице произвольный
+// онлайн-статус любого пользователя.
+// Реальные данные и история должны формироваться на собственном сервере
+// через разрешённую Telegram-интеграцию, TDLib или MTProto-клиент.
+async function fetchTelegramStatus({ signal } = {}) { return mockFetch('telegramStatus', signal); }
+async function fetchTelegramHistory({ signal } = {}) { return mockFetch('telegramHistory', signal); }
+async function fetchVisitorCount({ signal } = {}) { return mockFetch('visitors', signal); }
+/* Сервер отвечает за хранение секретов, Steam Web API, Discord presence,
+   Telegram-клиент, формирование истории, дедупликацию, rate limiting,
+   кеширование, базу данных, CORS, логирование и защиту visitor endpoint.
+   Все секреты хранятся только на сервере в переменных окружения. */
+
+/* =========================================================
+   8. Менеджер обновлений
+   ========================================================= */
+class RefreshManager {
+  constructor() {
+    this.resources = new Map();
+    this.pollingStarted = false;
+    this.register('profile', fetchProfileData, normalizeProfile, data => { state.profile.data=data; state.profile.updatedAt=new Date().toISOString(); renderProfile(); });
+    this.register('steamStatus', fetchSteamStatus, normalizeSteamStatus, data => { const previous=state.steam.status; state.steam.status=data; state.steam.updatedAt=data.checkedAt; renderSteam(previous); });
+    this.register('steamHistory', fetchSteamHistory, rows => normalizeHistory('steam', rows), data => {
+      state.steam.history=data;
+      const player=state.steam.status?.player;
+      if (player) {
+        const currentPresence=data.find(entry=>entry.type==='presence' && !entry.endedAt);
+        const currentGame=data.find(entry=>entry.type==='game' && !entry.endedAt);
+        if (!player.statusStartedAt && currentPresence) player.statusStartedAt=currentPresence.startedAt;
+        if (!player.gameStartedAt && currentGame) player.gameStartedAt=currentGame.startedAt;
+      }
+      renderSteam(); renderSteamHistory(); renderSteamStats();
+    });
+    this.register('discordStatus', fetchDiscordStatus, normalizeDiscordStatus, data => { const previous=state.discord.status; state.discord.status=data; state.discord.updatedAt=data.checkedAt; renderDiscord(previous); });
+    this.register('discordHistory', fetchDiscordHistory, rows => normalizeHistory('discord', rows), data => { state.discord.history=data; renderDiscordHistory(); renderDiscordStats(); });
+    this.register('telegramStatus', fetchTelegramStatus, normalizeTelegramStatus, data => { const previous=state.telegram.status; state.telegram.status=data; state.telegram.updatedAt=data.checkedAt; renderTelegram(previous); });
+    this.register('telegramHistory', fetchTelegramHistory, rows => normalizeHistory('telegram', rows), data => { state.telegram.history=data; renderTelegramHistory(); renderTelegramStats(); });
+    this.register('visitors', fetchVisitorCount, raw => ({ count:Number.isFinite(Number(raw?.count)) ? Math.max(0, Math.floor(Number(raw.count))) : null }), data => { state.visitors.count=data.count; renderVisitors(); });
+  }
+  register(name, fetcher, normalizer, apply) { this.resources.set(name, { name, fetcher, normalizer, apply, promise:null, controller:null, lastRun:null, lastSuccess:null, error:null, interval:null }); }
+  get(name) { return this.resources.get(name); }
+  async refresh(name, { force=false, manual=false } = {}) {
+    const resource = this.get(name);
+    if (!resource) return null;
+    if (resource.promise && !force) return resource.promise;
+    if (resource.promise && force) resource.controller?.abort();
+    resource.controller = new AbortController();
+    resource.lastRun = Date.now();
+    const platform = name.startsWith('steam') ? 'steam' : name.startsWith('discord') ? 'discord' : name.startsWith('telegram') ? 'telegram' : name;
+    setResourceBusy(platform, true, Boolean(resource.lastSuccess));
+    resource.promise = (async () => {
+      try {
+        const raw = await resource.fetcher({ signal:resource.controller.signal });
+        const normalized = resource.normalizer(raw);
+        resource.apply(normalized);
+        resource.lastSuccess = Date.now();
+        resource.error = null;
+        clearPlatformError(platform);
+        if (manual) showToast(`${platformLabel(platform)} обновлён`, 'success');
+        return normalized;
+      } catch (error) {
+        if (error?.name === 'AbortError') return null;
+        resource.error = cleanErrorMessage(error);
+        showPlatformError(platform, resource.error);
+        if (manual) showToast(`Не удалось обновить ${platformLabel(platform)}`, 'error');
+        return null;
+      } finally {
+        resource.promise = null;
+        resource.controller = null;
+        setResourceBusy(platform, false, Boolean(resource.lastSuccess));
+        updateOverallStatus();
+        renderTechnicalJson();
+      }
+    })();
+    return resource.promise;
+  }
+  refreshPlatform(platform, options={}) {
+    if (platform === 'steam') return Promise.all([this.refresh('steamStatus', options), this.refresh('steamHistory', options)]);
+    if (platform === 'discord') return Promise.all([this.refresh('discordStatus', options), this.refresh('discordHistory', options)]);
+    if (platform === 'telegram') return Promise.all([this.refresh('telegramStatus', options), this.refresh('telegramHistory', options)]);
+    return Promise.resolve([]);
+  }
+  async refreshAll(options={}) {
+    const results = await Promise.allSettled([
+      this.refresh('profile', options), this.refreshPlatform('steam', options), this.refreshPlatform('discord', options),
+      this.refreshPlatform('telegram', options), this.refresh('visitors', options)
+    ]);
+    state.lastFullSyncAt = new Date().toISOString();
+    renderSyncTime();
+    return results;
+  }
+  startPolling() {
+    if (this.pollingStarted) return;
+    this.pollingStarted = true;
+    this.setPlatformInterval('profile', CONFIG.refreshIntervals.profile, () => this.refresh('profile'));
+    this.setPlatformInterval('steam', CONFIG.refreshIntervals.steam, () => this.refreshPlatform('steam'));
+    this.setPlatformInterval('discord', CONFIG.refreshIntervals.discord, () => this.refreshPlatform('discord'));
+    this.setPlatformInterval('telegram', CONFIG.refreshIntervals.telegram, () => this.refreshPlatform('telegram'));
+  }
+  setPlatformInterval(key, interval, callback) {
+    if (this.resources.get(key)?.interval || this[`interval_${key}`]) return;
+    const id = window.setInterval(() => { if (!document.hidden) callback(); }, interval);
+    if (this.resources.has(key)) this.resources.get(key).interval=id; else this[`interval_${key}`]=id;
+  }
+  stop() {
+    for (const resource of this.resources.values()) {
+      if (resource.interval) clearInterval(resource.interval);
+      resource.controller?.abort();
+      resource.interval=null;
+    }
+    ['steam','discord','telegram'].forEach(key=>{ if(this[`interval_${key}`]) clearInterval(this[`interval_${key}`]); });
+    this.pollingStarted=false;
+  }
+}
+const refreshManager = new RefreshManager();
+
+function cleanErrorMessage(error) {
+  if (error?.name === 'TimeoutError') return 'Запрос занял слишком много времени.';
+  return cleanString(error?.message, 'Не удалось получить данные.');
+}
+function platformLabel(platform) { return ({steam:'Steam',discord:'Discord',telegram:'Telegram',profile:'профиль',visitors:'счётчик посетителей'})[platform] || platform; }
+
+/* =========================================================
+   9. Форматирование времени
+   ========================================================= */
+function dateOptions(extra={}) { return { localeMatcher:'best fit', ...extra, ...(CONFIG.interface.timeZone ? { timeZone:CONFIG.interface.timeZone } : {}) }; }
+function formatDateTime(value, fallback='Нет данных') {
+  const date=validDate(value); if(!date) return fallback;
+  const now=new Date(); const dayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const targetStart=new Date(date.getFullYear(),date.getMonth(),date.getDate()); const delta=Math.round((targetStart-dayStart)/DAY);
+  const time=new Intl.DateTimeFormat(CONFIG.interface.locale,dateOptions({hour:'2-digit',minute:'2-digit'})).format(date);
+  if(delta===0) return `сегодня в ${time}`; if(delta===-1) return `вчера в ${time}`;
+  return new Intl.DateTimeFormat(CONFIG.interface.locale,dateOptions({day:'numeric',month:'short',year:date.getFullYear()===now.getFullYear()?undefined:'numeric',hour:'2-digit',minute:'2-digit'})).format(date);
+}
+function formatRelativeTime(value, fallback='Нет данных') {
+  const date=validDate(value); if(!date) return fallback;
+  const diff=Math.round((date.getTime()-Date.now())/1000); const abs=Math.abs(diff);
+  if(abs<8) return 'только что';
+  const rtf=new Intl.RelativeTimeFormat(CONFIG.interface.locale,{numeric:'auto'});
+  if(abs<60) return rtf.format(Math.round(diff),'second');
+  if(abs<3600) return rtf.format(Math.round(diff/60),'minute');
+  if(abs<DAY/1000) return rtf.format(Math.round(diff/3600),'hour');
+  return rtf.format(Math.round(diff/(DAY/1000)),'day');
+}
+function formatDuration(seconds, fallback='Нет данных') {
+  const value=Math.max(0,Math.floor(Number(seconds))); if(!Number.isFinite(value)) return fallback;
+  const d=Math.floor(value/86400), h=Math.floor(value%86400/3600), m=Math.floor(value%3600/60), s=value%60;
+  if(d) return `${d} д ${h} ч`; if(h) return `${h} ч ${m} мин`; if(m) return `${m} мин ${s} сек`; return `${s} сек`;
+}
+function formatDateRange(start,end) { return `${formatDateTime(start)} — ${end ? formatDateTime(end) : 'Сейчас'}`; }
+function getElapsedSeconds(start,end=Date.now()) { const date=validDate(start); const finish=validDate(end); return date&&finish ? Math.max(0,Math.floor((finish-date)/1000)) : null; }
+function isStale(platform,checkedAt) { const date=validDate(checkedAt); return !date || Date.now()-date.getTime()>CONFIG.staleAfter[platform]; }
+function overlapSeconds(start,end,windowStart,windowEnd=Date.now()) {
+  const a=validDate(start)?.getTime(), b=end ? validDate(end)?.getTime() : Date.now();
+  if(!Number.isFinite(a)||!Number.isFinite(b)) return 0; return Math.max(0,Math.floor((Math.min(b,windowEnd)-Math.max(a,windowStart))/1000));
+}
+
+/* =========================================================
+   10. Менеджер изображений
+   ========================================================= */
+function buildVersionedImageUrl(url,version) {
+  if(!url) return null; if(url.startsWith('data:image/')) return url;
+  try { const result=new URL(url,location.href); if(version) result.searchParams.set('v',String(version)); return result.href; } catch { return null; }
+}
+class AvatarManager {
+  constructor(){this.entries=new Map();}
+  async update(key,imageId,placeholderId,url,version,alt) {
+    const image=byId(imageId),placeholder=byId(placeholderId); if(!image||!placeholder) return;
+    const normalized=normalizeImageUrl(url); const signature=`${normalized||''}|${version||''}`; const old=this.entries.get(key);
+    if(old?.signature===signature || old?.failedSignature===signature) return;
+    if(!normalized) { if(!old?.loaded){image.hidden=true;placeholder.hidden=false;} this.entries.set(key,{...old,signature,loaded:false}); return; }
+    const src=buildVersionedImageUrl(normalized,version); const preload=new Image(); preload.decoding='async';
+    try {
+      await new Promise((resolve,reject)=>{preload.onload=resolve;preload.onerror=reject;preload.src=src;});
+      if(preload.decode) await preload.decode().catch(()=>{});
+      image.style.opacity='0'; await new Promise(r=>setTimeout(r,80));
+      image.src=src; image.alt=alt; image.hidden=false; placeholder.hidden=true; image.style.opacity='1';
+      this.entries.set(key,{signature,loaded:true,lastSuccessfulUrl:src});
+    } catch { if(!old?.loaded){image.hidden=true;placeholder.hidden=false;} this.entries.set(key,{...old,failedSignature:signature}); }
+  }
+}
+const avatarManager=new AvatarManager();
+
+/* =========================================================
+   11. Рендер главного профиля
+   ========================================================= */
+const text=(id,value)=>{const el=byId(id);if(el)el.textContent=value??'—';};
+function mainSteamStatus() {
+  const player=state.steam.status?.player;
+  if (!player) return { text:'Steam: данные недоступны', status:'unknown' };
+  if (player.gameName) return { text:`Steam: ${player.gameName}`, status:'in-game' };
+  return { text:`Steam: ${(STEAM_STATUS[player.status]||'неизвестно').toLowerCase()}`, status:player.status };
+}
+function renderProfile() {
+  const profile=state.profile.data; if(!profile)return;
+  text('profileName',profile.displayName); text('profileHandle',profile.handle);
+  if(state.firstProfileRender) renderAnimatedDescription(profile.description); else text('profileDescription',profile.description);
+  const steam=state.steam.status?.player;
+  const avatarUrl=profile.avatarUrl || (profile.useSteamAvatar ? steam?.avatar : null);
+  const avatarVersion=profile.avatarUrl ? state.profile.updatedAt : steam?.avatarVersion;
+  avatarManager.update('profile','profileAvatar','profileAvatarPlaceholder',avatarUrl,avatarVersion,`Аватар ${profile.displayName}`);
+  const summary=mainSteamStatus(); text('profileStatusText',summary.text.replace(/^Steam:\s*/,'') || 'Данные недоступны');
+  const pill=byId('profileStatusPill'); if(pill)pill.dataset.state=summary.status;
+  const dot=byId('profilePresenceDot');if(dot)dot.dataset.state=summary.status;
+  text('profileFooterSteam',summary.text); text('profileFooterUpdated',formatRelativeTime(state.steam.status?.checkedAt));
+  renderProfileLinks(profile.links); state.firstProfileRender=false;
+}
+function renderAnimatedDescription(description) {
+  const node=byId('profileDescription'); if(!node)return; node.textContent='';
+  if(REDUCED_MOTION.matches){node.textContent=description;return;}
+  description.split(/\s+/).forEach((word,index)=>{const span=document.createElement('span');span.className='description-word';span.style.animationDelay=`${Math.min(index*34,650)}ms`;span.textContent=word;node.append(span,index===description.split(/\s+/).length-1?'':' ');});
+}
+function renderProfileLinks(links) {
+  if(!dom.profileLinks)return; const existing=new Map([...dom.profileLinks.children].map(node=>[node.dataset.linkId,node]));
+  links.forEach(link=>{
+    let anchor=existing.get(link.id); if(!anchor){anchor=document.createElement('a');anchor.className='social-link';anchor.dataset.linkId=link.id;anchor.target='_blank';anchor.rel='noopener noreferrer';const icon=document.createElement('span');icon.className='social-link__icon';icon.innerHTML=ICONS[link.icon]||ICONS.external;const label=document.createElement('span');label.className='social-link__label';const arrow=document.createElement('span');arrow.className='social-link__arrow';arrow.setAttribute('aria-hidden','true');arrow.textContent='↗';anchor.append(icon,label,arrow);dom.profileLinks.append(anchor);} existing.delete(link.id);anchor.href=link.url;anchor.querySelector('.social-link__label').textContent=link.label;
+    if(link.id==='discord'){let indicator=anchor.querySelector('.discord-link-indicator');if(!indicator){indicator=document.createElement('span');indicator.className='discord-link-indicator';anchor.insertBefore(indicator,anchor.lastElementChild);}const status=state.discord.status?.user?.status||'unknown';indicator.dataset.state=status;indicator.title=DISCORD_STATUS[status]||'Неизвестно';}
+  });
+  existing.forEach(node=>node.remove());
+}
+function renderVisitors(){text('visitorCount',state.visitors.count==null?'—':new Intl.NumberFormat('ru-RU').format(state.visitors.count));}
+
+/* =========================================================
+   12. Рендер обзора
+   ========================================================= */
+function renderOverview() {
+  const s=state.steam.status?.player,d=state.discord.status?.user,t=state.telegram.status?.user;
+  if(s){text('steamOverviewName',s.name);text('steamOverviewIdentity',s.steamId);text('steamOverviewMainStatus',s.gameName?`В игре: ${s.gameName}`:STEAM_STATUS[s.status]);text('steamOverviewActivity',s.gameName?`App ID ${s.gameId||'—'}`:`Persona: ${STEAM_STATUS[s.personaState]}`);text('steamOverviewUpdated',`Обновлено: ${formatRelativeTime(state.steam.status.checkedAt)}`);text('steamOverviewStatusMini',STEAM_STATUS[s.status]);setSafeHref('steamOverviewProfileLink',s.profileUrl);avatarManager.update('steam-overview','steamOverviewAvatar','steamOverviewAvatarPlaceholder',s.avatar,s.avatarVersion,'Steam-аватар');}
+  if(d){const a=state.discord.status.activity;text('discordOverviewName',d.displayName);text('discordOverviewIdentity',`@${d.username}`);text('discordOverviewMainStatus',DISCORD_STATUS[d.status]);text('discordOverviewActivity',a?.type!=='none'?`${DISCORD_ACTIVITY[a.type]}: ${a.name||'без названия'}`:'Нет текущей активности');text('discordOverviewUpdated',`Обновлено: ${formatRelativeTime(state.discord.status.checkedAt)}`);text('discordOverviewStatusMini',DISCORD_STATUS[d.status]);avatarManager.update('discord-overview','discordOverviewAvatar','discordOverviewAvatarPlaceholder',d.avatar,d.avatarVersion,'Discord-аватар');}
+  if(t){text('telegramOverviewName',t.displayName);text('telegramOverviewIdentity',`@${t.username}`);text('telegramOverviewMainStatus',TELEGRAM_STATUS[t.status]);text('telegramOverviewActivity',t.bio||'Описание не указано');text('telegramOverviewUpdated',`Обновлено: ${formatRelativeTime(state.telegram.status.checkedAt)}`);text('telegramOverviewStatusMini',TELEGRAM_STATUS[t.status]);setSafeHref('telegramOverviewProfileLink',t.profileUrl);avatarManager.update('telegram-overview','telegramOverviewAvatar','telegramOverviewAvatarPlaceholder',t.avatar,t.avatarVersion,'Telegram-аватар');}
+  ['steam','discord','telegram'].forEach(platform=>{const card=document.querySelector(`.platform-card[data-platform="${platform}"]`);if(card)card.setAttribute('aria-busy',String(state[platform].loading||state[platform].refreshing));});
+  updateStaleStates();
+}
+function setSafeHref(id,url){const node=byId(id);const safe=normalizeExternalUrl(url);if(!node)return;node.hidden=!safe;if(safe)node.href=safe;}
+
+/* =========================================================
+   13. Рендер Steam
+   ========================================================= */
+function renderSteam(previous=null) {
+  const data=state.steam.status;if(!data)return;const p=data.player;const main=p.gameName?`В игре: ${p.gameName}`:STEAM_STATUS[p.status];
+  text('steamDetailName',p.name);text('steamDetailSteamId',p.steamId);text('steamIdValue',p.steamId);text('steamDetailMainStatus',main);
+  text('steamDetailSubStatus',`Persona: ${STEAM_STATUS[p.personaState]}`);text('steamPersonaState',STEAM_STATUS[p.personaState]);text('steamGameName',p.gameName||'Нет текущей игры');text('steamAppId',p.gameId||'—');text('steamStatusSince',formatDateTime(p.statusStartedAt));text('steamLastLogoff',formatDateTime(p.lastLogoff));text('steamDetailUpdated',formatDateTime(data.checkedAt));
+  const duration=byId('steamSessionDuration');if(duration){const start=p.gameStartedAt||p.statusStartedAt;duration.dataset.startTime=start||'';duration.textContent=start?formatDuration(getElapsedSeconds(start)):'Нет данных';}
+  const orb=byId('steamDetailStatusOrb');if(orb)orb.dataset.state=p.status;setSafeHref('steamProfileButton',p.profileUrl);
+  avatarManager.update('steam-detail','steamDetailAvatar','steamDetailAvatarPlaceholder',p.avatar,p.avatarVersion,'Steam-аватар');
+  text('steamJson',JSON.stringify(data,null,2));renderOverview();renderProfile();updateStaleStates();renderSteamStats();
+  notifySteamChanges(previous,data);
+}
+function notifySteamChanges(previous,current){
+  if(!state.initialized||!previous)return;const before=previous.player,after=current.player;
+  if(before.gameName!==after.gameName)showToast(after.gameName?`Steam: запущена ${after.gameName}`:'Steam: игра закрыта','info');
+  const beforeOnline=before.status!=='offline',afterOnline=after.status!=='offline';
+  if(beforeOnline!==afterOnline)showToast(`Steam: ${afterOnline?'теперь в сети':'перешёл в офлайн'}`,'info');
+}
+
+/* =========================================================
+   14. Рендер Discord
+   ========================================================= */
+function renderDiscord(previous=null){
+  const data=state.discord.status;if(!data)return;const u=data.user,a=data.activity;
+  text('discordDetailName',u.displayName);text('discordDetailUsername',`@${u.username}`);text('discordIdValue',u.id);text('discordUsernameValue',`@${u.username}`);text('discordDetailMainStatus',DISCORD_STATUS[u.status]);text('discordCustomStatus',u.customStatus||'Пользовательский статус не указан');text('discordDetailUpdated',formatDateTime(data.checkedAt));
+  const orb=byId('discordDetailStatusOrb');if(orb)orb.dataset.state=u.status;const hasActivity=a&&a.type!=='none';
+  const activityCard=byId('discordActivityCard'),empty=byId('discordEmptyState');if(activityCard)activityCard.hidden=!hasActivity;if(empty)empty.classList.toggle('is-visible',!hasActivity);
+  if(hasActivity){text('discordActivityType',DISCORD_ACTIVITY[a.type]);text('discordActivityName',a.name||'Без названия');text('discordActivityDetails',[a.details,a.state].filter(Boolean).join(' · ')||'Без дополнительного описания');text('discordActivityStarted',formatDateTime(a.startedAt));const elapsed=byId('discordActivityElapsed');if(elapsed){elapsed.dataset.startTime=a.startedAt||'';elapsed.textContent=a.startedAt?`Прошло: ${formatDuration(getElapsedSeconds(a.startedAt))}`:'';}avatarManager.update('discord-activity','discordActivityImage','discordActivityImagePlaceholder',a.largeImageUrl,data.checkedAt,'Изображение активности Discord');}
+  avatarManager.update('discord-detail','discordDetailAvatar','discordDetailAvatarPlaceholder',u.avatar,u.avatarVersion,'Discord-аватар');text('discordJson',JSON.stringify(data,null,2));renderOverview();renderProfile();updateStaleStates();renderDiscordStats();
+  if(state.initialized&&previous){if(previous.user.status!==u.status)showToast(`Discord: ${DISCORD_STATUS[u.status]}`,'info');const before=previous.activity?.name||'',after=a?.name||'';if(before!==after)showToast(`Discord: ${after||'активность завершена'}`,'info');}
+}
+
+/* =========================================================
+   15. Рендер Telegram
+   ========================================================= */
+function renderTelegram(previous=null){
+  const data=state.telegram.status;if(!data)return;const u=data.user;
+  text('telegramDetailName',u.displayName);text('telegramDetailUsername',`@${u.username}`);text('telegramIdValue',u.id);text('telegramUsernameValue',`@${u.username}`);text('telegramBio',u.bio);text('telegramDetailMainStatus',TELEGRAM_STATUS[u.status]);
+  text('telegramLastSeen',u.lastSeenAt?`${formatDateTime(u.lastSeenAt)} · ${formatRelativeTime(u.lastSeenAt)}`:(approximateTelegramStatuses.has(u.status)?'Точное время недоступно':'Нет данных'));text('telegramDetailUpdated',formatDateTime(data.checkedAt));
+  const orb=byId('telegramDetailStatusOrb');if(orb)orb.dataset.state=u.status;setSafeHref('telegramProfileButton',u.profileUrl);avatarManager.update('telegram-detail','telegramDetailAvatar','telegramDetailAvatarPlaceholder',u.avatar,u.avatarVersion,'Telegram-аватар');text('telegramJson',JSON.stringify(data,null,2));renderOverview();updateStaleStates();renderTelegramStats();
+  if(state.initialized&&previous){const before=previous.user.status==='online',after=u.status==='online';if(before!==after)showToast(`Telegram: ${after?'в сети':'вышел из сети'}`,'info');}
+}
+
+/* =========================================================
+   16. Рендер историй
+   ========================================================= */
+function createTimelineEntry({kind,title,start,end,duration,details,current=false,approximate=false}){
+  const article=document.createElement('article');article.className='timeline-entry';article.dataset.kind=kind||'unknown';
+  const head=document.createElement('div');head.className='timeline-entry__head';const strong=document.createElement('strong');strong.textContent=title;const time=document.createElement('span');time.textContent=formatDateTime(start);head.append(strong,time);
+  const meta=document.createElement('div');meta.className='timeline-entry__meta';const range=document.createElement('span');range.textContent=formatDateRange(start,end);const durationNode=document.createElement('span');
+  if(current&&!approximate){durationNode.dataset.liveDuration=start;durationNode.textContent=formatDuration(getElapsedSeconds(start));}else durationNode.textContent=approximate?'Точное время недоступно':formatDuration(duration);
+  meta.append(range,durationNode);article.append(head,meta);
+  if(details){const p=document.createElement('p');p.className='timeline-entry__details';p.textContent=details;article.append(p);}
+  if(current||approximate){const badges=document.createElement('div');badges.className='timeline-entry__meta';if(current){const b=document.createElement('span');b.className='timeline-entry__badge is-current';b.textContent='Сейчас';badges.append(b);}if(approximate){const b=document.createElement('span');b.className='timeline-entry__badge is-approximate';b.textContent='Приблизительно';badges.append(b);}article.append(badges);}
+  return article;
+}
+function renderList(containerId,entries,visible,mapper){const c=byId(containerId);if(!c)return;c.replaceChildren();if(!entries.length){const e=document.createElement('div');e.className='timeline-empty';e.textContent='История пока пуста.';c.append(e);return;}entries.slice(0,visible).forEach(item=>c.append(mapper(item)));}
+function filteredSteamHistory(){const filter=state.historyView.steam.filter;return state.steam.history.filter(e=>filter==='all'||(filter==='games'&&e.type==='game')||(filter==='online'&&e.status!=='offline')||(filter==='offline'&&e.status==='offline'));}
+function renderSteamHistory(){
+  const all=filteredSteamHistory(),games=all.filter(e=>e.type==='game'),presence=all.filter(e=>e.type==='presence');
+  renderList('steamGameTimeline',games,state.historyView.steamGames.visible,e=>createTimelineEntry({kind:e.status,title:e.gameName||'Неизвестная игра',start:e.startedAt,end:e.endedAt,duration:e.durationSeconds,details:`App ID: ${e.gameId||'—'}`,current:!e.endedAt}));
+  renderList('steamPresenceTimeline',presence,state.historyView.steamPresence.visible,e=>createTimelineEntry({kind:e.status,title:STEAM_STATUS[e.status],start:e.startedAt,end:e.endedAt,duration:e.durationSeconds,details:`PersonaState: ${STEAM_STATUS[e.personaState]}`,current:!e.endedAt}));
+  updateHistoryButtons('steamGames',games.length);updateHistoryButtons('steamPresence',presence.length);text('steamHistoryJson',JSON.stringify(state.steam.history,null,2));
+}
+function filteredDiscordHistory(){const f=state.historyView.discord.filter;return state.discord.history.filter(e=>f==='all'||e.status===f||(f==='activities'&&e.activityType!=='none'));}
+function renderDiscordHistory(){const entries=filteredDiscordHistory();renderList('discordTimeline',entries,state.historyView.discord.visible,e=>createTimelineEntry({kind:e.status,title:`${DISCORD_STATUS[e.status]}${e.activityName?` · ${e.activityName}`:''}`,start:e.startedAt,end:e.endedAt,duration:e.durationSeconds,details:[DISCORD_ACTIVITY[e.activityType],e.customStatus?`Статус: ${e.customStatus}`:null].filter(Boolean).join(' · '),current:!e.endedAt}));updateHistoryButtons('discord',entries.length);}
+function filteredTelegramHistory(){const f=state.historyView.telegram.filter;return state.telegram.history.filter(e=>f==='all'||e.status===f||(f==='approximate'&&approximateTelegramStatuses.has(e.status)));}
+function renderTelegramHistory(){const entries=filteredTelegramHistory();renderList('telegramTimeline',entries,state.historyView.telegram.visible,e=>{const approximate=approximateTelegramStatuses.has(e.status);return createTimelineEntry({kind:e.status,title:TELEGRAM_STATUS[e.status],start:e.startedAt,end:e.endedAt,duration:e.durationSeconds,details:approximate?'Точное время недоступно':null,current:!e.endedAt,approximate});});updateHistoryButtons('telegram',entries.length);}
+function updateHistoryButtons(key,total){const view=state.historyView[key];const more=document.querySelector(`[data-history-more="${key}"]`),collapse=document.querySelector(`[data-history-collapse="${key}"]`);if(more)more.hidden=view.visible>=total;if(collapse)collapse.hidden=view.visible<=CONFIG.history.initialVisibleEntries;}
+
+/* =========================================================
+   17. Статистические вычисления
+   ========================================================= */
+function todayStart(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();}
+function renderSteamStats(){const history=state.steam.history,start=todayStart(),week=Date.now()-7*DAY;const presence=history.filter(e=>e.type==='presence'),games=history.filter(e=>e.type==='game');const online=presence.filter(e=>e.status!=='offline'&&e.status!=='unknown').reduce((s,e)=>s+overlapSeconds(e.startedAt,e.endedAt,start),0);const gameToday=games.reduce((s,e)=>s+overlapSeconds(e.startedAt,e.endedAt,start),0);const gameWeek=games.reduce((s,e)=>s+overlapSeconds(e.startedAt,e.endedAt,week),0);const counts=new Map(),durations=new Map();for(const e of games){const name=e.gameName||'Неизвестная игра';counts.set(name,(counts.get(name)||0)+1);durations.set(name,(durations.get(name)||0)+getElapsedSeconds(e.startedAt,e.endedAt||Date.now()));}const maxKey=map=>[...map.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';text('steamStatOnline',formatDuration(online));text('steamStatGames',formatDuration(gameToday));text('steamStatLaunches',String(games.length));text('steamStatLastGame',games[0]?.gameName||'—');text('steamStatGames7d',formatDuration(gameWeek));text('steamStatUniqueGames',String(new Set(games.map(e=>e.gameName).filter(Boolean)).size));text('steamStatMostLaunched',maxKey(counts));text('steamStatLongestGame',maxKey(durations));}
+function renderDiscordStats(){const h=state.discord.history,start=todayStart();const sum=status=>h.filter(e=>e.status===status).reduce((s,e)=>s+overlapSeconds(e.startedAt,e.endedAt,start),0);const activities=h.filter(e=>e.activityType!=='none');const longest=Math.max(0,...h.filter(e=>e.status==='online').map(e=>getElapsedSeconds(e.startedAt,e.endedAt||Date.now())||0));text('discordStatOnline',formatDuration(sum('online')));text('discordStatIdle',formatDuration(sum('idle')));text('discordStatDnd',formatDuration(sum('dnd')));text('discordStatChanges',String(activities.length));text('discordStatLastActivity',activities[0]?.activityName||'—');text('discordStatLongest',formatDuration(longest));}
+function renderTelegramStats(){const h=state.telegram.history,start=todayStart();const exact=h.filter(e=>e.status==='online');const online=exact.reduce((s,e)=>s+overlapSeconds(e.startedAt,e.endedAt,start),0);const todayEntries=exact.filter(e=>new Date(e.startedAt).getTime()>=start);const lastEntry=exact[0],lastExit=exact.find(e=>e.endedAt);text('telegramStatOnline',formatDuration(online));text('telegramStatEntries',String(todayEntries.length));text('telegramStatLastEntry',formatDateTime(lastEntry?.startedAt));text('telegramStatLastExit',formatDateTime(lastExit?.endedAt));text('telegramStatCategory',TELEGRAM_STATUS[state.telegram.status?.user?.status]||'—');}
+
+/* =========================================================
+   18. Роутинг
+   ========================================================= */
+function parseRoute(hash) {
+  const value=(hash||'').replace(/^#/,'').replace(/^\//,'');
+  if(!value||value==='profile')return{screen:'profile',trackerTab:'overview'};
+  if(value==='tracker'||value==='tracker/overview'||value==='tracker-overview')return{screen:'tracker',trackerTab:'overview'};
+  const match=value.match(/^tracker(?:\/|-)(steam|discord|telegram)$/);if(match)return{screen:'tracker',trackerTab:match[1]};
+  return{screen:'profile',trackerTab:'overview'};
+}
+function navigate(route){location.hash=route==='profile'?'#profile':`#tracker/${route}`;}
+function renderRoute({focus=false}={}){
+  state.route=parseRoute(location.hash);const profile=state.route.screen==='profile';
+  dom.profileScreen?.classList.toggle('is-active',profile);dom.profileScreen?.setAttribute('aria-hidden',String(!profile));
+  dom.trackerScreen?.classList.toggle('is-active',!profile);dom.trackerScreen?.setAttribute('aria-hidden',String(profile));
+  document.querySelectorAll('.tracker-view').forEach(view=>view.classList.toggle('is-active',!profile&&view.id===(state.route.trackerTab==='overview'?'trackerOverviewView':`${state.route.trackerTab}View`)));
+  document.querySelectorAll('[role="tab"]').forEach(tab=>{const active=tab.dataset.tab===state.route.trackerTab;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;});
+  if(!profile){requestAnimationFrame(()=>motionController.measure());if(focus)dom.trackerTitle?.focus({preventScroll:true});}else if(focus)byId('profileName')?.focus?.({preventScroll:true});
+}
+
+/* =========================================================
+   19. Управление вкладками
+   ========================================================= */
+function setupTabs(){const tabs=[...document.querySelectorAll('[role="tab"]')];tabs.forEach((tab,index)=>tab.addEventListener('keydown',event=>{let target=index;if(event.key==='ArrowRight')target=(index+1)%tabs.length;else if(event.key==='ArrowLeft')target=(index-1+tabs.length)%tabs.length;else if(event.key==='Home')target=0;else if(event.key==='End')target=tabs.length-1;else if(event.key==='Enter'||event.key===' '){event.preventDefault();navigate(tab.dataset.tab);return;}else return;event.preventDefault();tabs[target].focus();}));}
+
+/* =========================================================
+   20. Уведомления
+   ========================================================= */
+function showToast(message,type='info'){if(!dom.toastRegion)return;const toast=document.createElement('div');toast.className='toast';toast.dataset.type=type;toast.textContent=message;dom.toastRegion.append(toast);setTimeout(()=>{toast.classList.add('is-leaving');setTimeout(()=>toast.remove(),220);},3200);}
+
+/* =========================================================
+   21. Копирование
+   ========================================================= */
+async function copyText(value){try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(value);else{const area=document.createElement('textarea');area.value=value;area.style.position='fixed';area.style.opacity='0';document.body.append(area);area.select();if(!document.execCommand('copy'))throw new Error();area.remove();}showToast('Скопировано','success');}catch{showToast('Не удалось скопировать','error');}}
+
+/* =========================================================
+   22. Интерактивные карточки
+   ========================================================= */
+class MotionController {
+  constructor(){this.items=[];this.pointer={x:-9999,y:-9999,active:false};this.raf=null;}
+  register(){if(COARSE_POINTER.matches||REDUCED_MOTION.matches)return;this.items=[...document.querySelectorAll('[data-motion-panel]')].map(el=>({el,max:Number(el.dataset.motionMax)||1.2,rect:el.getBoundingClientRect()}));window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;this.pointer.x=e.clientX;this.pointer.y=e.clientY;this.pointer.active=true;this.schedule();},{passive:true});window.addEventListener('pointerleave',()=>{this.pointer.active=false;this.schedule();});}
+  measure(){this.items.forEach(item=>item.rect=item.el.getBoundingClientRect());}
+  schedule(){if(this.raf)return;this.raf=requestAnimationFrame(()=>{this.raf=null;this.update();});}
+  update(){for(const item of this.items){if(item.el.offsetParent===null)continue;const r=item.rect,cx=r.left+r.width/2,cy=r.top+r.height/2,dx=this.pointer.x-cx,dy=this.pointer.y-cy,distance=Math.hypot(Math.max(0,Math.abs(dx)-r.width/2),Math.max(0,Math.abs(dy)-r.height/2)),influence=this.pointer.active?Math.max(0,1-distance/280):0,nx=Math.max(-1,Math.min(1,dx/(r.width/2||1))),ny=Math.max(-1,Math.min(1,dy/(r.height/2||1)));item.el.style.setProperty('--rotate-y',`${nx*item.max*influence}deg`);item.el.style.setProperty('--rotate-x',`${-ny*item.max*influence}deg`);item.el.style.setProperty('--shine-x',`${(nx+1)*50}%`);item.el.style.setProperty('--shine-y',`${(ny+1)*50}%`);item.el.style.setProperty('--shine-opacity',String(influence*.72));}}
+}
+const motionController=new MotionController();
+
+/* =========================================================
+   23. Canvas-фон
+   ========================================================= */
+class CanvasController {
+  constructor(canvas){this.canvas=canvas;this.ctx=canvas?.getContext('2d');this.particles=[];this.rings=[];this.pointer={targetX:0,targetY:0,renderX:0,renderY:0,lastX:0,lastY:0,active:false,down:false,lastWave:0};this.running=false;this.frame=null;this.last=0;this.mobile=COARSE_POINTER.matches;this.cellSize=130;this.boundLoop=t=>this.loop(t);}
+  init(){if(!this.canvas||!this.ctx)return;this.resize();this.bind();if(REDUCED_MOTION.matches){this.drawStatic();return;}this.start();}
+  bind(){window.addEventListener('resize',()=>{this.resize();motionController.measure();},{passive:true});window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const now=performance.now(),speed=Math.hypot(e.clientX-this.pointer.lastX,e.clientY-this.pointer.lastY);this.pointer.targetX=e.clientX;this.pointer.targetY=e.clientY;this.pointer.active=true;if(speed>18&&now-this.pointer.lastWave>55){this.pointer.lastWave=now;this.impulse(e.clientX,e.clientY,Math.min(speed/80,.42));}this.pointer.lastX=e.clientX;this.pointer.lastY=e.clientY;},{passive:true});window.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;this.pointer.down=true;this.pointer.targetX=e.clientX;this.pointer.targetY=e.clientY;this.addRings(e.clientX,e.clientY);});window.addEventListener('pointerup',()=>this.pointer.down=false,{passive:true});window.addEventListener('pointercancel',()=>this.pointer.down=false,{passive:true});window.addEventListener('blur',()=>this.pointer.down=false);document.addEventListener('visibilitychange',()=>{if(document.hidden)this.stop();else{this.last=0;this.start();}});REDUCED_MOTION.addEventListener?.('change',()=>{if(REDUCED_MOTION.matches){this.stop();this.drawStatic();}else this.start();});}
+  resize(){const w=innerWidth,h=innerHeight,dpr=Math.min(devicePixelRatio||1,this.mobile?1.5:2);this.canvas.width=Math.floor(w*dpr);this.canvas.height=Math.floor(h*dpr);this.canvas.style.width=`${w}px`;this.canvas.style.height=`${h}px`;this.ctx.setTransform(dpr,0,0,dpr,0,0);this.width=w;this.height=h;const max=this.mobile?CONFIG.interface.mobileParticleMaximum:CONFIG.interface.desktopParticleMaximum;const target=Math.min(max,Math.max(this.mobile?35:70,Math.floor(w*h/(this.mobile?15000:16000))));this.createParticles(target);}
+  createParticles(count){const old=this.particles;this.particles=Array.from({length:count},(_,i)=>old[i]||this.makeParticle());this.particles.forEach(p=>{p.homeX=Math.max(10,Math.min(this.width-10,p.homeX));p.homeY=Math.max(10,Math.min(this.height-10,p.homeY));});}
+  makeParticle(){const x=Math.random()*innerWidth,y=Math.random()*innerHeight;return{homeX:x,homeY:y,x,y,vx:0,vy:0,depth:.55+Math.random()*.75,size:.7+Math.random()*1.25,alpha:.16+Math.random()*.34,phase:Math.random()*Math.PI*2,orbit:18+Math.random()*38};}
+  start(){if(this.running||REDUCED_MOTION.matches)return;this.running=true;this.frame=requestAnimationFrame(this.boundLoop);}
+  stop(){this.running=false;if(this.frame)cancelAnimationFrame(this.frame);this.frame=null;}
+  loop(time){if(!this.running)return;if(this.mobile&&time-this.last<32){this.frame=requestAnimationFrame(this.boundLoop);return;}const dt=Math.min(2,(time-(this.last||time))/16.67);this.last=time;this.update(dt,time);this.draw(time);this.frame=requestAnimationFrame(this.boundLoop);}
+  update(dt,time){const p=this.pointer;p.renderX+=(p.targetX-p.renderX)*.14;p.renderY+=(p.targetY-p.renderY)*.14;for(const item of this.particles){const floatX=Math.sin(time*.00025+item.phase)*8*item.depth,floatY=Math.cos(time*.00019+item.phase)*7*item.depth;let tx=item.homeX+floatX,ty=item.homeY+floatY;const dx=p.renderX-item.x,dy=p.renderY-item.y,dist=Math.hypot(dx,dy)||1;if(p.active&&dist<190){const influence=(1-dist/190);if(p.down&&dist<150){const angle=item.phase+time*.00035;tx=p.renderX+Math.cos(angle)*item.orbit;ty=p.renderY+Math.sin(angle)*item.orbit;item.vx+=dx/dist*influence*.025;item.vy+=dy/dist*influence*.025;}else{item.vx-=dx/dist*influence*.075;item.vy-=dy/dist*influence*.075;}}for(const ring of this.rings){const rd=Math.abs(distTo(item.x,item.y,ring.x,ring.y)-ring.radius);if(rd<18){const rx=item.x-ring.x,ry=item.y-ring.y,rl=Math.hypot(rx,ry)||1;const force=(1-rd/18)*.22*ring.alpha;item.vx+=rx/rl*force;item.vy+=ry/rl*force;}}item.vx+=(tx-item.x)*.0045*dt;item.vy+=(ty-item.y)*.0045*dt;item.vx*=Math.pow(.91,dt);item.vy*=Math.pow(.91,dt);item.x+=item.vx*dt;item.y+=item.vy*dt;if(item.x<-80||item.x>this.width+80||item.y<-80||item.y>this.height+80){item.x=item.homeX;item.y=item.homeY;item.vx=item.vy=0;}}
+  for(const ring of this.rings){ring.previousRadius=ring.radius;ring.radius+=ring.speed*dt;ring.alpha*=Math.pow(.955,dt);}this.rings=this.rings.filter(r=>r.alpha>.025&&r.radius<Math.max(this.width,this.height));}
+  buildGrid(){const grid=new Map();for(const p of this.particles){const x=Math.floor(p.x/this.cellSize),y=Math.floor(p.y/this.cellSize),key=`${x},${y}`;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(p);}return grid;}
+  draw(time){const c=this.ctx;c.clearRect(0,0,this.width,this.height);const grid=this.buildGrid();c.lineWidth=.65;for(const [key,bucket] of grid){const [cx,cy]=key.split(',').map(Number);for(const p of bucket){for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){const other=grid.get(`${cx+ox},${cy+oy}`)||[];for(const q of other){if(q===p||q.x<p.x)continue;const d=distTo(p.x,p.y,q.x,q.y);if(d<130){c.strokeStyle=`rgba(165,181,225,${(1-d/130)*.09})`;c.beginPath();c.moveTo(p.x,p.y);c.lineTo(q.x,q.y);c.stroke();}}}}}
+  if(this.pointer.active){const nearest=[];for(const p of this.particles){const d=distTo(p.x,p.y,this.pointer.renderX,this.pointer.renderY);if(d<230){nearest.push({p,d});nearest.sort((a,b)=>a.d-b.d);if(nearest.length>(this.pointer.down?15:10))nearest.pop();}}for(const {p,d} of nearest){const g=c.createLinearGradient(this.pointer.renderX,this.pointer.renderY,p.x,p.y);g.addColorStop(0,`rgba(190,202,255,${(1-d/230)*(this.pointer.down?.22:.14)})`);g.addColorStop(1,'rgba(134,168,255,0)');c.strokeStyle=g;c.beginPath();c.moveTo(this.pointer.renderX,this.pointer.renderY);c.lineTo(p.x,p.y);c.stroke();}const glow=c.createRadialGradient(this.pointer.renderX,this.pointer.renderY,0,this.pointer.renderX,this.pointer.renderY,120);glow.addColorStop(0,'rgba(139,154,233,.08)');glow.addColorStop(1,'rgba(139,154,233,0)');c.fillStyle=glow;c.beginPath();c.arc(this.pointer.renderX,this.pointer.renderY,120,0,Math.PI*2);c.fill();}
+  for(const ring of this.rings){c.strokeStyle=`rgba(151,169,230,${ring.alpha*.28})`;c.lineWidth=ring.width;c.beginPath();c.arc(ring.x,ring.y,ring.radius,0,Math.PI*2);c.stroke();}
+  c.shadowBlur=8;c.shadowColor='rgba(139,164,255,.42)';for(const p of this.particles){c.fillStyle=`rgba(207,218,255,${p.alpha})`;c.beginPath();c.arc(p.x,p.y,p.size,0,Math.PI*2);c.fill();}c.shadowBlur=0;}
+  impulse(x,y,strength){for(const p of this.particles){const d=distTo(p.x,p.y,x,y);if(d<160){const dx=p.x-x,dy=p.y-y,l=Math.hypot(dx,dy)||1,f=(1-d/160)*strength;p.vx+=dx/l*f;p.vy+=dy/l*f;}}}
+  addRings(x,y){for(let i=0;i<3;i++)this.rings.push({x,y,radius:i*12,previousRadius:i*12,speed:2.5+i*.8,alpha:.9-i*.12,width:1+i*.25});this.rings=this.rings.slice(-12);this.impulse(x,y,.5);}
+  drawStatic(){this.draw(0);}
+}
+const distTo=(x1,y1,x2,y2)=>Math.hypot(x2-x1,y2-y1);
+const canvasController=new CanvasController(byId('particleCanvas'));
+
+/* =========================================================
+   24. Мяукающий кот
+   ========================================================= */
+const CatController={context:null,timer:null,async meow(){const button=dom.catButton;if(!button)return;clearTimeout(this.timer);button.classList.remove('is-meowing');void button.offsetWidth;button.classList.add('is-meowing');this.timer=setTimeout(()=>button.classList.remove('is-meowing'),560);if(dom.catHint)dom.catHint.hidden=true;safeStorageSet('qulon-cat-used','1');navigator.vibrate?.(18);const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;try{this.context ||= new Audio();if(this.context.state==='suspended')await this.context.resume();const now=this.context.currentTime,master=this.context.createGain(),filter=this.context.createBiquadFilter(),main=this.context.createOscillator(),overtone=this.context.createOscillator(),overGain=this.context.createGain();filter.type='bandpass';filter.frequency.setValueAtTime(1250,now);filter.Q.setValueAtTime(1.5,now);master.gain.setValueAtTime(.0001,now);master.gain.exponentialRampToValueAtTime(.19,now+.035);master.gain.exponentialRampToValueAtTime(.0001,now+.54);overGain.gain.value=.23;main.type='sine';overtone.type='triangle';main.frequency.setValueAtTime(520,now);main.frequency.exponentialRampToValueAtTime(760,now+.16);main.frequency.exponentialRampToValueAtTime(450,now+.52);overtone.frequency.setValueAtTime(1040,now);overtone.frequency.exponentialRampToValueAtTime(1420,now+.17);overtone.connect(overGain).connect(filter);main.connect(filter);filter.connect(master).connect(this.context.destination);main.start(now);overtone.start(now);main.stop(now+.56);overtone.stop(now+.56);}catch{}}
+};
+
+/* =========================================================
+   25. Счётчик посетителей
+   ========================================================= */
+function safeStorageGet(key){try{return localStorage.getItem(key);}catch{return null;}}
+function safeStorageSet(key,value){try{localStorage.setItem(key,value);return true;}catch{return false;}}
+function getVisitorId(){let id=safeStorageGet('qulon-visitor-id');if(id)return id;id=crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;safeStorageSet('qulon-visitor-id',id);return id;}
+
+/* =========================================================
+   26. Жизненный цикл
+   ========================================================= */
+function setResourceBusy(platform,busy,hasData){if(state[platform]){state[platform].loading=busy&&!hasData;state[platform].refreshing=busy&&hasData;}if(platform==='profile'&&state.profile)state.profile.loading=busy&&!hasData;if(platform==='visitors')state.visitors.loading=busy;const card=document.querySelector(`.platform-card[data-platform="${platform}"]`);if(card)card.setAttribute('aria-busy',String(busy));if(dom.refreshAllButton)dom.refreshAllButton.setAttribute('aria-busy',String([...refreshManager.resources.values()].some(r=>r.promise)));}
+function showPlatformError(platform,message){if(state[platform])state[platform].error=message;const banner=byId(`${platform}ErrorBanner`);if(banner){banner.textContent=message;banner.classList.add('is-visible');}const inline=byId(`${platform}OverviewState`);if(inline)inline.textContent=`Ошибка: ${message}`;}
+function clearPlatformError(platform){if(state[platform])state[platform].error=null;const banner=byId(`${platform}ErrorBanner`);banner?.classList.remove('is-visible');const inline=byId(`${platform}OverviewState`);if(inline)inline.textContent='';}
+function updateStaleStates(){for(const platform of ['steam','discord','telegram']){const stale=isStale(platform,state[platform].status?.checkedAt);byId(`${platform}StaleBanner`)?.classList.toggle('is-visible',stale&&Boolean(state[platform].status));const inline=byId(`${platform}OverviewState`);if(inline&&!state[platform].error)inline.textContent=stale?'Данные могут быть устаревшими':'';}}
+function updateOverallStatus(){const resources=[...refreshManager.resources.values()],busy=resources.some(r=>r.promise),errors=resources.filter(r=>r.error).length,success=resources.filter(r=>r.lastSuccess).length;const stateName=busy?'warning':errors?'error':success?'online':'warning';if(dom.overallFetchState)dom.overallFetchState.dataset.state=stateName;text('overallFetchStateText',busy?'Получение данных':errors?'Есть ошибки загрузки':'Данные получены');if(dom.refreshAllButton)dom.refreshAllButton.setAttribute('aria-busy',String(busy));}
+function renderSyncTime(){text('trackerLastUpdate',`Последнее общее обновление: ${formatDateTime(state.lastFullSyncAt)}`);text('syncText',state.lastFullSyncAt?`Синхронизировано ${formatRelativeTime(state.lastFullSyncAt)}`:'Синхронизация ещё не выполнялась');}
+function renderTechnicalJson(){if(!dom.technicalJson)return;dom.technicalJson.textContent=JSON.stringify({mode:CONFIG.mode,steam:state.steam.status,steamHistory:state.steam.history,discord:state.discord.status,discordHistory:state.discord.history,telegram:state.telegram.status,telegramHistory:state.telegram.history,updates:{profile:state.profile.updatedAt,steam:state.steam.updatedAt,discord:state.discord.updatedAt,telegram:state.telegram.updatedAt}},null,2);}
+function updateLiveDurations(){document.querySelectorAll('[data-live-duration]').forEach(node=>{const start=node.dataset.liveDuration;if(start)node.textContent=formatDuration(getElapsedSeconds(start));});document.querySelectorAll('[data-start-time]').forEach(node=>{const start=node.dataset.startTime;if(start)node.textContent=node.id==='discordActivityElapsed'?`Прошло: ${formatDuration(getElapsedSeconds(start))}`:formatDuration(getElapsedSeconds(start));});updateStaleStates();renderSyncTime();}
+function refreshStale(){for(const platform of ['steam','discord','telegram'])if(isStale(platform,state[platform].status?.checkedAt))refreshManager.refreshPlatform(platform);if(!state.profile.updatedAt||Date.now()-new Date(state.profile.updatedAt)>CONFIG.refreshIntervals.profile)refreshManager.refresh('profile');}
+function cleanup(){refreshManager.stop();canvasController.stop();clearInterval(liveTicker);}
+
+/* =========================================================
+   27. Инициализация
+   ========================================================= */
+function setupIcons(){document.querySelectorAll('[data-icon]').forEach(node=>{const icon=ICONS[node.dataset.icon];if(icon)node.innerHTML=icon;});}
+function setupEvents(){
+  window.addEventListener('hashchange',()=>renderRoute({focus:true}));
+  dom.refreshAllButton?.addEventListener('click',()=>refreshManager.refreshAll({force:true,manual:true}));
+  byId('retrySteamButton')?.addEventListener('click',()=>refreshManager.refreshPlatform('steam',{force:true,manual:true}));
+  byId('retryDiscordButton')?.addEventListener('click',()=>refreshManager.refreshPlatform('discord',{force:true,manual:true}));
+  byId('retryTelegramButton')?.addEventListener('click',()=>refreshManager.refreshPlatform('telegram',{force:true,manual:true}));
+  document.addEventListener('click',event=>{const copy=event.target.closest('[data-copy-target]');if(copy){const target=byId(copy.dataset.copyTarget);if(target)copyText(target.textContent.trim());}const filter=event.target.closest('[data-history-filter]');if(filter){const platform=filter.dataset.historyPlatform;document.querySelectorAll(`[data-history-platform="${platform}"]`).forEach(b=>b.classList.toggle('is-active',b===filter));state.historyView[platform].filter=filter.dataset.historyFilter;state.historyView[platform].visible=CONFIG.history.initialVisibleEntries;if(platform==='steam'){state.historyView.steamGames.visible=CONFIG.history.initialVisibleEntries;state.historyView.steamPresence.visible=CONFIG.history.initialVisibleEntries;renderSteamHistory();}if(platform==='discord')renderDiscordHistory();if(platform==='telegram')renderTelegramHistory();}const more=event.target.closest('[data-history-more]');if(more){const key=more.dataset.historyMore;state.historyView[key].visible+=CONFIG.history.loadMoreStep;key.startsWith('steam')?renderSteamHistory():key==='discord'?renderDiscordHistory():renderTelegramHistory();}const collapse=event.target.closest('[data-history-collapse]');if(collapse){const key=collapse.dataset.historyCollapse;state.historyView[key].visible=CONFIG.history.initialVisibleEntries;key.startsWith('steam')?renderSteamHistory():key==='discord'?renderDiscordHistory():renderTelegramHistory();}});
+  dom.catButton?.addEventListener('click',()=>CatController.meow());
+  window.addEventListener('focus',refreshStale);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshStale();});window.addEventListener('beforeunload',cleanup,{once:true});
+}
+async function initialize(){
+  if(state.initialized)return;setupIcons();setupTabs();setupEvents();renderRoute();motionController.register();canvasController.init();
+  if(safeStorageGet('qulon-cat-used')&&dom.catHint)dom.catHint.hidden=true;
+  await refreshManager.refreshAll();renderOverview();renderSteamHistory();renderDiscordHistory();renderTelegramHistory();renderSteamStats();renderDiscordStats();renderTelegramStats();renderTechnicalJson();updateOverallStatus();refreshManager.startPolling();state.initialized=true;
+}
+const liveTicker=window.setInterval(updateLiveDurations,1000);
+initialize();
+</script>
+</body>
+</html>
