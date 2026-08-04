@@ -106,6 +106,9 @@ jobs:
             git push origin HEAD:main
           fi
 
+      - name: Build polished profile preview
+        run: node projects/steam-status-tracker/scripts/build-profile-v2.mjs
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
