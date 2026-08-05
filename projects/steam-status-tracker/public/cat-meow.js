@@ -83,16 +83,15 @@ function playJumpAnimation() {
   if (typeof cat.animate === 'function') {
     reactionAnimation = cat.animate(
       [
-        { transform: 'translateY(0) rotate(0deg) scale(1)' },
-        { transform: 'translateY(-8px) rotate(-12deg) scale(1.16)', offset: 0.18 },
-        { transform: 'translateY(-3px) rotate(11deg) scale(1.1)', offset: 0.38 },
-        { transform: 'translateY(-6px) rotate(-7deg) scale(1.13)', offset: 0.58 },
-        { transform: 'translateY(-1px) rotate(4deg) scale(1.04)', offset: 0.78 },
-        { transform: 'translateY(0) rotate(0deg) scale(1)' }
+        { transform: 'translateY(0) rotate(0deg) scale(1)', offset: 0 },
+        { transform: 'translateY(-7px) rotate(-3deg) scale(1.08)', offset: 0.24 },
+        { transform: 'translateY(-5px) rotate(2deg) scale(1.06)', offset: 0.5 },
+        { transform: 'translateY(-2px) rotate(-1deg) scale(1.025)', offset: 0.76 },
+        { transform: 'translateY(0) rotate(0deg) scale(1)', offset: 1 }
       ],
       {
-        duration: 560,
-        easing: 'cubic-bezier(.18,.8,.24,1)',
+        duration: 980,
+        easing: 'cubic-bezier(.22,.72,.24,1)',
         iterations: 1
       }
     );
@@ -103,7 +102,7 @@ function playJumpAnimation() {
   cat.classList.remove('is-meowing');
   void cat.offsetWidth;
   cat.classList.add('is-meowing');
-  reactionTimer = window.setTimeout(() => cat.classList.remove('is-meowing'), 580);
+  reactionTimer = window.setTimeout(() => cat.classList.remove('is-meowing'), 980);
 }
 
 function react() {
