@@ -1,353 +1,45 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#05060a" />
-  <meta name="description" content="Живая персональная страница Qu’lon и трекер активности." />
-  <title>Qu’lon — живой профиль</title>
-
-  <link rel="stylesheet" href="../styles.css?v=8" />
-  <link rel="stylesheet" href="../refinements.css?v=6" />
-  <link rel="stylesheet" href="../inertia.css?v=1" />
-  <link rel="stylesheet" href="../cursor-web.css?v=1" />
-  <link rel="stylesheet" href="../main-card-effects.css?v=1" />
-  <link rel="stylesheet" href="../main-card-hint.css?v=1" />
-  <link rel="stylesheet" href="../description-motion.css?v=1" />
-  <link rel="stylesheet" href="../mobile.css?v=1" />
-
-  <style>
-    [hidden] { display: none !important; }
-    html { min-width: 320px; background: #05060a; }
-    body {
-      position: relative; min-height: 100vh; margin: 0; overflow-x: hidden; isolation: isolate;
-      color: #f8f8fc;
-      background: radial-gradient(circle at 50% 20%, rgba(31,34,59,.86), rgba(10,11,18,.92) 45%, #05060a 100%);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    *, *::before, *::after { box-sizing: border-box; }
-    :root {
-      --tracker-steam:#7cb9eb; --tracker-discord:#a79aff; --tracker-telegram:#6fd2ff;
-      --tracker-glass:rgba(12,15,24,.69); --tracker-line:rgba(255,255,255,.13);
-      --tracker-text:#f7f7fc; --tracker-muted:#a5adbd;
-    }
-    body { min-height:100svh; min-height:100dvh; }
-    body.is-tracker { overflow-y:auto; }
-    .tracker-light-beam {
-      position:fixed; z-index:2; top:-24vh; left:37vw; width:22vw; height:115vh; min-width:190px;
-      opacity:0; pointer-events:none;
-      background:linear-gradient(180deg,transparent,rgba(174,161,255,.045) 16%,rgba(122,193,255,.13) 51%,rgba(174,161,255,.035) 76%,transparent);
-      filter:blur(34px); transform:rotate(19deg); transition:opacity .55s ease;
-    }
-    body.is-tracker .tracker-light-beam { opacity:.9; animation:beam-breathe 8s ease-in-out infinite alternate; }
-    @keyframes beam-breathe { to { opacity:.55; translate:5vw 1vh; scale:1.12 1; } }
-    .tracker-shell {
-      position:relative; z-index:7; width:min(1240px,100%); min-height:100svh; min-height:100dvh; margin:0 auto;
-      padding:max(24px,calc(env(safe-area-inset-top) + 18px)) clamp(14px,3vw,34px) max(38px,calc(env(safe-area-inset-bottom) + 24px));
-    }
-    .tracker-stage { position:relative; isolation:isolate; }
-    .tracker-stage::before {
-      position:absolute; z-index:-1; top:7rem; left:50%; width:min(86vw,920px); height:380px; border-radius:50%;
-      background:radial-gradient(circle,rgba(132,107,255,.18),rgba(58,158,225,.06) 45%,transparent 72%);
-      filter:blur(55px); translate:-50% 0; content:""; pointer-events:none;
-    }
-    .tracker-glass {
-      position:relative; overflow:hidden; border:1px solid var(--tracker-line); border-radius:31px;
-      background:linear-gradient(145deg,rgba(255,255,255,.078),rgba(255,255,255,.018) 42%,rgba(118,91,255,.025)),var(--tracker-glass);
-      box-shadow:0 34px 100px rgba(0,0,0,.48),0 0 0 1px rgba(142,126,255,.035),inset 0 1px 0 rgba(255,255,255,.095),inset 0 -1px 0 rgba(255,255,255,.025);
-      backdrop-filter:blur(28px) saturate(1.24); -webkit-backdrop-filter:blur(28px) saturate(1.24);
-    }
-    .tracker-glass::before {
-      position:absolute; inset:0; border-radius:inherit;
-      background:radial-gradient(620px circle at var(--light-x,22%) var(--light-y,0%),rgba(183,172,255,.135),transparent 48%);
-      content:""; pointer-events:none;
-    }
-    .tracker-glass::after {
-      position:absolute; inset:0; border-radius:inherit;
-      box-shadow:inset 0 0 90px rgba(103,82,255,.035),inset 0 0 0 1px rgba(255,255,255,.018);
-      content:""; pointer-events:none;
-    }
-    .tracker-hero { padding:clamp(22px,4vw,38px); }
-    .tracker-hero-top,.tracker-title-row,.tracker-panel-heading,.platform-card-top,.identity-row,.history-toolbar {
-      position:relative; z-index:1; display:flex; align-items:center;
-    }
-    .tracker-hero-top { justify-content:space-between; gap:16px; }
-    .back-button,.refresh-button,.tracker-tab,.soft-button,.copy-button,.history-filter,.history-more,.profile-external {
-      appearance:none; -webkit-appearance:none; display:inline-flex; min-height:44px; align-items:center; justify-content:center; gap:9px;
-      border:1px solid rgba(255,255,255,.12); border-radius:15px; color:var(--tracker-text);
-      background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.022));
-      box-shadow:0 13px 29px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.055);
-      font:inherit; font-weight:760; text-decoration:none; cursor:pointer;
-      transition:border-color 170ms ease,background 170ms ease,box-shadow 170ms ease,translate 170ms ease,scale 170ms ease;
-    }
-    .back-button,.refresh-button { padding:10px 14px; }
-    .back-button:hover,.refresh-button:hover,.tracker-tab:hover,.soft-button:hover,.copy-button:hover,.history-filter:hover,.history-more:hover,.profile-external:hover,
-    .back-button:focus-visible,.refresh-button:focus-visible,.tracker-tab:focus-visible,.soft-button:focus-visible,.copy-button:focus-visible,.history-filter:focus-visible,.history-more:focus-visible,.profile-external:focus-visible {
-      border-color:rgba(177,164,255,.52); background:rgba(170,157,255,.12);
-      box-shadow:0 20px 42px rgba(0,0,0,.31),0 0 24px rgba(153,136,255,.08),inset 0 1px 0 rgba(255,255,255,.085);
-      translate:0 -2px; outline:none;
-    }
-    .back-button:active,.refresh-button:active,.tracker-tab:active,.soft-button:active,.copy-button:active,.history-filter:active,.history-more:active,.profile-external:active { translate:0 1px; scale:.985; }
-    .vector-icon { width:20px; height:20px; flex:0 0 auto; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
-    .refresh-button .refresh-vector { transition:rotate .4s cubic-bezier(.2,.8,.2,1); }
-    .refresh-button.is-loading .refresh-vector { animation:refresh-vector-spin .82s linear infinite; }
-    @keyframes refresh-vector-spin { to { rotate:360deg; } }
-    .tracker-title-row { justify-content:space-between; gap:24px; margin-top:26px; }
-    .tracker-eyebrow { margin:0 0 9px; color:#b8adff; font-size:.74rem; font-weight:850; letter-spacing:.18em; }
-    .tracker-title {
-      margin:0; color:transparent;
-      background:linear-gradient(108deg,#f8f8fc 0 31%,#c7bbff 43%,#fff 52%,#aebfff 64%,#f8f8fc 78%);
-      background-position:125% 50%; background-size:260% 100%; -webkit-background-clip:text; background-clip:text;
-      font-size:clamp(2.25rem,6vw,5rem); line-height:.98; letter-spacing:-.04em;
-      filter:drop-shadow(0 13px 28px rgba(0,0,0,.38)); animation:tracker-title-shimmer 8s linear infinite;
-    }
-    @keyframes tracker-title-shimmer { to { background-position:-135% 50%; } }
-    .sync-block { min-width:190px; border:1px solid rgba(255,255,255,.09); border-radius:20px; padding:13px 15px; background:rgba(255,255,255,.028); box-shadow:inset 0 1px 0 rgba(255,255,255,.035); }
-    .sync-label,.detail-label,.section-kicker { color:var(--tracker-muted); font-size:.71rem; font-weight:820; letter-spacing:.1em; text-transform:uppercase; }
-    .sync-value { display:block; margin-top:5px; font-size:.91rem; font-weight:710; }
-    .tracker-tabs { position:relative; z-index:1; display:flex; gap:9px; margin-top:25px; overflow-x:auto; padding:4px 2px 7px; scrollbar-width:none; }
-    .tracker-tabs::-webkit-scrollbar,.history-filters::-webkit-scrollbar { display:none; }
-    .tracker-tab { flex:0 0 auto; padding:10px 16px; white-space:nowrap; }
-    .tracker-tab[aria-selected="true"] { border-color:rgba(177,164,255,.58); background:linear-gradient(145deg,rgba(176,164,255,.18),rgba(103,181,255,.07)); box-shadow:0 18px 36px rgba(0,0,0,.28),0 0 28px rgba(153,136,255,.1),inset 0 1px 0 rgba(255,255,255,.09); }
-    .tracker-content { margin-top:18px; }
-    .tracker-view { animation:tracker-view-in .5s cubic-bezier(.2,.8,.2,1) both; }
-    @keyframes tracker-view-in { from { opacity:0; translate:0 12px; } to { opacity:1; translate:0 0; } }
-    .overview-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px; }
-    .platform-card { --platform-color:var(--tracker-steam); min-width:0; padding:23px; animation:tracker-card-float 6.4s var(--float-delay,0s) ease-in-out infinite; }
-    .platform-card.discord { --platform-color:var(--tracker-discord); }
-    .platform-card.telegram { --platform-color:var(--tracker-telegram); }
-    @keyframes tracker-card-float { 0%,100% { translate:0 0; } 50% { translate:0 -5px; } }
-    .platform-card-top { justify-content:space-between; gap:12px; }
-    .platform-brand { display:inline-flex; align-items:center; gap:11px; font-size:1rem; font-weight:850; }
-    .platform-brand-icon { display:inline-grid; width:44px; height:44px; place-items:center; border:1px solid color-mix(in srgb,var(--platform-color) 42%,transparent); border-radius:15px; color:var(--platform-color); background:color-mix(in srgb,var(--platform-color) 11%,transparent); box-shadow:0 0 25px color-mix(in srgb,var(--platform-color) 10%,transparent); }
-    .demo-badge,.status-badge { display:inline-flex; min-height:27px; align-items:center; gap:6px; border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:4px 9px; font-size:.72rem; font-weight:800; }
-    .demo-badge { color:#c9c2ff; background:rgba(176,164,255,.08); }
-    .platform-identity { display:grid; grid-template-columns:70px minmax(0,1fr); gap:14px; align-items:center; margin-top:22px; }
-    .platform-avatar { width:70px; height:70px; border:1px solid rgba(255,255,255,.16); border-radius:22px; object-fit:cover; background:linear-gradient(145deg,rgba(173,158,255,.22),rgba(35,40,59,.72)); box-shadow:0 18px 38px rgba(0,0,0,.34),0 0 25px color-mix(in srgb,var(--platform-color) 10%,transparent); transition:opacity .15s ease; }
-    .platform-name { overflow:hidden; margin:0; text-overflow:ellipsis; white-space:nowrap; font-size:1.18rem; }
-    .platform-id { overflow:hidden; margin:5px 0 0; color:var(--tracker-muted); text-overflow:ellipsis; white-space:nowrap; font-size:.86rem; }
-    .platform-status { margin:21px 0 0; font-size:1.08rem; font-weight:820; }
-    .platform-activity { min-height:46px; margin:9px 0 0; color:#c8ceda; line-height:1.5; }
-    .platform-updated { margin:17px 0 0; color:#7f899b; font-size:.78rem; }
-    .platform-actions { display:flex; gap:9px; margin-top:19px; }
-    .soft-button,.profile-external { flex:1 1 auto; padding:9px 12px; font-size:.85rem; }
-    .platform-detail,.history-panel { padding:clamp(22px,4vw,34px); }
-    .platform-detail + .history-panel,.history-panel + .history-panel { margin-top:17px; }
-    .tracker-panel-heading { justify-content:space-between; gap:18px; margin-bottom:24px; }
-    .tracker-panel-heading h2 { margin:5px 0 0; font-size:clamp(1.45rem,3vw,2.15rem); letter-spacing:-.025em; }
-    .identity-row { align-items:flex-start; gap:20px; }
-    .detail-avatar { width:clamp(88px,12vw,120px); height:clamp(88px,12vw,120px); flex:0 0 auto; border:1px solid rgba(255,255,255,.18); border-radius:29px; object-fit:cover; background:linear-gradient(145deg,rgba(173,158,255,.22),rgba(35,40,59,.72)); box-shadow:0 25px 55px rgba(0,0,0,.4),0 0 34px rgba(141,125,255,.11); transition:opacity .15s ease; }
-    .identity-copy { min-width:0; flex:1 1 auto; }
-    .identity-copy h3 { overflow:hidden; margin:3px 0 6px; text-overflow:ellipsis; white-space:nowrap; font-size:clamp(1.6rem,4vw,2.65rem); letter-spacing:-.035em; }
-    .identity-copy p { margin:0; color:var(--tracker-muted); }
-    .id-row { display:flex; min-width:0; align-items:center; gap:8px; margin-top:13px; }
-    .selectable-id { min-width:0; overflow-wrap:anywhere; color:#d8dceb; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.86rem; user-select:text; -webkit-user-select:text; }
-    .copy-button { width:42px; min-width:42px; height:42px; min-height:42px; padding:0; }
-    .status-orb { --orb-color:#7e8592; width:13px; height:13px; flex:0 0 auto; border-radius:50%; background:var(--orb-color); box-shadow:0 0 16px color-mix(in srgb,var(--orb-color) 65%,transparent); }
-    .status-orb.online { --orb-color:#67e7a6; } .status-orb.away,.status-orb.idle { --orb-color:#ffc66f; } .status-orb.dnd { --orb-color:#ff7788; } .status-orb.offline { --orb-color:#7e8592; }
-    .detail-grid,.stats-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:25px; }
-    .detail-tile,.stat-tile { min-width:0; border:1px solid rgba(255,255,255,.085); border-radius:20px; padding:16px; background:linear-gradient(145deg,rgba(255,255,255,.052),rgba(255,255,255,.016)); box-shadow:inset 0 1px 0 rgba(255,255,255,.035); transition:border-color 170ms ease,background 170ms ease,translate 170ms ease; }
-    .detail-tile:hover,.stat-tile:hover { border-color:rgba(177,164,255,.28); background:rgba(176,164,255,.055); translate:0 -2px; }
-    .detail-value,.stat-value { display:block; overflow:hidden; margin-top:7px; color:#f5f6fb; text-overflow:ellipsis; font-size:.98rem; font-weight:780; }
-    .stat-value { font-size:1.18rem; }
-    .history-toolbar { justify-content:space-between; gap:13px; margin-bottom:16px; }
-    .history-filters { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 5px; scrollbar-width:none; }
-    .history-filter { min-height:38px; padding:7px 12px; white-space:nowrap; font-size:.79rem; }
-    .history-filter.is-active { border-color:rgba(177,164,255,.5); color:#f7f5ff; background:rgba(176,164,255,.12); }
-    .history-list { position:relative; display:grid; gap:10px; }
-    .history-list::before { position:absolute; top:12px; bottom:12px; left:18px; width:1px; background:linear-gradient(180deg,rgba(176,164,255,.7),rgba(103,207,255,.22),transparent); box-shadow:0 0 13px rgba(176,164,255,.16); content:""; pointer-events:none; }
-    .history-entry { position:relative; display:grid; grid-template-columns:38px minmax(0,1fr) auto; gap:13px; align-items:center; border:1px solid rgba(255,255,255,.075); border-radius:18px; padding:13px 14px 13px 8px; background:rgba(255,255,255,.024); box-shadow:inset 0 1px 0 rgba(255,255,255,.025); transition:border-color 170ms ease,background 170ms ease,translate 170ms ease; }
-    .history-entry:hover { border-color:rgba(177,164,255,.24); background:rgba(176,164,255,.045); translate:2px 0; }
-    .history-dot { position:relative; z-index:1; width:13px; height:13px; justify-self:center; border:2px solid rgba(7,8,13,.8); border-radius:50%; background:var(--entry-color,#8c93a0); box-shadow:0 0 15px color-mix(in srgb,var(--entry-color,#8c93a0) 48%,transparent); }
-    .history-main { min-width:0; }
-    .history-title { overflow:hidden; margin:0; text-overflow:ellipsis; white-space:nowrap; font-weight:810; }
-    .history-meta { margin:5px 0 0; color:var(--tracker-muted); font-size:.8rem; line-height:1.45; }
-    .history-duration { color:#d8dcea; font-size:.84rem; font-weight:760; white-space:nowrap; }
-    .history-more { width:100%; margin-top:13px; padding:10px 14px; }
-    .empty-state { border:1px dashed rgba(255,255,255,.12); border-radius:20px; padding:22px; color:var(--tracker-muted); text-align:center; background:rgba(255,255,255,.02); }
-    .toast { position:fixed; z-index:30; right:max(18px,env(safe-area-inset-right)); bottom:max(18px,calc(env(safe-area-inset-bottom) + 12px)); max-width:min(360px,calc(100vw - 36px)); border:1px solid rgba(255,255,255,.14); border-radius:17px; padding:12px 15px; color:#f7f7fc; background:rgba(12,15,24,.88); box-shadow:0 20px 55px rgba(0,0,0,.45); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); opacity:0; translate:0 12px; pointer-events:none; transition:opacity .2s ease,translate .2s ease; }
-    .toast.is-visible { opacity:1; translate:0 0; }
-    @media (max-width:920px) { .overview-grid { grid-template-columns:1fr 1fr; } .platform-card:last-child { grid-column:1/-1; } .detail-grid,.stats-grid { grid-template-columns:1fr 1fr; } }
-    @media (max-width:650px) {
-      .tracker-title-row,.tracker-panel-heading,.history-toolbar { align-items:stretch; flex-direction:column; }
-      .tracker-hero-top { flex-direction:row; align-items:center; }
-      .refresh-button span { display:none; } .refresh-button { width:46px; min-width:46px; padding:0; }
-      .sync-block { min-width:0; } .overview-grid { grid-template-columns:1fr; } .platform-card:last-child { grid-column:auto; }
-      .identity-row { flex-direction:column; } .detail-grid,.stats-grid { grid-template-columns:1fr; }
-      .history-entry { grid-template-columns:36px minmax(0,1fr); } .history-duration { grid-column:2; }
-    }
-    @media (max-width:430px) {
-      .tracker-shell { padding-right:10px; padding-left:10px; }
-      .tracker-hero,.platform-card,.platform-detail,.history-panel { border-radius:25px; }
-      .tracker-hero { padding:18px; } .back-button span { display:none; } .back-button { width:46px; min-width:46px; padding:0; }
-      .tracker-title { font-size:clamp(2.35rem,14vw,3.3rem); } .platform-actions { flex-direction:column; } .history-entry { padding-right:11px; }
-    }
-    @media (prefers-reduced-motion:reduce) { .tracker-light-beam,.tracker-title,.platform-card,.tracker-view { animation:none !important; } .platform-card { translate:none; } }
-  </style>
-
-  <script>
-    (() => {
-      const nativeFetch = window.fetch.bind(window);
-      window.fetch = (input, init) => {
-        if (typeof input === 'string' && input.startsWith('./data/')) input = `../data/${input.slice('./data/'.length)}`;
-        return nativeFetch(input, init);
-      };
-    })();
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05060a">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Qu’lon — digital observatory">
+<title>Qu’lon — Digital Observatory</title>
+<link rel="stylesheet" href="../styles.css?v=8">
+<link rel="stylesheet" href="../refinements.css?v=6">
+<link rel="stylesheet" href="../main-card-effects.css?v=1">
+<link rel="stylesheet" href="../main-card-hint.css?v=1">
+<link rel="stylesheet" href="../mobile.css?v=1">
+<style>
+:root{--bg:#05060a;--panel:rgba(12,14,23,.77);--line:rgba(255,255,255,.13);--text:#f8f8fc;--muted:#a2aabc;--violet:#b0a4ff;--blue:#69cbff;--green:#67e7a6;--shadow:0 42px 135px rgba(0,0,0,.62)}
+*{box-sizing:border-box}html{min-width:320px;background:var(--bg)}body{min-height:100svh;margin:0;overflow-x:hidden;color:var(--text);background:radial-gradient(circle at 50% 24%,rgba(31,34,59,.84) 0,rgba(10,11,18,.9) 44%,#05060a 100%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#interactive-background,.fallback-stars,.aurora,.noise,.vignette{position:fixed;inset:0;pointer-events:none}#interactive-background{z-index:0;width:100%;height:100%}.fallback-stars{z-index:1;opacity:.31;background-repeat:repeat;animation:stars-drift 30s linear infinite}.fallback-stars-one{background-image:radial-gradient(circle,rgba(226,230,255,.86) 0 1px,transparent 1.5px),radial-gradient(circle,rgba(140,130,255,.56) 0 .9px,transparent 1.4px);background-position:0 0,36px 52px;background-size:92px 92px,126px 126px}.fallback-stars-two{opacity:.17;background-image:radial-gradient(circle,rgba(100,201,255,.72) 0 1.1px,transparent 1.7px);background-position:17px 29px;background-size:152px 152px;animation-duration:44s;animation-direction:reverse}@keyframes stars-drift{to{transform:translate3d(-44px,34px,0)}}.aurora{z-index:2;width:56vw;height:56vw;min-width:520px;min-height:520px;border-radius:50%;filter:blur(115px);opacity:.16;animation:aurora-drift 14s ease-in-out infinite alternate}.aurora-one{top:-30vw;right:-18vw;background:#7659ff}.aurora-two{top:auto;right:auto;bottom:-34vw;left:-20vw;background:#209fde;animation-delay:-5s}@keyframes aurora-drift{to{transform:translate3d(5vw,4vw,0) scale(1.1);opacity:.24}}.noise{z-index:3;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E")}.vignette{z-index:4;background:radial-gradient(circle at center,transparent 18%,rgba(3,4,8,.32) 68%,rgba(1,2,5,.76) 100%),linear-gradient(180deg,rgba(5,6,10,0),rgba(5,6,10,.25))}
+.page-shell{position:relative;z-index:6;display:grid;min-height:100svh;place-items:start center;padding:max(28px,calc(env(safe-area-inset-top) + 18px)) clamp(16px,3vw,38px) max(34px,calc(env(safe-area-inset-bottom) + 20px));perspective:1400px}.observatory{display:grid;width:min(1100px,100%);grid-template-columns:minmax(0,1.22fr) minmax(350px,.9fr);gap:18px;align-items:start;margin:auto}
+.panel{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:30px;background:linear-gradient(150deg,rgba(28,30,44,.86),rgba(8,10,16,.74)),var(--panel);box-shadow:var(--shadow),0 0 0 1px rgba(147,130,255,.045),inset 0 1px 0 rgba(255,255,255,.085),inset 0 -1px 0 rgba(255,255,255,.03);backdrop-filter:blur(30px) saturate(1.17);-webkit-backdrop-filter:blur(30px) saturate(1.17)}.panel::before{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(540px circle at var(--shine-x,50%) var(--shine-y,5%),rgba(184,172,255,.15),transparent 48%);content:"";pointer-events:none}.panel::after{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 90px rgba(102,85,255,.045),inset 0 0 0 1px rgba(255,255,255,.022);content:"";pointer-events:none}.panel-inner{position:relative;z-index:1}
+#profile-card{width:auto;padding:28px 29px 24px;transform-style:preserve-3d;will-change:transform}.profile-glow{position:absolute;top:-155px;right:-110px;width:370px;height:370px;border-radius:50%;background:rgba(118,91,255,.22);filter:blur(82px);pointer-events:none}.card-shine{position:absolute;top:-55%;left:-44%;width:54%;height:205%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.045),transparent);pointer-events:none;animation:card-sheen 8.5s ease-in-out infinite}@keyframes card-sheen{0%,68%{transform:translateX(-30%) rotate(18deg);opacity:0}78%{opacity:1}100%{transform:translateX(350%) rotate(18deg);opacity:0}}
+.observatory-label{display:flex;align-items:center;gap:9px;margin:0;color:#a7afc1;font-size:.67rem;font-weight:850;letter-spacing:.2em;text-transform:uppercase}.observatory-label::before{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 14px rgba(103,231,166,.65);content:""}.profile-header{display:grid;grid-template-columns:132px minmax(0,1fr);gap:23px;align-items:center;margin-top:27px}.avatar-wrap{position:relative;width:132px;height:132px;flex:0 0 auto}.profile-avatar{width:100%;height:100%;border:1px solid rgba(255,255,255,.22);border-radius:34px;object-fit:cover;background:linear-gradient(145deg,rgba(173,158,255,.24),rgba(35,40,59,.72));box-shadow:0 22px 48px rgba(0,0,0,.44),0 0 30px rgba(141,125,255,.1)}.avatar-ring{position:absolute;inset:-5px;border:2px solid transparent;border-radius:39px;background:linear-gradient(135deg,#a99cff,#62d2ff,#526279) border-box;mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);mask-composite:exclude;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor}.identity{min-width:0}.identity h1{margin:0;font-size:clamp(4rem,7vw,6.2rem);line-height:.9;letter-spacing:-.055em}.handle{margin:10px 0 0;font-size:1rem}.status-chip{display:inline-flex;align-items:center;gap:9px;margin-top:15px;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:8px 13px;color:#d8dbe5;background:rgba(255,255,255,.035);font-size:.81rem;font-weight:690}.status-chip::before{width:8px;height:8px;border-radius:50%;background:#818897;content:""}.status-chip.is-online::before{background:var(--green);box-shadow:0 0 12px rgba(103,231,166,.5)}
+.profile-divider{height:1px;margin:27px 0 25px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.13) 12%,rgba(255,255,255,.13) 88%,transparent)}.about{margin:0;padding:0;border:0;background:none;box-shadow:none;overflow:visible}.about-greeting{display:flex;align-items:center;gap:13px;margin:0;font-size:clamp(2rem,4vw,3rem);font-weight:900;letter-spacing:-.035em;opacity:1;transform:none;animation:none}.about-emoji{appearance:none!important;display:inline-block!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;color:inherit;background:transparent!important;box-shadow:none!important;font:inherit;line-height:1;cursor:pointer}.about-emoji:hover,.about-emoji:focus-visible{background:transparent!important;box-shadow:none!important;outline:none}.description{max-width:none;margin:18px 0 0;font-size:clamp(1rem,1.45vw,1.14rem);font-weight:620;line-height:1.65;opacity:1;transform:none}.description-word{display:inline-block;opacity:0;filter:blur(4px);transform:translateY(7px);animation:description-word-in 500ms cubic-bezier(.2,.8,.2,1) forwards,description-word-flow 4.9s ease-in-out infinite;animation-delay:calc(170ms + var(--word-index)*45ms),calc(var(--word-index)*-180ms);will-change:translate,scale,color,text-shadow}.about-line{position:relative;display:block;width:100%;height:18px;margin-top:20px;background:none;box-shadow:none;animation:none}.about-line::before{position:absolute;top:50%;right:0;left:0;height:1px;translate:0 -50%;background:linear-gradient(90deg,transparent,rgba(176,164,255,.82) 16%,rgba(100,201,255,.56) 84%,transparent);content:""}.about-line::after{position:absolute;z-index:2;top:50%;left:0;width:8px;height:8px;border-radius:50%;translate:-50% -50%;background:#f4f5ff;box-shadow:0 0 10px rgba(255,255,255,.95),0 0 22px rgba(166,151,255,.72);content:"";animation:signal-travel 5.4s cubic-bezier(.45,.05,.55,.95) infinite}@keyframes signal-travel{0%{left:0;opacity:.2;scale:.72}10%{opacity:1;scale:1}48%{scale:1.24}90%{opacity:1;scale:1}100%{left:100%;opacity:.2;scale:.72}}
+.profile-footer{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;min-height:0;margin-top:17px;padding-top:0;border:0;color:inherit}.profile-footer>span{display:block;border-top:1px solid rgba(255,255,255,.11);padding:13px 8px 0;animation:none}.profile-footer small{display:block;color:#747e91;font-size:.61rem;font-weight:850;letter-spacing:.15em;text-transform:uppercase}.profile-footer strong{display:block;margin-top:8px;color:#e5e8f0;font-size:.75rem;line-height:1.35}.footer-separator{display:none!important}
+.links-panel{padding:28px 25px 24px}.links-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}.section-kicker{margin:0;color:#949daf;font-size:.67rem;font-weight:850;letter-spacing:.2em;text-transform:uppercase}.links-head h2{margin:7px 0 0;font-size:clamp(2.6rem,4vw,3.55rem);line-height:.92;letter-spacing:-.055em}.count-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:8px 12px;color:#c8ceda;background:rgba(255,255,255,.03);font-size:.75rem;white-space:nowrap}.count-pill::before{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(103,231,166,.45);content:""}.profile-links{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:21px;padding:0;border:0;background:none;box-shadow:none}.link-stage:first-child,.link-stage:last-child{grid-column:1/-1}.profile-link{min-height:64px;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:11px 13px;background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.022));box-shadow:0 14px 31px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.055);animation:float-link 5.9s var(--float-delay,0s) ease-in-out infinite}.profile-link:hover,.profile-link:focus-visible{border-color:rgba(177,164,255,.5);background:rgba(170,157,255,.11);box-shadow:0 23px 46px rgba(0,0,0,.35),0 0 25px rgba(153,136,255,.08),inset 0 1px 0 rgba(255,255,255,.08);transform:translateY(-3px) scale(1.01)}.link-icon{width:43px;height:43px;flex:0 0 43px;border-radius:14px}.link-label{font-size:.92rem}.tracker-button{display:flex;width:100%;min-height:57px;align-items:center;justify-content:center;gap:10px;margin-top:12px;border:1px solid rgba(176,164,255,.44);border-radius:17px;color:#fff;background:linear-gradient(110deg,rgba(100,77,220,.42),rgba(41,133,178,.2),rgba(255,255,255,.04));box-shadow:0 15px 34px rgba(0,0,0,.25),0 0 25px rgba(141,125,255,.09),inset 0 1px 0 rgba(255,255,255,.09);font-weight:850;text-decoration:none;transition:transform .18s ease,box-shadow .18s ease}.tracker-button:hover,.tracker-button:focus-visible{transform:translateY(-3px);box-shadow:0 22px 43px rgba(0,0,0,.34),0 0 31px rgba(141,125,255,.15);outline:none}.tracker-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.links-note{display:flex;gap:10px;margin:16px 2px 0;border-top:1px solid rgba(255,255,255,.08);padding-top:15px;color:#7f899b;font-size:.76rem;line-height:1.45}.links-note::before{width:7px;height:7px;flex:0 0 7px;margin-top:.37em;border-radius:50%;background:#5acdfb;box-shadow:0 0 10px rgba(90,205,251,.35);content:""}
+@media(max-width:900px){.observatory{grid-template-columns:1fr;width:min(690px,100%)}.links-panel{margin-top:0}.panel{border-radius:27px}}
+@media(max-width:560px){.page-shell{display:block;padding:max(14px,calc(env(safe-area-inset-top) + 9px)) 10px max(24px,calc(env(safe-area-inset-bottom) + 14px))}.observatory{display:block;width:100%}#profile-card,.links-panel{width:100%;border-radius:24px;padding:19px 18px}.links-panel{margin-top:12px}.profile-header{grid-template-columns:94px minmax(0,1fr);gap:15px;margin-top:21px}.avatar-wrap{width:94px;height:94px}.profile-avatar{border-radius:26px}.avatar-ring{border-radius:31px}.identity h1{font-size:clamp(3.25rem,17vw,4.55rem)}.handle{font-size:.9rem}.status-chip{margin-top:11px;padding:7px 11px}.profile-divider{margin:21px 0}.about-greeting{font-size:2rem}.description{font-size:1rem;line-height:1.62}.profile-footer{gap:6px}.profile-footer>span{padding:11px 5px 0}.profile-footer small{font-size:.54rem}.profile-footer strong{font-size:.68rem}.links-head{align-items:flex-start}.links-head h2{font-size:2.55rem}.count-pill{padding:7px 10px}.profile-links{grid-template-columns:1fr;gap:9px}.link-stage:first-child,.link-stage:last-child{grid-column:auto}.profile-link{min-height:58px;border-radius:16px}.link-icon{width:40px;height:40px;flex-basis:40px}.tracker-button{min-height:54px}.panel{backdrop-filter:blur(17px) saturate(1.1);-webkit-backdrop-filter:blur(17px) saturate(1.1)}.fallback-stars{animation:none}.aurora{filter:blur(85px);animation:none;opacity:.1}.noise{display:none}}
+@media(pointer:coarse){#profile-card{transform:none!important}.panel::before{display:none}.profile-link{animation-duration:7s}}
+@media(prefers-reduced-motion:reduce){.description-word{opacity:1;filter:none;transform:none;animation:none}.about-line::after{left:50%;animation:none}.profile-link,.card-shine,.fallback-stars,.aurora{animation:none!important}#profile-card{transform:none!important}}
+</style>
+<script>(()=>{const nativeFetch=window.fetch.bind(window);window.fetch=(input,init)=>{if(typeof input==='string'&&input.startsWith('./data/'))input=`../data/${input.slice(7)}`;return nativeFetch(input,init)}})();</script>
 </head>
-<body class="is-profile">
-  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
-    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18 9 12l6-6M9 12h11"></path></symbol>
-    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 6v5h-5"></path><path d="M19 11a7.5 7.5 0 1 0 .2 4.6"></path></symbol>
-    <symbol id="i-steam" viewBox="0 0 24 24"><circle cx="16.4" cy="7.8" r="3.6"></circle><circle cx="16.4" cy="7.8" r="1.55"></circle><circle cx="7.1" cy="16.5" r="2.7"></circle><path d="m9.4 15.1 3.9-2.9M4.8 15.5 2.2 14.4"></path></symbol>
-    <symbol id="i-discord" viewBox="0 0 24 24"><path d="M7.2 7.2A13.8 13.8 0 0 1 12 6.3c1.7 0 3.3.3 4.8.9 1.2 1.7 2 3.8 2.2 6.1-1.3 1.7-3 2.8-4.8 3.4l-1.1-1.5c.6-.2 1.2-.5 1.7-.9-1.8.8-3.8.8-5.6 0 .5.4 1.1.7 1.7.9l-1.1 1.5c-1.8-.6-3.5-1.7-4.8-3.4.2-2.3 1-4.4 2.2-6.1Z"></path><circle cx="9.4" cy="12.1" r=".9" fill="currentColor" stroke="none"></circle><circle cx="14.6" cy="12.1" r=".9" fill="currentColor" stroke="none"></circle></symbol>
-    <symbol id="i-telegram" viewBox="0 0 24 24"><path d="m21 4-3.2 15.1c-.2 1.1-.9 1.4-1.8.9l-4.8-3.6-2.3 2.2c-.3.3-.5.5-1 .5l.4-4.8L17 6.5c.4-.3-.1-.5-.6-.2L5.7 13 1 11.5c-1-.3-1-1 .2-1.5L19.4 3c.8-.3 1.7.2 1.6 1Z"></path></symbol>
-    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8"></path><path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></symbol>
-    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></symbol>
-    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path></symbol>
-  </svg>
-
-  <canvas id="interactive-background" aria-hidden="true"></canvas>
-  <div class="fallback-stars fallback-stars-one" aria-hidden="true"></div>
-  <div class="fallback-stars fallback-stars-two" aria-hidden="true"></div>
-  <div class="aurora aurora-one" aria-hidden="true"></div>
-  <div class="aurora aurora-two" aria-hidden="true"></div>
-  <div class="noise" aria-hidden="true"></div>
-  <div class="vignette" aria-hidden="true"></div>
-  <canvas id="cursor-web-overlay" aria-hidden="true"></canvas>
-  <div class="tracker-light-beam" aria-hidden="true"></div>
-
-  <main id="profile-screen" class="landing-shell" aria-hidden="false">
-    <section id="profile-card" class="profile-card" aria-labelledby="profile-name">
-      <div class="profile-glow" aria-hidden="true"></div><div class="card-shine" aria-hidden="true"></div>
-      <header class="profile-header depth-layer depth-high">
-        <div class="avatar-wrap"><img id="profile-avatar" class="profile-avatar" src="" alt="" decoding="async" /><span class="avatar-ring" aria-hidden="true"></span></div>
-        <div class="identity"><h1 id="profile-name">Qu’lon</h1><p id="profile-handle" class="handle">@quixylon</p></div>
-      </header>
-      <section class="about depth-layer" aria-label="Описание профиля">
-        <p class="about-greeting"><span>Привет</span><button id="dancing-cat" class="about-emoji" type="button" aria-label="Мяукнуть" title="Мяу">🐈</button></p>
-        <p id="profile-description" class="description">Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.</p>
-        <span class="about-line" aria-hidden="true"></span>
-      </section>
-      <nav id="profile-links" class="profile-links depth-layer" aria-label="Ссылки Qu’lon"></nav>
-      <div class="action-stage depth-layer"><a id="guns-card" class="guns-card floating-action" href="https://guns.lol/quixylon" target="_blank" rel="noopener noreferrer"><span id="guns-dot" class="presence-dot unknown" aria-hidden="true"></span><strong>guns.lol</strong><span class="card-arrow" aria-hidden="true">↗</span></a></div>
-      <div class="action-stage depth-layer"><a class="tracker-button floating-action" href="#tracker/overview"><span class="tracker-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path></svg></span><strong>Открыть трекер</strong><span class="card-arrow" aria-hidden="true">→</span></a></div>
-      <footer class="profile-footer depth-layer"><span id="profile-status">Steam Tracker</span><span class="footer-separator">•</span><span id="visitor-count" aria-live="polite">Посетители: …</span></footer>
-    </section>
-  </main>
-
-  <main id="tracker-screen" class="tracker-shell" hidden aria-hidden="true">
-    <div class="tracker-stage">
-      <header class="tracker-hero tracker-glass">
-        <div class="tracker-hero-top">
-          <a class="back-button" href="#profile" aria-label="Назад к профилю"><svg class="vector-icon"><use href="#i-back"></use></svg><span>Назад к профилю</span></a>
-          <button id="refresh-all" class="refresh-button" type="button" aria-label="Обновить данные"><svg class="vector-icon refresh-vector"><use href="#i-refresh"></use></svg><span>Обновить</span></button>
-        </div>
-        <div class="tracker-title-row">
-          <div><p class="tracker-eyebrow">QUIXYLON TRACKER</p><h1 id="tracker-title" class="tracker-title" tabindex="-1">Трекер активности</h1></div>
-          <div class="sync-block"><span class="sync-label">Последняя синхронизация</span><strong id="last-sync" class="sync-value">Загрузка…</strong></div>
-        </div>
-        <nav id="tracker-tabs" class="tracker-tabs" role="tablist" aria-label="Платформы">
-          <button class="tracker-tab" type="button" role="tab" data-tab="overview" aria-controls="view-overview" aria-selected="true"><svg class="vector-icon"><use href="#i-pulse"></use></svg>Обзор</button>
-          <button class="tracker-tab" type="button" role="tab" data-tab="steam" aria-controls="view-steam" aria-selected="false" tabindex="-1"><svg class="vector-icon"><use href="#i-steam"></use></svg>Steam</button>
-          <button class="tracker-tab" type="button" role="tab" data-tab="discord" aria-controls="view-discord" aria-selected="false" tabindex="-1"><svg class="vector-icon"><use href="#i-discord"></use></svg>Discord</button>
-          <button class="tracker-tab" type="button" role="tab" data-tab="telegram" aria-controls="view-telegram" aria-selected="false" tabindex="-1"><svg class="vector-icon"><use href="#i-telegram"></use></svg>Telegram</button>
-        </nav>
-      </header>
-
-      <div class="tracker-content">
-        <section id="view-overview" class="tracker-view" role="tabpanel" aria-labelledby="tracker-title">
-          <div class="overview-grid">
-            <article class="platform-card tracker-glass steam" style="--float-delay:-.7s">
-              <div class="platform-card-top"><div class="platform-brand"><span class="platform-brand-icon"><svg class="vector-icon"><use href="#i-steam"></use></svg></span>Steam</div><span id="overview-steam-badge" class="status-badge">Загрузка</span></div>
-              <div class="platform-identity"><img id="overview-steam-avatar" class="platform-avatar" src="" alt="Steam-аватар" /><div><h2 id="overview-steam-name" class="platform-name">Загрузка</h2><p id="overview-steam-id" class="platform-id">SteamID64</p></div></div>
-              <p id="overview-steam-status" class="platform-status">Получаем данные…</p><p id="overview-steam-activity" class="platform-activity">Текущая активность появится здесь.</p><p id="overview-steam-updated" class="platform-updated">—</p>
-              <div class="platform-actions"><a class="soft-button" href="#tracker/steam">Подробнее</a><a id="overview-steam-link" class="profile-external" href="https://steamcommunity.com/id/quixylon/" target="_blank" rel="noopener noreferrer"><svg class="vector-icon"><use href="#i-external"></use></svg>Профиль</a></div>
-            </article>
-            <article class="platform-card tracker-glass discord" style="--float-delay:-2.4s">
-              <div class="platform-card-top"><div class="platform-brand"><span class="platform-brand-icon"><svg class="vector-icon"><use href="#i-discord"></use></svg></span>Discord</div><span class="demo-badge">Демо</span></div>
-              <div class="platform-identity"><div class="platform-avatar" aria-hidden="true" style="display:grid;place-items:center;color:#b7adff;font-size:1.45rem;font-weight:900">Q</div><div><h2 class="platform-name">Qu’lon</h2><p class="platform-id">@quixylon</p></div></div>
-              <p class="platform-status"><span class="status-orb idle" style="display:inline-block;margin-right:8px"></span>Неактивен</p><p class="platform-activity">Visual Studio Code · собирает новую версию сайта</p><p class="platform-updated">Демонстрационные данные для внешнего вида</p>
-              <div class="platform-actions"><a class="soft-button" href="#tracker/discord">Подробнее</a><a class="profile-external" href="https://guns.lol/quixylon" target="_blank" rel="noopener noreferrer"><svg class="vector-icon"><use href="#i-external"></use></svg>guns.lol</a></div>
-            </article>
-            <article class="platform-card tracker-glass telegram" style="--float-delay:-4.1s">
-              <div class="platform-card-top"><div class="platform-brand"><span class="platform-brand-icon"><svg class="vector-icon"><use href="#i-telegram"></use></svg></span>Telegram</div><span class="demo-badge">Демо</span></div>
-              <div class="platform-identity"><div class="platform-avatar" aria-hidden="true" style="display:grid;place-items:center;color:#8bddff;font-size:1.45rem;font-weight:900">Q</div><div><h2 class="platform-name">Qu’lon</h2><p class="platform-id">@quixylon</p></div></div>
-              <p class="platform-status"><span class="status-orb online" style="display:inline-block;margin-right:8px"></span>Был недавно</p><p class="platform-activity">Последняя активность скрыта настройками Telegram</p><p class="platform-updated">Демонстрационные данные для внешнего вида</p>
-              <div class="platform-actions"><a class="soft-button" href="#tracker/telegram">Подробнее</a><a class="profile-external" href="https://t.me/quixylon" target="_blank" rel="noopener noreferrer"><svg class="vector-icon"><use href="#i-external"></use></svg>Профиль</a></div>
-            </article>
-          </div>
-        </section>
-
-        <section id="view-steam" class="tracker-view" role="tabpanel" hidden>
-          <article class="platform-detail tracker-glass">
-            <div class="tracker-panel-heading"><div><span class="section-kicker">ЖИВЫЕ ДАННЫЕ GITHUB ACTIONS</span><h2>Steam</h2></div><a id="steam-profile-link" class="profile-external" href="https://steamcommunity.com/id/quixylon/" target="_blank" rel="noopener noreferrer"><svg class="vector-icon"><use href="#i-external"></use></svg>Открыть Steam</a></div>
-            <div class="identity-row"><img id="steam-detail-avatar" class="detail-avatar" src="" alt="Steam-аватар Qu’lon" /><div class="identity-copy"><div style="display:flex;align-items:center;gap:10px"><span id="steam-status-orb" class="status-orb offline"></span><span id="steam-status-text" class="status-badge">Загрузка</span></div><h3 id="steam-detail-name">Загрузка</h3><p id="steam-current-activity">Получаем текущую активность…</p><div class="id-row"><code id="steam-id" class="selectable-id">—</code><button class="copy-button" type="button" data-copy-target="steam-id" aria-label="Скопировать SteamID64"><svg class="vector-icon"><use href="#i-copy"></use></svg></button></div></div></div>
-            <div class="detail-grid"><div class="detail-tile"><span class="detail-label">Игра</span><strong id="steam-game" class="detail-value">—</strong></div><div class="detail-tile"><span class="detail-label">App ID</span><strong id="steam-game-id" class="detail-value">—</strong></div><div class="detail-tile"><span class="detail-label">Последний выход</span><strong id="steam-last-logoff" class="detail-value">—</strong></div><div class="detail-tile"><span class="detail-label">Проверено</span><strong id="steam-checked" class="detail-value">—</strong></div></div>
-            <div class="stats-grid"><div class="stat-tile"><span class="detail-label">Онлайн сегодня</span><strong id="stat-online-today" class="stat-value">—</strong></div><div class="stat-tile"><span class="detail-label">В играх сегодня</span><strong id="stat-games-today" class="stat-value">—</strong></div><div class="stat-tile"><span class="detail-label">Запусков за 7 дней</span><strong id="stat-launches" class="stat-value">—</strong></div><div class="stat-tile"><span class="detail-label">Последняя игра</span><strong id="stat-last-game" class="stat-value">—</strong></div></div>
-          </article>
-          <article class="history-panel tracker-glass"><div class="tracker-panel-heading"><div><span class="section-kicker">ИСТОРИЯ STEAM</span><h2>Сеть и игры</h2></div></div><div class="history-toolbar"><div class="history-filters" aria-label="Фильтр Steam-истории"><button class="history-filter is-active" type="button" data-steam-filter="all">Всё</button><button class="history-filter" type="button" data-steam-filter="games">Игры</button><button class="history-filter" type="button" data-steam-filter="online">Онлайн</button><button class="history-filter" type="button" data-steam-filter="offline">Офлайн</button></div></div><div id="steam-history-list" class="history-list"></div><button id="steam-history-more" class="history-more" type="button">Показать ещё</button></article>
-        </section>
-
-        <section id="view-discord" class="tracker-view" role="tabpanel" hidden>
-          <article class="platform-detail tracker-glass"><div class="tracker-panel-heading"><div><span class="section-kicker">ДЕМОНСТРАЦИЯ ИНТЕРФЕЙСА</span><h2>Discord</h2></div><span class="demo-badge">Без серверного presence</span></div><div class="identity-row"><div class="detail-avatar" aria-hidden="true" style="display:grid;place-items:center;color:#b7adff;font-size:2.2rem;font-weight:900">Q</div><div class="identity-copy"><div style="display:flex;align-items:center;gap:10px"><span class="status-orb idle"></span><span class="status-badge">Неактивен</span></div><h3>Qu’lon</h3><p>@quixylon · пользовательский статус: «делаю красиво»</p><div class="id-row"><code id="discord-id" class="selectable-id">DEMO_DISCORD_ID</code><button class="copy-button" type="button" data-copy-target="discord-id" aria-label="Скопировать Discord ID"><svg class="vector-icon"><use href="#i-copy"></use></svg></button></div></div></div><div class="detail-grid"><div class="detail-tile"><span class="detail-label">Активность</span><strong class="detail-value">Visual Studio Code</strong></div><div class="detail-tile"><span class="detail-label">Тип</span><strong class="detail-value">Работает</strong></div><div class="detail-tile"><span class="detail-label">Проект</span><strong class="detail-value">Qu’lon Profile</strong></div><div class="detail-tile"><span class="detail-label">Длительность</span><strong class="detail-value">1 ч 34 мин</strong></div></div></article>
-          <article class="history-panel tracker-glass"><div class="tracker-panel-heading"><div><span class="section-kicker">ДЕМОНСТРАЦИОННАЯ ИСТОРИЯ</span><h2>История Discord</h2></div></div><div id="discord-history-list" class="history-list"></div></article>
-        </section>
-
-        <section id="view-telegram" class="tracker-view" role="tabpanel" hidden>
-          <article class="platform-detail tracker-glass"><div class="tracker-panel-heading"><div><span class="section-kicker">ДЕМОНСТРАЦИЯ ИНТЕРФЕЙСА</span><h2>Telegram</h2></div><span class="demo-badge">Без MTProto-сервера</span></div><div class="identity-row"><div class="detail-avatar" aria-hidden="true" style="display:grid;place-items:center;color:#8bddff;font-size:2.2rem;font-weight:900">Q</div><div class="identity-copy"><div style="display:flex;align-items:center;gap:10px"><span class="status-orb online"></span><span class="status-badge">Был недавно</span></div><h3>Qu’lon</h3><p>@quixylon · точное время скрыто настройками приватности</p><div class="id-row"><code id="telegram-id" class="selectable-id">DEMO_TELEGRAM_ID</code><button class="copy-button" type="button" data-copy-target="telegram-id" aria-label="Скопировать Telegram ID"><svg class="vector-icon"><use href="#i-copy"></use></svg></button></div></div></div><div class="detail-grid"><div class="detail-tile"><span class="detail-label">Статус</span><strong class="detail-value">Был недавно</strong></div><div class="detail-tile"><span class="detail-label">Точность</span><strong class="detail-value">Приблизительно</strong></div><div class="detail-tile"><span class="detail-label">Профиль</span><strong class="detail-value">@quixylon</strong></div><div class="detail-tile"><span class="detail-label">Источник</span><strong class="detail-value">Демо</strong></div></div></article>
-          <article class="history-panel tracker-glass"><div class="tracker-panel-heading"><div><span class="section-kicker">ДЕМОНСТРАЦИОННАЯ ИСТОРИЯ</span><h2>История Telegram</h2></div></div><div id="telegram-history-list" class="history-list"></div></article>
-        </section>
-      </div>
-    </div>
-  </main>
-
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <script type="module" src="../app.js?v=13"></script>
-  <script type="module" src="../profile-refresh.js?v=1"></script>
-  <script type="module" src="../description-motion.js?v=1"></script>
-  <script type="module" src="../responsive-runtime.js?v=1"></script>
-  <script type="module" src="../visitor-counter.js?v=1"></script>
-  <script type="module" src="../cat-meow.js?v=2"></script>
-
-  <script type="module">
-    const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-    const STATUS_RU={offline:'Не в сети',online:'В сети',busy:'Занят',away:'Отошёл',snooze:'Спит','looking-to-trade':'Ищет обмен','looking-to-play':'Ищет игру','in-game':'В игре',unknown:'Неизвестно'};
-    const state={steamStatus:null,steamHistory:[],steamFilter:'all',steamVisible:8,loading:false};
-    const discordDemo=[['Неактивен','Visual Studio Code · Qu’lon Profile','сегодня, 05:21','Сейчас','#ffc66f'],['В сети','Counter-Strike 2','сегодня, 02:48','2 ч 12 мин','#67e7a6'],['Не беспокоить','Без активности','вчера, 23:14','1 ч 09 мин','#ff7788'],['В сети','Spotify · Boy Harsher','вчера, 21:02','1 ч 46 мин','#67e7a6'],['Не в сети','Нет активности','вчера, 17:30','3 ч 32 мин','#7e8592'],['В сети','Blender','4 авг., 13:11','2 ч 18 мин','#67e7a6']];
-    const telegramDemo=[['Был недавно','Точное время недоступно','Сейчас','#6fd2ff'],['В сети','Известный онлайн-период','12 мин','#67e7a6'],['Не в сети','Последний точный выход','34 мин','#7e8592'],['Был недавно','Точное время недоступно','—','#6fd2ff'],['Время посещения скрыто','Точное время недоступно','—','#a79aff'],['Был на этой неделе','Точное время недоступно','—','#8da3be']];
-    const safeDate=v=>{const d=new Date(v);return Number.isFinite(d.getTime())?d:null};
-    function formatDateTime(v){const d=safeDate(v);if(!d)return'Нет данных';const n=new Date(),y=new Date(n);y.setDate(n.getDate()-1);const t=new Intl.DateTimeFormat('ru-RU',{hour:'2-digit',minute:'2-digit'}).format(d);if(d.toDateString()===n.toDateString())return`сегодня в ${t}`;if(d.toDateString()===y.toDateString())return`вчера в ${t}`;return new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short',year:d.getFullYear()===n.getFullYear()?undefined:'numeric',hour:'2-digit',minute:'2-digit'}).format(d)}
-    function formatRelative(v){const d=safeDate(v);if(!d)return'Нет данных';const s=Math.max(0,Math.floor((Date.now()-d)/1000));if(s<15)return'только что';if(s<60)return`${s} сек. назад`;const m=Math.floor(s/60);if(m<60)return`${m} мин. назад`;const h=Math.floor(m/60);return h<24?`${h} ч. назад`:`${Math.floor(h/24)} дн. назад`}
-    function formatDuration(v){let s=Number(v);if(!Number.isFinite(s)||s<0)return'Нет данных';s=Math.floor(s);const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);return d?`${d} д ${h} ч`:h?`${h} ч ${m} мин`:m?`${m} мин`:`${s} сек`}
-    function durationOf(e){if(Number.isFinite(Number(e?.durationSeconds)))return Number(e.durationSeconds);const s=safeDate(e?.startedAt),n=safeDate(e?.endedAt)||new Date();return s?Math.max(0,Math.floor((n-s)/1000)):0}
-    function overlap(e,f,t){const s=safeDate(e?.startedAt),n=safeDate(e?.endedAt)||new Date();return !s||n<=f||s>=t?0:Math.max(0,Math.floor((Math.min(n,t)-Math.max(s,f))/1000))}
-    function text(sel,v){const n=$(sel);if(n)n.textContent=v??'—'}
-    function toast(m){const n=$('#toast');n.textContent=m;n.classList.add('is-visible');clearTimeout(toast.t);toast.t=setTimeout(()=>n.classList.remove('is-visible'),2200)}
-    function image(sel,url){const n=$(sel);if(!n||!url||n.dataset.source===url)return;const i=new Image();i.decoding='async';i.onload=()=>{n.style.opacity='0';setTimeout(()=>{n.src=url;n.dataset.source=url;n.style.opacity='1'},120)};i.src=url}
-    async function json(url){const r=await fetch(`${url}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}
-    async function refresh({manual=false}={}){if(state.loading)return;state.loading=true;const b=$('#refresh-all');b.classList.add('is-loading');b.setAttribute('aria-busy','true');try{const[s,h]=await Promise.all([json('../data/status.json'),json('../data/history.json')]);state.steamStatus=s&&typeof s==='object'?s:null;state.steamHistory=Array.isArray(h)?h.slice(-200):[];renderSteam();renderHistory();text('#last-sync',formatDateTime(state.steamStatus?.checkedAt));if(manual)toast('Данные Steam обновлены')}catch(e){console.error(e);text('#last-sync','Не удалось обновить');if(manual)toast('Не удалось обновить Steam')}finally{state.loading=false;b.classList.remove('is-loading');b.setAttribute('aria-busy','false')}}
-    const statusText=p=>!p?'Данные недоступны':p.gameName?`В игре: ${p.gameName}`:STATUS_RU[p.status]||STATUS_RU.unknown;
-    const statusClass=s=>s==='online'||s==='in-game'?'online':s==='away'||s==='snooze'?'away':s==='busy'?'dnd':'offline';
-    function renderSteam(){const d=state.steamStatus,p=d?.player;if(!p){text('#overview-steam-status','Данные Steam недоступны');return}const st=statusText(p),cl=statusClass(p.status);text('#overview-steam-name',p.name||'Qu’lon');text('#overview-steam-id',p.steamId||'SteamID64');text('#overview-steam-status',st);text('#overview-steam-activity',p.gameName?`App ID ${p.gameId||'—'}`:'Сейчас игра не запущена');text('#overview-steam-updated',`Обновлено ${formatRelative(d.checkedAt)}`);text('#overview-steam-badge',STATUS_RU[p.status]||STATUS_RU.unknown);image('#overview-steam-avatar',p.avatar);$('#overview-steam-link').href=p.profileUrl||'https://steamcommunity.com/id/quixylon/';text('#steam-detail-name',p.name||'Qu’lon');text('#steam-status-text',st);text('#steam-current-activity',p.gameName?`Сейчас запущена ${p.gameName}`:'Сейчас игра не запущена');text('#steam-id',p.steamId||'—');text('#steam-game',p.gameName||'Не запущена');text('#steam-game-id',p.gameId||'—');text('#steam-last-logoff',formatDateTime(p.lastLogoff));text('#steam-checked',formatDateTime(d.checkedAt));image('#steam-detail-avatar',p.avatar);$('#steam-profile-link').href=p.profileUrl||'https://steamcommunity.com/id/quixylon/';$('#steam-status-orb').className=`status-orb ${cl}`;$('#overview-steam-badge').className=`status-badge ${cl}`;renderStats()}
-    function renderStats(){const n=new Date(),ds=new Date(n.getFullYear(),n.getMonth(),n.getDate()),ws=new Date(n-7*86400000),h=state.steamHistory,online=h.filter(e=>e.status!=='offline'&&e.status!=='unknown').reduce((a,e)=>a+overlap(e,ds,n),0),games=h.filter(e=>e.gameName).reduce((a,e)=>a+overlap(e,ds,n),0),week=h.filter(e=>e.gameName&&(safeDate(e.startedAt)||0)>=ws),last=[...h].reverse().find(e=>e.gameName)?.gameName||'Нет данных';text('#stat-online-today',formatDuration(online));text('#stat-games-today',formatDuration(games));text('#stat-launches',String(week.length));text('#stat-last-game',last)}
-    function matches(e){return state.steamFilter==='games'?!!e.gameName:state.steamFilter==='online'?e.status!=='offline'&&e.status!=='unknown'&&!e.gameName:state.steamFilter==='offline'?e.status==='offline':true}
-    function renderHistory(){const list=$('#steam-history-list'),all=[...state.steamHistory].reverse().filter(matches),visible=all.slice(0,state.steamVisible);list.replaceChildren();if(!visible.length){const x=document.createElement('div');x.className='empty-state';x.textContent='Для этого фильтра пока нет записей.';list.append(x)}for(const e of visible){const color=e.gameName?'#7cb9eb':e.status==='offline'?'#7e8592':e.status==='away'||e.status==='snooze'?'#ffc66f':'#67e7a6';list.append(entry(e.gameName||STATUS_RU[e.status]||STATUS_RU.unknown,`${formatDateTime(e.startedAt)} → ${e.endedAt?formatDateTime(e.endedAt):'сейчас'}`,formatDuration(durationOf(e)),color))}const b=$('#steam-history-more');b.hidden=all.length<=8;b.textContent=state.steamVisible>=all.length?'Свернуть':'Показать ещё'}
-    function entry(title,meta,dur,color){const a=document.createElement('article');a.className='history-entry';a.style.setProperty('--entry-color',color);const dot=document.createElement('span');dot.className='history-dot';const m=document.createElement('div');m.className='history-main';const t=document.createElement('p');t.className='history-title';t.textContent=title;const p=document.createElement('p');p.className='history-meta';p.textContent=meta;m.append(t,p);const d=document.createElement('span');d.className='history-duration';d.textContent=dur;a.append(dot,m,d);return a}
-    function demos(){const d=$('#discord-history-list'),t=$('#telegram-history-list');d.replaceChildren();t.replaceChildren();discordDemo.forEach(x=>d.append(entry(x[0],`${x[1]} · ${x[2]}`,x[3],x[4])));telegramDemo.forEach(x=>t.append(entry(x[0],x[1],x[2],x[3])))}
-    function route(){const h=location.hash||'#profile';if(!h.startsWith('#tracker'))return{screen:'profile',tab:'overview'};const t=h.split('/')[1]||'overview';return{screen:'tracker',tab:['overview','steam','discord','telegram'].includes(t)?t:'overview'}}
-    function renderRoute(focus=false){const r=route(),on=r.screen==='tracker',p=$('#profile-screen'),t=$('#tracker-screen');document.body.classList.toggle('is-profile',!on);document.body.classList.toggle('is-tracker',on);p.hidden=on;p.setAttribute('aria-hidden',String(on));t.hidden=!on;t.setAttribute('aria-hidden',String(!on));document.title=on?'Qu’lon — трекер активности':'Qu’lon — живой профиль';$$('.tracker-tab').forEach(x=>{const a=x.dataset.tab===r.tab;x.setAttribute('aria-selected',String(a));x.tabIndex=a?0:-1});$$('.tracker-view').forEach(x=>x.hidden=x.id!==`view-${r.tab}`);if(on&&focus)$('#tracker-title').focus({preventScroll:true})}
-    async function copy(id){const v=document.getElementById(id)?.textContent?.trim();if(!v)return;try{await navigator.clipboard.writeText(v)}catch{const t=document.createElement('textarea');t.value=v;t.style.position='fixed';t.style.opacity='0';document.body.append(t);t.select();document.execCommand('copy');t.remove()}toast('Скопировано')}
-    window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const p=e.target.closest('.tracker-glass');if(!p)return;const r=p.getBoundingClientRect();p.style.setProperty('--light-x',`${(e.clientX-r.left)/r.width*100}%`);p.style.setProperty('--light-y',`${(e.clientY-r.top)/r.height*100}%`)},{passive:true});
-    $('#refresh-all').addEventListener('click',()=>refresh({manual:true}));
-    $('#steam-history-more').addEventListener('click',()=>{const n=[...state.steamHistory].reverse().filter(matches).length;state.steamVisible=state.steamVisible>=n?8:state.steamVisible+8;renderHistory()});
-    $$('[data-steam-filter]').forEach(b=>b.addEventListener('click',()=>{state.steamFilter=b.dataset.steamFilter;state.steamVisible=8;$$('[data-steam-filter]').forEach(x=>x.classList.toggle('is-active',x===b));renderHistory()}));
-    $$('[data-copy-target]').forEach(b=>b.addEventListener('click',()=>copy(b.dataset.copyTarget)));
-    $$('.tracker-tab').forEach(b=>b.addEventListener('click',()=>location.hash=`#tracker/${b.dataset.tab}`));
-    $('#tracker-tabs').addEventListener('keydown',e=>{const a=$$('.tracker-tab'),i=a.indexOf(document.activeElement);if(i<0)return;let n=i;if(e.key==='ArrowRight')n=(i+1)%a.length;if(e.key==='ArrowLeft')n=(i-1+a.length)%a.length;if(e.key==='Home')n=0;if(e.key==='End')n=a.length-1;if(n!==i){e.preventDefault();a[n].focus();location.hash=`#tracker/${a[n].dataset.tab}`}});
-    window.addEventListener('hashchange',()=>renderRoute(true));window.addEventListener('focus',()=>{if(route().screen==='tracker')refresh()});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&route().screen==='tracker')refresh()});
-    if(!location.hash)history.replaceState(null,'','#profile');renderRoute();demos();refresh();setInterval(()=>{if(!document.hidden&&route().screen==='tracker')refresh()},60000);
-  </script>
+<body>
+<canvas id="interactive-background" aria-hidden="true"></canvas>
+<div class="fallback-stars fallback-stars-one" aria-hidden="true"></div><div class="fallback-stars fallback-stars-two" aria-hidden="true"></div><div class="aurora aurora-one" aria-hidden="true"></div><div class="aurora aurora-two" aria-hidden="true"></div><div class="noise" aria-hidden="true"></div><div class="vignette" aria-hidden="true"></div>
+<main class="page-shell"><div class="observatory">
+<section id="profile-card" class="panel" aria-labelledby="profile-name"><div class="profile-glow" aria-hidden="true"></div><div class="card-shine" aria-hidden="true"></div><div class="panel-inner"><p class="observatory-label">QUIXYLON / DIGITAL OBSERVATORY</p><header class="profile-header"><div class="avatar-wrap"><img id="profile-avatar" class="profile-avatar" src="" alt="Аватар Qu’lon" decoding="async"><span class="avatar-ring" aria-hidden="true"></span></div><div class="identity"><h1 id="profile-name">Qu’lon</h1><p id="profile-handle" class="handle">@quixylon</p><div id="profile-status-chip" class="status-chip">загрузка статуса</div></div></header><div class="profile-divider"></div><section class="about" aria-label="Описание профиля"><p class="about-greeting"><span>Привет</span><button id="dancing-cat" class="about-emoji" type="button" aria-label="Мяукнуть" title="Мяу">🐈</button></p><p id="profile-description" class="description">Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.</p><span class="about-line" aria-hidden="true"></span></section><footer class="profile-footer"><span><small>Статус</small><strong id="profile-status">Steam: загрузка</strong></span><span><small>Обновлено</small><strong id="profile-updated">—</strong></span><span><small>Посетители</small><strong id="visitor-count">—</strong></span></footer></div></section>
+<aside class="panel links-panel"><div class="panel-inner"><div class="links-head"><div><p class="section-kicker">MY DIGITAL TRACE</p><h2>Где меня<br>найти</h2></div><span class="count-pill">7 каналов</span></div><nav id="profile-links" class="profile-links" aria-label="Ссылки Qu’lon"></nav><a class="tracker-button" href="../tracker/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2.2-6 4.1 12 2.3-6H21"></path></svg>Открыть трекер <span>→</span></a><p class="links-note">Steam обновляется автоматически. Остальные платформы подготовлены для будущей серверной интеграции.</p></div></aside>
+</div></main>
+<script type="module" src="../app.js?v=12"></script><script type="module" src="../description-motion.js?v=2"></script><script type="module" src="../cat-meow.js?v=2"></script><script type="module" src="../profile-refresh.js?v=2"></script><script type="module" src="../visitor-counter.js?v=2"></script>
+<script>
+(()=>{const format=v=>{const d=new Date(v);if(!Number.isFinite(d.getTime()))return '—';const s=Math.max(0,Math.round((Date.now()-d)/1000));if(s<45)return 'только что';if(s<3600)return Math.floor(s/60)+' мин. назад';if(s<86400)return Math.floor(s/3600)+' ч. назад';return new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(d)};const set=async()=>{try{const r=await fetch('../data/status.json?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const d=await r.json(),p=d.player||{},online=p.status!=='offline'||!!p.gameName,text=p.gameName?'В игре: '+p.gameName:online?'В сети':'Не в сети',chip=document.querySelector('#profile-status-chip');chip.textContent=text;chip.classList.toggle('is-online',online);document.querySelector('#profile-updated').textContent=format(d.checkedAt)}catch{}};set();setInterval(set,60000)})();
+</script>
 </body>
 </html>
