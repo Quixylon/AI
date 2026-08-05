@@ -219,3 +219,92 @@
     display: none;
   }
 }
+
+/* Единая карточка вместо двух отдельных панелей. Эти правила намеренно
+   имеют !important: страница содержит более поздние встроенные стили. */
+.page-shell .observatory {
+  display: block !important;
+  width: min(680px, 100%) !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+  margin: auto !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 30px !important;
+  background:
+    linear-gradient(145deg, rgba(29, 31, 46, 0.88), rgba(10, 12, 20, 0.79) 50%, rgba(7, 9, 15, 0.84)),
+    rgba(12, 14, 23, 0.8) !important;
+  box-shadow:
+    0 42px 135px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(147, 130, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(30px) saturate(1.17) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.17) !important;
+}
+
+.page-shell .observatory > .panel {
+  width: 100% !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.page-shell .observatory > .panel::before,
+.page-shell .observatory > .panel::after {
+  display: none !important;
+}
+
+.page-shell .observatory > #profile-card {
+  transform: none !important;
+}
+
+.page-shell .observatory > .links-panel {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 25px 29px 27px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.004)) !important;
+}
+
+#profile-card .about-greeting .about-emoji {
+  display: inline-grid !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 0 0 0.04em !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+  font-size: 0.56em !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  transform: translateY(0.03em) !important;
+}
+
+#profile-card .about-greeting .about-emoji:hover,
+#profile-card .about-greeting .about-emoji:focus-visible {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 560px) {
+  .page-shell .observatory {
+    width: 100% !important;
+    border-radius: 24px !important;
+  }
+
+  .page-shell .observatory > .links-panel {
+    margin-top: 0 !important;
+    padding: 19px 18px 22px !important;
+  }
+
+  #profile-card .about-greeting .about-emoji {
+    font-size: 0.53em !important;
+  }
+}
