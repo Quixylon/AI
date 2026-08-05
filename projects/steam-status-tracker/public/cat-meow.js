@@ -2,6 +2,7 @@ const cat = document.querySelector('#dancing-cat');
 
 let audioContext = null;
 let reactionTimer = 0;
+let reactionAnimation = null;
 
 function getAudioContext() {
   if (audioContext) return audioContext;
@@ -74,15 +75,42 @@ function playMeow() {
   vibrato.stop(finish + 0.02);
 }
 
-function react() {
+function playJumpAnimation() {
   if (!cat) return;
 
-  cat.classList.add('is-hint-dismissed');
+  reactionAnimation?.cancel();
+
+  if (typeof cat.animate === 'function') {
+    reactionAnimation = cat.animate(
+      [
+        { transform: 'translateY(0) rotate(0deg) scale(1)' },
+        { transform: 'translateY(-8px) rotate(-12deg) scale(1.16)', offset: 0.18 },
+        { transform: 'translateY(-3px) rotate(11deg) scale(1.1)', offset: 0.38 },
+        { transform: 'translateY(-6px) rotate(-7deg) scale(1.13)', offset: 0.58 },
+        { transform: 'translateY(-1px) rotate(4deg) scale(1.04)', offset: 0.78 },
+        { transform: 'translateY(0) rotate(0deg) scale(1)' }
+      ],
+      {
+        duration: 560,
+        easing: 'cubic-bezier(.18,.8,.24,1)',
+        iterations: 1
+      }
+    );
+    return;
+  }
+
   window.clearTimeout(reactionTimer);
   cat.classList.remove('is-meowing');
   void cat.offsetWidth;
   cat.classList.add('is-meowing');
   reactionTimer = window.setTimeout(() => cat.classList.remove('is-meowing'), 580);
+}
+
+function react() {
+  if (!cat) return;
+
+  cat.classList.add('is-hint-dismissed');
+  playJumpAnimation();
 
   const context = getAudioContext();
   if (context?.state === 'suspended') {
