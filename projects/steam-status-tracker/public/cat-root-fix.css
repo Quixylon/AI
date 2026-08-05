@@ -1,0 +1,16 @@
+/* Исправления кота только для главной страницы. */
+#dancing-cat::before,
+#dancing-cat::after {
+  display: none !important;
+  content: none !important;
+  animation: none !important;
+}
+
+#dancing-cat,
+#dancing-cat:hover,
+#dancing-cat:focus-visible {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
