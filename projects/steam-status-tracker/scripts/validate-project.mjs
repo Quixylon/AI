@@ -87,10 +87,15 @@ async function validateHtml(filePath) {
 
 async function validateCss(filePath) {
   const css = await readFile(filePath, 'utf8');
-  const urlPattern = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+
+  // Capture quoted URLs as a whole. The previous expression stopped at quotes
+  // inside data:image SVGs and then mistook nested url(%23filter) fragments for
+  // local files such as "%23noise".
+  const urlPattern = /url\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi;
 
   for (const match of css.matchAll(urlPattern)) {
-    await validateLocalReference(filePath, match[1]);
+    const reference = match[1] ?? match[2] ?? match[3] ?? '';
+    await validateLocalReference(filePath, reference);
   }
 }
 
