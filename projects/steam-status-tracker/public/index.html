@@ -6,13 +6,14 @@
   <meta name="theme-color" content="#05060a" />
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="Цифровой профиль Qu’lon и живой Steam-трекер." />
-  <meta name="quixylon-build" content="legacy-visuals-new-blueprint-20260807" />
+  <meta name="quixylon-build" content="legacy-calm-background-avatar-progress-20260807" />
   <title>Qu’lon — цифровой профиль</title>
   <link rel="stylesheet" href="./experience-1.css?v=3" />
   <link rel="stylesheet" href="./experience-2.css?v=3" />
   <link rel="stylesheet" href="./experience-3.css?v=3" />
   <link rel="stylesheet" href="./experience-4.css?v=3" />
   <link rel="stylesheet" href="./legacy-blueprint.css?v=1" />
+  <link rel="stylesheet" href="./legacy-corrections.css?v=1" />
 </head>
 <body>
   <main style="min-height:100dvh;display:grid;place-items:center;color:#9ca9bd;font-family:system-ui;background:#05060a">Загрузка профиля…</main>
@@ -32,7 +33,8 @@
           "./experience-4.js?v=3",
           "./experience-5.js?v=3",
           "./experience-fixes.js?v=3",
-          "./legacy-blueprint.js?v=1"
+          "./legacy-blueprint.js?v=1",
+          "./legacy-corrections.js?v=1"
         ];
         for (const source of scripts) {
           await new Promise((resolve, reject) => {
