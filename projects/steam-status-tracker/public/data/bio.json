@@ -9,6 +9,11 @@
       "kind": "telegram"
     },
     {
+      "label": "Discord",
+      "url": "https://discordapp.com/users/358528415558795265",
+      "kind": "discord"
+    },
+    {
       "label": "Roblox",
       "url": "https://roblox.com/users/1295717297/profile",
       "kind": "roblox"

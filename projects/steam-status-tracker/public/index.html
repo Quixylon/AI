@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="./description-motion.css?v=1" />
     <link rel="stylesheet" href="./mobile.css?v=1" />
     <link rel="stylesheet" href="./cat-root-fix.css?v=1" />
+    <link rel="stylesheet" href="./brand-icons.css?v=1" />
   </head>
   <body>
     <canvas id="interactive-background" aria-hidden="true"></canvas>
@@ -33,7 +34,7 @@
 
         <header class="profile-header depth-layer depth-high">
           <div class="avatar-wrap">
-            <img id="profile-avatar" class="profile-avatar" src="" alt="" decoding="async" />
+            <img id="profile-avatar" class="profile-avatar" alt="" decoding="async" fetchpriority="high" />
             <span class="avatar-ring" aria-hidden="true"></span>
           </div>
 
@@ -58,7 +59,12 @@
 
         <div class="action-stage depth-layer">
           <a id="guns-card" class="guns-card floating-action" href="https://guns.lol/quixylon" target="_blank" rel="noreferrer">
-            <span id="guns-dot" class="presence-dot unknown" aria-hidden="true"></span>
+            <span class="action-brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10.5 13.5a4.5 4.5 0 0 0 6.36.14l2.78-2.78a4.5 4.5 0 0 0-6.36-6.36l-1.59 1.59"></path>
+                <path d="M13.5 10.5a4.5 4.5 0 0 0-6.36-.14l-2.78 2.78a4.5 4.5 0 0 0 6.36 6.36l1.59-1.59"></path>
+              </svg>
+            </span>
             <strong>guns.lol</strong>
             <span class="card-arrow" aria-hidden="true">↗</span>
           </a>
@@ -85,6 +91,7 @@
     </main>
 
     <script type="module" src="./app.js?v=14"></script>
+    <script type="module" src="./brand-icons.js?v=1"></script>
     <script type="module" src="./description-motion.js?v=1"></script>
     <script type="module" src="./responsive-runtime.js?v=1"></script>
     <script type="module" src="./visitor-counter.js?v=1"></script>
