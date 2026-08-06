@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#080a10" />
+  <meta name="theme-color" content="#05060a" />
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="Цифровой профиль Qu’lon и живой Steam-трекер." />
-  <meta name="quixylon-build" content="redesign-20260807-0530" />
+  <meta name="quixylon-build" content="legacy-visuals-new-blueprint-20260807" />
   <title>Qu’lon — цифровой профиль</title>
   <link rel="stylesheet" href="./experience-1.css?v=3" />
   <link rel="stylesheet" href="./experience-2.css?v=3" />
   <link rel="stylesheet" href="./experience-3.css?v=3" />
   <link rel="stylesheet" href="./experience-4.css?v=3" />
+  <link rel="stylesheet" href="./legacy-blueprint.css?v=1" />
 </head>
 <body>
   <main style="min-height:100dvh;display:grid;place-items:center;color:#9ca9bd;font-family:system-ui;background:#05060a">Загрузка профиля…</main>
@@ -22,7 +23,17 @@
         const responses = await Promise.all(parts.map(path => fetch(path, { cache: 'no-store' })));
         if (responses.some(response => !response.ok)) throw new Error('Не удалось загрузить интерфейс');
         document.body.innerHTML = (await Promise.all(responses.map(response => response.text()))).join('');
-        const scripts = ["./experience-1.js?v=3", "./experience-2.js?v=3", "./experience-3a.js?v=3", "./experience-3b.js?v=3", "./experience-3c.js?v=3", "./experience-4.js?v=3", "./experience-5.js?v=3", "./experience-fixes.js?v=3"];
+        const scripts = [
+          "./experience-1.js?v=3",
+          "./experience-2.js?v=3",
+          "./experience-3a.js?v=3",
+          "./experience-3b.js?v=3",
+          "./experience-3c.js?v=3",
+          "./experience-4.js?v=3",
+          "./experience-5.js?v=3",
+          "./experience-fixes.js?v=3",
+          "./legacy-blueprint.js?v=1"
+        ];
         for (const source of scripts) {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script');
