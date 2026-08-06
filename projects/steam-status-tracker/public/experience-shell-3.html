@@ -1,0 +1,98 @@
+<div class="stat-row"><span>Активность</span><strong id="discordSideActivity">—</strong></div>
+<div class="stat-row"><span>Прошло</span><strong data-start-time="" id="discordSideElapsed">—</strong></div>
+<div class="stat-row"><span>Источник</span><strong>Прямая ссылка</strong></div>
+<div class="stat-row"><span>Online сегодня</span><strong id="discordStatOnlineToday">—</strong></div><div class="stat-row"><span>Idle сегодня</span><strong id="discordStatIdleToday">—</strong></div><div class="stat-row"><span>DND сегодня</span><strong id="discordStatDndToday">—</strong></div><div class="stat-row"><span>Смен активности</span><strong id="discordStatActivityChanges">—</strong></div><div class="stat-row"><span>Последняя активность</span><strong id="discordStatLastActivity">—</strong></div><div class="stat-row"><span>Самый долгий онлайн</span><strong id="discordStatLongestOnline">—</strong></div></div>
+</aside>
+</div>
+<section aria-labelledby="discordHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title history-panel-title">
+<div><h3 id="discordHistoryTitle">История Discord</h3><p>Не собирается без отдельной интеграции</p></div>
+<div aria-label="Фильтр истории Discord" class="history-filters" role="group">
+<button class="filter-button is-active" data-history-filter="all" data-history-platform="discord" type="button">Всё</button>
+<button class="filter-button" data-history-filter="online" data-history-platform="discord" type="button">В сети</button>
+<button class="filter-button" data-history-filter="idle" data-history-platform="discord" type="button">Неактивен</button>
+<button class="filter-button" data-history-filter="dnd" data-history-platform="discord" type="button">Не беспокоить</button>
+<button class="filter-button" data-history-filter="offline" data-history-platform="discord" type="button">Не в сети</button>
+<button class="filter-button" data-history-filter="activities" data-history-platform="discord" type="button">Активности</button>
+</div>
+</div>
+<div aria-live="polite" class="timeline" id="discordTimeline"></div>
+<div class="history-controls"><button class="ghost-button" data-history-more="discord" id="discordMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="discord" hidden="" id="discordCollapse" type="button">Свернуть</button></div>
+</section>
+</section>
+<section aria-label="Подробный Telegram-трекер" aria-labelledby="tab-telegram" class="tracker-view" id="telegramView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="telegramDetailAvatarPlaceholder">Q</div>
+<img alt="Telegram-аватар" hidden="" id="telegramDetailAvatar"/>
+</div>
+<div class="detail-title">
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="telegram" style="width:18px;height:18px;color:var(--telegram)"></span> Telegram</div>
+<h2 id="telegramDetailName">—</h2>
+<p id="telegramDetailUsername">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="telegramDetailMainStatus">Получение статуса…</strong>
+<p id="telegramLastSeenText">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="telegramDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="telegramErrorBanner"></div>
+<div class="stale-banner" id="telegramStaleBanner">Данные могут быть устаревшими.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">Telegram ID</span><div class="data-item__value-row"><span class="data-item__value" id="telegramIdValue">—</span><button class="copy-button" data-copy-target="telegramIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">Username</span><div class="data-item__value-row"><span class="data-item__value" id="telegramUsernameValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Статус</span><div class="data-item__value-row"><span class="data-item__value" id="telegramStatusValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последняя активность</span><div class="data-item__value-row"><span class="data-item__value" id="telegramLastActivity">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Описание</span><div class="data-item__value-row"><span class="data-item__value" id="telegramBio">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="telegramDetailUpdated">—</span></div></div>
+</div>
+<div class="detail-actions">
+<a class="action-button" href="#" id="telegramProfileButton" rel="noopener noreferrer" target="_blank">Открыть Telegram-профиль</a>
+<button class="retry-button" id="retryTelegramButton" type="button">Обновить профиль</button>
+</div>
+<details class="tech-details">
+<summary>Технические данные</summary>
+<pre class="json-preview" id="telegramJson">{}</pre>
+</details>
+</article>
+<aside class="stats-card">
+<div class="panel-title"><div><h3>О статусе Telegram</h3><p class="telegram-note">Ограничения публичных данных</p></div></div>
+<p style="margin:0;color:var(--muted);line-height:1.65;font-size:.84rem">Браузер сам по себе не может получить произвольный онлайн-статус любого пользователя. В рабочей версии данные должны приходить с собственного сервера через разрешённую интеграцию.</p>
+<div class="stats-list">
+<div class="stat-row"><span>Online сегодня</span><strong id="telegramStatOnlineToday">—</strong></div>
+<div class="stat-row"><span>Известных входов</span><strong id="telegramStatEntriesToday">—</strong></div>
+<div class="stat-row"><span>Последний вход</span><strong id="telegramStatLastEntry">—</strong></div>
+<div class="stat-row"><span>Последний точный выход</span><strong id="telegramStatLastExit">—</strong></div>
+<div class="stat-row"><span>Текущая категория</span><strong id="telegramStatCategory">—</strong></div>
+</div>
+</aside>
+</div>
+<section aria-labelledby="telegramHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title history-panel-title">
+<div><h3 id="telegramHistoryTitle">История Telegram</h3><p>Не собирается без отдельной интеграции</p></div>
+<div aria-label="Фильтр истории Telegram" class="history-filters" role="group">
+<button class="filter-button is-active" data-history-filter="all" data-history-platform="telegram" type="button">Всё</button>
+<button class="filter-button" data-history-filter="online" data-history-platform="telegram" type="button">В сети</button>
+<button class="filter-button" data-history-filter="offline" data-history-platform="telegram" type="button">Не в сети</button>
+<button class="filter-button" data-history-filter="recently" data-history-platform="telegram" type="button">Недавно</button>
+<button class="filter-button" data-history-filter="approximate" data-history-platform="telegram" type="button">Приблизительные</button>
+<button class="filter-button" data-history-filter="hidden" data-history-platform="telegram" type="button">Скрыто</button>
+</div>
+</div>
+<div aria-live="polite" class="timeline" id="telegramTimeline"></div>
+<div class="history-controls"><button class="ghost-button" data-history-more="telegram" id="telegramMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="telegram" hidden="" id="telegramCollapse" type="button">Свернуть</button></div>
+</section>
+</section>
+<details class="tech-details global-tech-details">
+<summary>Технические данные</summary>
+<pre class="json-preview" id="technicalJson">{}</pre>
+</details>
+</div>
+</section>
+</main>
+<div aria-atomic="true" aria-live="polite" class="toast-region" id="toastRegion"></div>
