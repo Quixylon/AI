@@ -32,6 +32,11 @@
     });
   }
 
+  function resetAllScroll() {
+    resetPageScroll();
+    for (const list of lists) resetListScroll(list);
+  }
+
   for (const list of lists) {
     if (list.children.length > 0) {
       resetListScroll(list);
@@ -47,9 +52,6 @@
     observer.observe(list, { childList: true });
   }
 
-  resetPageScroll();
-  window.addEventListener('pageshow', () => {
-    resetPageScroll();
-    for (const list of lists) resetListScroll(list);
-  }, { once: true });
+  resetAllScroll();
+  window.addEventListener('pageshow', resetAllScroll);
 })();
