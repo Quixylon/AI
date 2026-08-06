@@ -1,0 +1,89 @@
+name: Steam Status Tracker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/steam-status-pages.yml
+      - projects/steam-status-tracker/public/**
+      - projects/steam-status-tracker/scripts/**
+      - projects/steam-status-tracker/package.json
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: steam-status-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pages: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Update Steam status
+        id: steam
+        env:
+          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+          STEAM_ID64: ${{ vars.STEAM_ID64 }}
+          STEAM_VANITY: ${{ vars.STEAM_VANITY }}
+        run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
+
+      - name: Validate project
+        working-directory: projects/steam-status-tracker
+        run: npm run check
+
+      - name: Save meaningful Steam changes
+        if: steps.steam.outputs.persist == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add projects/steam-status-tracker/public/data/status.json
+          git add projects/steam-status-tracker/public/data/history.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update Steam activity [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: projects/steam-status-tracker/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
