@@ -1,0 +1,245 @@
+name: Apply site hardening
+
+on:
+  push:
+    branches:
+      - fix/site-hardening
+    paths:
+      - .github/workflows/apply-site-hardening.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/site-hardening
+          fetch-depth: 0
+
+      - name: Apply fixes
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+          import shutil
+
+          def replace_once(path, old, new):
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              if old not in text:
+                  raise RuntimeError(f'Expected text not found in {path}: {old[:80]!r}')
+              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          def regex_once(path, pattern, replacement):
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=re.S)
+              if count != 1:
+                  raise RuntimeError(f'Expected one regex match in {path}, got {count}')
+              file.write_text(updated, encoding='utf-8')
+
+          root = Path('projects/steam-status-tracker')
+          public = root / 'public'
+          app = public / 'app.js'
+
+          replace_once(app,
+              "let lastFrame = performance.now();\nlet motionStages = [];",
+              "let lastFrame = performance.now();\nlet lastBackgroundFrame = 0;\nlet motionStages = [];"
+          )
+          replace_once(app,
+              "  pixelRatio = Math.min(window.devicePixelRatio || 1, 2);\n  width = window.innerWidth;\n  height = window.innerHeight;",
+              "  width = window.innerWidth;\n  height = window.innerHeight;\n  const lowPower = coarsePointer || reducedMotion || width < 700;\n  pixelRatio = Math.min(window.devicePixelRatio || 1, lowPower ? 1.25 : 1.75);"
+          )
+          replace_once(app,
+              "  const count = Math.min(155, Math.max(reducedMotion ? 62 : 96, Math.round((width * height) / 8500)));",
+              "  const areaCount = Math.round((width * height) / (lowPower ? 16_000 : 12_500));\n  const count = lowPower\n    ? Math.min(52, Math.max(30, areaCount))\n    : Math.min(96, Math.max(54, areaCount));"
+          )
+          replace_once(app,
+              "function animateCard(timestamp = 0) {\n  if (coarsePointer) {",
+              "function animateCard(timestamp = 0) {\n  if (document.hidden) {\n    window.requestAnimationFrame(animateCard);\n    return;\n  }\n\n  if (coarsePointer || reducedMotion) {"
+          )
+          replace_once(app,
+              "function animateButtonMotion() {\n  motion.targetX *= 0.9;",
+              "function animateButtonMotion() {\n  if (document.hidden) {\n    window.requestAnimationFrame(animateButtonMotion);\n    return;\n  }\n\n  if (reducedMotion) {\n    motionStages.forEach((stage) => { stage.style.transform = 'none'; });\n    window.requestAnimationFrame(animateButtonMotion);\n    return;\n  }\n\n  motion.targetX *= 0.9;"
+          )
+          replace_once(app,
+              "    particle.renderX = particle.x + Math.cos(timestamp * 0.00042 + particle.phase) * particle.depth * 1.6;\n    particle.renderY = particle.y + Math.sin(timestamp * 0.00036 + particle.phase) * particle.depth * 1.35;",
+              "    const motionScale = reducedMotion ? 0 : 1;\n    particle.renderX = particle.x + Math.cos(timestamp * 0.00042 + particle.phase) * particle.depth * 1.6 * motionScale;\n    particle.renderY = particle.y + Math.sin(timestamp * 0.00036 + particle.phase) * particle.depth * 1.35 * motionScale;"
+          )
+          replace_once(app,
+              "function drawBackground(timestamp = 0) {\n  const delta = Math.min(2, Math.max(0.4, (timestamp - lastFrame) / 16.67));",
+              "function drawBackground(timestamp = 0) {\n  if (document.hidden) {\n    lastFrame = timestamp;\n    window.requestAnimationFrame(drawBackground);\n    return;\n  }\n\n  const frameInterval = reducedMotion ? 1000 : coarsePointer ? 1000 / 30 : 0;\n  if (frameInterval && timestamp - lastBackgroundFrame < frameInterval) {\n    window.requestAnimationFrame(drawBackground);\n    return;\n  }\n  lastBackgroundFrame = timestamp;\n\n  const delta = Math.min(2, Math.max(0.4, (timestamp - lastFrame) / 16.67));"
+          )
+          regex_once(app,
+              r"\nfunction parseDiscordPresence\(text\) \{.*?(?=\nasync function loadProfile\(\))",
+              "\n"
+          )
+          refresh_function = """
+
+          async function refreshSteamStatus() {
+            const status = await fetchJson(`./data/status.json?v=${Date.now()}`);
+            const player = status?.player;
+            if (!player) return;
+
+            const avatar = $('#profile-avatar');
+            if (avatar && player.avatar) {
+              avatar.src = player.avatar;
+              avatar.alt = 'Аватар Qu’lon';
+            }
+
+            if (player.gameName) $('#profile-status').textContent = `Steam: ${player.gameName}`;
+            else if (player.status === 'offline') $('#profile-status').textContent = 'Steam: не в сети';
+            else $('#profile-status').textContent = 'Steam: в сети';
+          }
+          """
+          replace_once(app,
+              "\nwindow.addEventListener('pointermove', (event) => {",
+              refresh_function + "\nwindow.addEventListener('pointermove', (event) => {"
+          )
+          replace_once(app,
+              "loadProfile();\nupdateDiscordPresence();\nwindow.setInterval(updateDiscordPresence, 60_000);",
+              "loadProfile();\nsetDiscordPresence('unknown', 'статус не отслеживается');\nwindow.setInterval(refreshSteamStatus, 60_000);\nwindow.addEventListener('focus', refreshSteamStatus);\ndocument.addEventListener('visibilitychange', () => {\n  if (!document.hidden) refreshSteamStatus();\n});"
+          )
+
+          tracker = public / 'tracker' / 'tracker.js'
+          replace_once(tracker,
+              "async function load() {\n  $('#message-panel').hidden = true;",
+              "async function load() {\n  if (document.hidden) return;\n  $('#message-panel').hidden = true;"
+          )
+          replace_once(tracker,
+              "    durationLabel.textContent = current ? 'Уже в сети' : 'Длительность';",
+              "    durationLabel.textContent = current\n      ? entry.status === 'offline' ? 'Уже не в сети' : 'Уже в сети'\n      : 'Длительность';"
+          )
+          replace_once(tracker,
+              "load();\nwindow.setInterval(load, 15_000);",
+              "load();\nwindow.setInterval(load, 60_000);\nwindow.addEventListener('focus', load);\ndocument.addEventListener('visibilitychange', () => {\n  if (!document.hidden) load();\n});"
+          )
+
+          background = public / 'tracker' / 'tracker-background.js'
+          replace_once(background,
+              "let lastFrame = performance.now();\nlet resizeFrame = 0;",
+              "let lastFrame = performance.now();\nlet lastDrawnAt = 0;\nlet resizeFrame = 0;"
+          )
+          replace_once(background,
+              "  pixelRatio = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);",
+              "  pixelRatio = Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 1.75);"
+          )
+          replace_once(background,
+              "  const areaCount = Math.round((width * height) / (mobile ? 11_500 : 7_600));\n  const count = mobile\n    ? Math.min(88, Math.max(56, areaCount))\n    : Math.min(170, Math.max(105, areaCount));",
+              "  const areaCount = Math.round((width * height) / (mobile ? 17_000 : 12_000));\n  const count = mobile\n    ? Math.min(50, Math.max(30, areaCount))\n    : Math.min(100, Math.max(58, areaCount));"
+          )
+          replace_once(background,
+              "    const motionScale = reducedMotionMedia.matches ? 0.2 : 1;",
+              "    const motionScale = reducedMotionMedia.matches ? 0 : 1;"
+          )
+          regex_once(background,
+              r"function animate\(timestamp = 0\) \{.*?\n\}(?=\n\nwindow.addEventListener\('pointermove')",
+              """function animate(timestamp = 0) {
+            const frameInterval = reducedMotionMedia.matches ? 1000 : mobileMode() ? 1000 / 30 : 0;
+
+            if (!document.hidden && (!frameInterval || timestamp - lastDrawnAt >= frameInterval)) {
+              const delta = Math.min(2.1, Math.max(0.4, (timestamp - lastFrame) / 16.67));
+              lastFrame = timestamp;
+              lastDrawnAt = timestamp;
+              context.clearRect(0, 0, width, height);
+              updateParticles(delta, timestamp);
+              drawParticleWeb();
+              drawPointerLines();
+              drawParticles(timestamp);
+            }
+
+            requestAnimationFrame(animate);
+          }"""
+          )
+
+          index = public / 'index.html'
+          replace_once(index,
+              '    <script type="module" src="./app.js?v=13"></script>',
+              '    <script type="module" src="./app.js?v=14"></script>'
+          )
+          replace_once(index,
+              '    <script type="module" src="./profile-refresh.js?v=1"></script>\n',
+              ''
+          )
+          tracker_index = public / 'tracker' / 'index.html'
+          replace_once(tracker_index,
+              '    <script type="module" src="./tracker-background.js?v=7"></script>',
+              '    <script type="module" src="./tracker-background.js?v=8"></script>'
+          )
+          replace_once(tracker_index,
+              '    <script type="module" src="./tracker.js?v=4"></script>',
+              '    <script type="module" src="./tracker.js?v=5"></script>'
+          )
+
+          workflow = Path('.github/workflows/steam-status-pages.yml')
+          replace_once(workflow,
+              "permissions:\n  contents: write\n  issues: write\n  pages: write\n  id-token: write",
+              "permissions:\n  contents: read"
+          )
+          replace_once(workflow,
+              "  cancel-in-progress: false",
+              "  cancel-in-progress: true"
+          )
+          replace_once(workflow,
+              "  build:\n    runs-on: ubuntu-latest\n    steps:",
+              "  build:\n    runs-on: ubuntu-latest\n    timeout-minutes: 10\n    permissions:\n      contents: write\n      issues: write\n    steps:"
+          )
+          replace_once(workflow,
+              "          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}\n          STEAM_VANITY: quixylon",
+              "          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}\n          STEAM_ID64: ${{ vars.STEAM_ID64 }}\n          STEAM_VANITY: ${{ vars.STEAM_VANITY || 'quixylon' }}"
+          )
+          replace_once(workflow,
+              "        if: steps.steam.outputs.notify == 'true' || github.event_name == 'workflow_dispatch'\n        env:",
+              "        if: steps.steam.outputs.notify == 'true'\n        continue-on-error: true\n        env:"
+          )
+          regex_once(workflow,
+              r"\n      - name: Build polished profile preview\n        run: node projects/steam-status-tracker/scripts/build-profile-v2\.mjs\n",
+              "\n"
+          )
+          replace_once(workflow,
+              "  deploy:\n    needs: build\n    runs-on: ubuntu-latest\n    environment:",
+              "  deploy:\n    needs: build\n    runs-on: ubuntu-latest\n    timeout-minutes: 10\n    permissions:\n      pages: write\n      id-token: write\n    environment:"
+          )
+
+          readme = root / 'README.md'
+          replace_once(readme,
+              "SteamID64 не является паролем, поэтому хранится как обычная переменная.",
+              "SteamID64 не является паролем, поэтому хранится как обычная переменная. Если переменная не указана, workflow использует vanity-адрес из `STEAM_VANITY` (по умолчанию `quixylon`)."
+          )
+          replace_once(readme,
+              "- обновление страницы без перезагрузки;",
+              "- обновление страницы без перезагрузки примерно раз в минуту;"
+          )
+          replace_once(readme,
+              "- `STEAM_API_KEY` хранится только в GitHub Secrets.",
+              "- `STEAM_API_KEY` хранится только в GitHub Secrets.\n- Права workflow разделены между чтением данных, записью истории и публикацией Pages.\n- Ошибка отправки GitHub-уведомления не блокирует публикацию сайта.\n- Главная страница не загружает guns.lol через сторонний прокси для определения Discord-статуса."
+          )
+
+          (public / 'profile-refresh.js').unlink(missing_ok=True)
+          (root / 'scripts' / 'build-profile-v2.mjs').unlink(missing_ok=True)
+          profile_v2 = public / 'profile-v2'
+          if profile_v2.exists():
+              shutil.rmtree(profile_v2)
+
+          Path('.github/workflows/apply-site-hardening.yml').unlink(missing_ok=True)
+          PY
+
+      - name: Validate JavaScript
+        run: |
+          node --check projects/steam-status-tracker/public/app.js
+          node --check projects/steam-status-tracker/public/tracker/tracker.js
+          node --check projects/steam-status-tracker/public/tracker/tracker-background.js
+          node --check projects/steam-status-tracker/scripts/update-steam-status.mjs
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: harden and optimize profile site"
+          git push origin HEAD:fix/site-hardening
