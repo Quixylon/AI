@@ -1,4 +1,4 @@
-name: Steam Status Tracker
+name: Stop Site Automation
 
 on:
   push:
@@ -6,10 +6,6 @@ on:
       - main
     paths:
       - .github/workflows/steam-status-pages.yml
-      - projects/steam-status-tracker/public/**
-      - projects/steam-status-tracker/scripts/**
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -17,120 +13,12 @@ permissions:
 
 concurrency:
   group: pages-deploy
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  build:
+  stop:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-      issues: write
-      pages: read
+    timeout-minutes: 2
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Read Steam status
-        id: steam
-        continue-on-error: true
-        env:
-          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
-          STEAM_ID64: ${{ vars.STEAM_ID64 }}
-          STEAM_VANITY: ${{ vars.STEAM_VANITY || 'quixylon' }}
-        run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
-
-      - name: Send GitHub Mobile notification
-        if: steps.steam.outcome == 'success' && steps.steam.outputs.notify == 'true'
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          node <<'NODE'
-          const { readFileSync, writeFileSync } = require('node:fs');
-          const data = JSON.parse(readFileSync('projects/steam-status-tracker/public/data/status.json', 'utf8'));
-          const player = data.player;
-          const statusNames = {
-            offline: 'не в сети',
-            online: 'в сети',
-            busy: 'занят',
-            away: 'отошёл',
-            snooze: 'спит',
-            'looking-to-trade': 'ищет обмен',
-            'looking-to-play': 'ищет игру',
-            'in-game': 'в игре',
-            unknown: 'неизвестный статус'
-          };
-
-          let headline;
-          if (player.gameName) {
-            headline = `🎮 ${player.name} запустил игру: **${player.gameName}**`;
-          } else if (player.status === 'offline') {
-            headline = `⚫ ${player.name} вышел из сети`;
-          } else {
-            headline = `🟢 ${player.name}: **${statusNames[player.status] || statusNames.unknown}**`;
-          }
-
-          const checkedAt = new Intl.DateTimeFormat('ru-RU', {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-            timeZone: 'Europe/Moscow'
-          }).format(new Date(data.checkedAt));
-
-          const body = [
-            '@Quixylon',
-            '',
-            `## ${headline}`,
-            '',
-            `Проверено: ${checkedAt} МСК`,
-            '',
-            `[Открыть Steam-профиль](${player.profileUrl}) · [Открыть трекер](https://quixylon.github.io/AI/tracker/)`
-          ].join('\n');
-
-          writeFileSync('/tmp/steam-notification.md', body);
-          NODE
-          gh issue comment 1 --repo "$GITHUB_REPOSITORY" --body-file /tmp/steam-notification.md
-
-      - name: Save meaningful status changes
-        if: steps.steam.outcome == 'success' && steps.steam.outputs.persist == 'true'
-        continue-on-error: true
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add projects/steam-status-tracker/public/data/status.json
-          git add projects/steam-status-tracker/public/data/history.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: update Steam activity [skip ci]"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload website
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: projects/steam-status-tracker/public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Stop previous site jobs
+        run: echo "Site automation paused"
