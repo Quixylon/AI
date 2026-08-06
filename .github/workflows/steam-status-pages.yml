@@ -1,6 +1,13 @@
 name: Steam Status Tracker
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/steam-status-pages.yml
+      - projects/steam-status-tracker/public/**
+      - projects/steam-status-tracker/scripts/**
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
