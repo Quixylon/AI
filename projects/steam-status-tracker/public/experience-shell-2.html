@@ -1,0 +1,117 @@
+
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="steam" style="width:18px;height:18px;color:var(--steam)"></span> Steam</div>
+<h2 id="steamDetailName">—</h2>
+<p id="steamDetailSteamId">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="steamDetailMainStatus">Получение статуса…</strong>
+<p id="steamDetailSubStatus">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="steamDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="steamErrorBanner"></div>
+<div class="stale-banner" id="steamStaleBanner">Данные могут быть устаревшими.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">SteamID64</span><div class="data-item__value-row"><span class="data-item__value" id="steamIdValue">—</span><button class="copy-button" data-copy-target="steamIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">personaState</span><div class="data-item__value-row"><span class="data-item__value" id="steamPersonaState">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Текущая игра</span><div class="data-item__value-row"><span class="data-item__value" id="steamGameName">—</span></div></div>
+<div class="data-item"><span class="data-item__label">App ID</span><div class="data-item__value-row"><span class="data-item__value" id="steamAppId">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Статус с</span><div class="data-item__value-row"><span class="data-item__value" id="steamStatusSince">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последний выход</span><div class="data-item__value-row"><span class="data-item__value" id="steamLastLogoff">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Длительность сессии</span><div class="data-item__value-row"><span class="data-item__value" data-start-time="" id="steamSessionDuration">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="steamDetailUpdated">—</span></div></div>
+</div>
+<div class="detail-actions">
+<a class="action-button" href="#" id="steamProfileButton" rel="noopener noreferrer" target="_blank">Открыть Steam-профиль</a>
+<a class="ghost-button" href="#" id="steamCsrepButton" rel="noopener noreferrer" target="_blank">Открыть CSRep</a>
+<button class="retry-button" id="retrySteamButton" type="button">Повторить запрос</button>
+</div>
+<details class="tech-details">
+<summary>Технические данные</summary>
+<pre class="json-preview" id="steamJson">{}</pre>
+</details>
+</article>
+<aside class="stats-card">
+<div class="panel-title"><div><h3>Сегодня</h3><p>Рассчитано по сохранённой истории Steam</p></div></div>
+<div class="stats-list">
+<div class="stat-row"><span>Онлайн</span><strong id="steamStatOnline">—</strong></div>
+<div class="stat-row"><span>В играх</span><strong id="steamStatGames">—</strong></div>
+<div class="stat-row"><span>Запусков игр</span><strong id="steamStatLaunches">—</strong></div>
+<div class="stat-row"><span>Последняя игра</span><strong id="steamStatLastGame">—</strong></div>
+<div class="stat-row"><span>В играх за 7 дней</span><strong id="steamStatGames7d">—</strong></div><div class="stat-row"><span>Уникальных игр</span><strong id="steamStatUniqueGames">—</strong></div><div class="stat-row"><span>Чаще запускается</span><strong id="steamStatMostLaunched">—</strong></div><div class="stat-row"><span>Больше всего времени</span><strong id="steamStatLongestGame">—</strong></div></div>
+</aside>
+</div>
+<section aria-labelledby="steamGamesHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title history-panel-title">
+<div><h3 id="steamGamesHistoryTitle">История игр</h3><p>Запуски и игровые сессии Steam</p></div>
+<div aria-label="Фильтр истории Steam" class="history-filters" role="group">
+<button class="filter-button is-active" data-history-filter="all" data-history-platform="steam" type="button">Всё</button>
+<button class="filter-button" data-history-filter="games" data-history-platform="steam" type="button">Игры</button>
+<button class="filter-button" data-history-filter="online" data-history-platform="steam" type="button">Онлайн</button>
+<button class="filter-button" data-history-filter="offline" data-history-platform="steam" type="button">Офлайн</button>
+</div>
+</div>
+<div aria-live="polite" class="timeline" id="steamGameTimeline"></div>
+<div class="history-controls"><button class="ghost-button" data-history-more="steamGames" id="steamGameMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="steamGames" hidden="" id="steamGameCollapse" type="button">Свернуть</button></div>
+</section>
+<section aria-labelledby="steamPresenceHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title"><div><h3 id="steamPresenceHistoryTitle">История сети</h3><p>Периоды онлайна и офлайна</p></div></div>
+<div aria-live="polite" class="timeline" id="steamPresenceTimeline"></div>
+<div class="history-controls"><button class="ghost-button" data-history-more="steamPresence" id="steamPresenceMore" type="button">Показать ещё</button><button class="ghost-button" data-history-collapse="steamPresence" hidden="" id="steamPresenceCollapse" type="button">Свернуть</button></div>
+</section>
+</section>
+<section aria-label="Подробный Discord-трекер" aria-labelledby="tab-discord" class="tracker-view" id="discordView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="discordDetailAvatarPlaceholder">Q</div>
+<img alt="Discord-аватар" hidden="" id="discordDetailAvatar"/>
+</div>
+<div class="detail-title">
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="discord" style="width:18px;height:18px;color:var(--discord)"></span> Discord</div>
+<h2 id="discordDetailName">—</h2>
+<p id="discordDetailUsername">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="discordDetailMainStatus">Получение статуса…</strong>
+<p id="discordCustomStatus">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="discordDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="discordErrorBanner"></div>
+<div class="stale-banner" id="discordStaleBanner">Данные могут быть устаревшими.</div>
+<div class="activity-card" id="discordActivityCard">
+<div class="activity-copy">
+<small id="discordActivityType">Активность</small>
+<h3 id="discordActivityName">—</h3>
+<p id="discordActivityDetails">Нет текущей активности.</p>
+<p data-start-time="" id="discordActivityElapsed"></p>
+</div>
+<img alt="Изображение активности Discord" class="activity-image" hidden="" id="discordActivityImage"/>
+</div>
+<div class="empty-state" id="discordEmptyState">Сейчас активность не передаётся. Это нормальное состояние, а не ошибка.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">Discord ID</span><div class="data-item__value-row"><span class="data-item__value" id="discordIdValue">—</span><button class="copy-button" data-copy-target="discordIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">Username</span><div class="data-item__value-row"><span class="data-item__value" id="discordUsernameValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Статус</span><div class="data-item__value-row"><span class="data-item__value" id="discordStatusValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Начало активности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityStartedAt">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="discordDetailUpdated">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Тип активности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityTypeValue">—</span></div></div><div class="data-item"><span class="data-item__label">Название активности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityNameValue">—</span></div></div><div class="data-item"><span class="data-item__label">Details</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityDetailsValue">—</span></div></div><div class="data-item"><span class="data-item__label">State</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityStateValue">—</span></div></div><div class="data-item"><span class="data-item__label">Текущая длительность</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityDurationValue">—</span></div></div></div>
+<div class="detail-actions">
+<a class="action-button" href="#" id="discordProfileButton" rel="noopener noreferrer" target="_blank">Открыть Discord-профиль</a>
+<button class="retry-button" id="retryDiscordButton" type="button">Обновить профиль</button>
+</div>
+<details class="tech-details">
+<summary>Технические данные</summary>
+<pre class="json-preview" id="discordJson">{}</pre>
+</details>
+</article>
+<aside class="stats-card">
+<div class="panel-title"><div><h3>Профиль Discord</h3><p>Онлайн-статус не отслеживается</p></div></div>
+<div class="stats-list">
+<div class="stat-row"><span>Состояние</span><strong id="discordSideStatus">—</strong></div>
