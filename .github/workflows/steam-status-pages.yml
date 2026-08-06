@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - .github/workflows/steam-status-pages.yml
+      - projects/steam-status-tracker/package.json
       - projects/steam-status-tracker/public/**
       - projects/steam-status-tracker/scripts/**
   schedule:
@@ -13,18 +14,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  issues: write
-  pages: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: status-pages-deploy
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -40,11 +42,13 @@ jobs:
         id: steam
         env:
           STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
-          STEAM_VANITY: quixylon
+          STEAM_ID64: ${{ vars.STEAM_ID64 }}
+          STEAM_VANITY: ${{ vars.STEAM_VANITY || 'quixylon' }}
         run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
 
       - name: Send GitHub Mobile notification
-        if: steps.steam.outputs.notify == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.steam.outputs.notify == 'true'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -106,9 +110,6 @@ jobs:
             git push origin HEAD:main
           fi
 
-      - name: Build polished profile preview
-        run: node projects/steam-status-tracker/scripts/build-profile-v2.mjs
-
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
@@ -120,6 +121,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

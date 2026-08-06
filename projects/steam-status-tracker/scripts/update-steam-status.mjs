@@ -62,6 +62,21 @@ function closeActiveHistoryEntry(history, endedAt) {
   }
 }
 
+async function fetchSteamJson(endpoint, description) {
+  const response = await fetch(endpoint, {
+    signal: AbortSignal.timeout(15_000),
+    headers: {
+      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.5'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`${description} returned HTTP ${response.status}.`);
+  }
+
+  return response.json();
+}
+
 async function resolveSteamId(apiKey) {
   const directId = process.env.STEAM_ID64?.trim();
   if (/^\d{17}$/.test(directId || '')) return directId;
@@ -71,18 +86,7 @@ async function resolveSteamId(apiKey) {
   endpoint.searchParams.set('key', apiKey);
   endpoint.searchParams.set('vanityurl', vanity);
 
-  const response = await fetch(endpoint, {
-    signal: AbortSignal.timeout(15_000),
-    headers: {
-      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.4'
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`Steam vanity resolver returned HTTP ${response.status}.`);
-  }
-
-  const payload = await response.json();
+  const payload = await fetchSteamJson(endpoint, 'Steam vanity resolver');
   const resolvedId = payload?.response?.steamid;
 
   if (!/^\d{17}$/.test(resolvedId || '')) {
@@ -90,6 +94,27 @@ async function resolveSteamId(apiKey) {
   }
 
   return resolvedId;
+}
+
+async function keepPreviousDataOnTemporaryFailure(error, previousStatus, history) {
+  console.error(error instanceof Error ? error.message : error);
+  await setOutput('persist', 'false');
+  await setOutput('notify', 'false');
+
+  if (previousStatus?.configured && previousStatus?.player) {
+    console.log('Steam is temporarily unavailable; keeping the last successful data.');
+    return;
+  }
+
+  const placeholder = {
+    configured: false,
+    message: 'Steam временно недоступен. Следующая проверка выполнится автоматически.',
+    checkedAt: null,
+    player: null
+  };
+
+  await writeFile(statusPath, `${JSON.stringify(placeholder, null, 2)}\n`);
+  await writeFile(historyPath, `${JSON.stringify(Array.isArray(history) ? history : [], null, 2)}\n`);
 }
 
 await mkdir(dataDirectory, { recursive: true });
@@ -114,83 +139,76 @@ if (!apiKey) {
   process.exit(0);
 }
 
-const steamId = await resolveSteamId(apiKey);
-const endpoint = new URL('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/');
-endpoint.searchParams.set('key', apiKey);
-endpoint.searchParams.set('steamids', steamId);
+try {
+  const steamId = await resolveSteamId(apiKey);
+  const endpoint = new URL('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/');
+  endpoint.searchParams.set('key', apiKey);
+  endpoint.searchParams.set('steamids', steamId);
 
-const response = await fetch(endpoint, {
-  signal: AbortSignal.timeout(15_000),
-  headers: {
-    'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.4'
+  const payload = await fetchSteamJson(endpoint, 'Steam Web API');
+  const steamPlayer = payload?.response?.players?.[0];
+
+  if (!steamPlayer) {
+    throw new Error('Steam profile was not found. Check profile visibility and identifier settings.');
   }
-});
 
-if (!response.ok) {
-  throw new Error(`Steam Web API returned HTTP ${response.status}.`);
+  const checkedAt = new Date().toISOString();
+  const personaState = personaStates[steamPlayer.personastate] || 'unknown';
+  const status = steamPlayer.gameextrainfo ? 'in-game' : personaState;
+
+  const player = {
+    steamId: steamPlayer.steamid,
+    name: steamPlayer.personaname,
+    profileUrl: steamPlayer.profileurl,
+    avatar: steamPlayer.avatarfull,
+    status,
+    personaState,
+    gameName: steamPlayer.gameextrainfo || null,
+    gameId: steamPlayer.gameid || null,
+    lastLogoff: steamPlayer.lastlogoff
+      ? new Date(steamPlayer.lastlogoff * 1000).toISOString()
+      : null
+  };
+
+  const newStatus = {
+    configured: true,
+    checkedAt,
+    player
+  };
+
+  const previousPlayer = previousStatus?.player || null;
+  const presenceChanged =
+    !previousStatus?.configured ||
+    previousPlayer?.status !== player.status ||
+    previousPlayer?.gameId !== player.gameId;
+
+  const profileChanged =
+    JSON.stringify(comparablePlayer(previousPlayer)) !== JSON.stringify(comparablePlayer(player));
+
+  const nextHistory = Array.isArray(history)
+    ? history.filter((entry) => entry && entry.startedAt).map((entry) => ({ ...entry }))
+    : [];
+
+  if (presenceChanged) {
+    closeActiveHistoryEntry(nextHistory, checkedAt);
+    nextHistory.push({
+      status: player.status,
+      personaState: player.personaState,
+      gameName: player.gameName,
+      gameId: player.gameId,
+      startedAt: checkedAt,
+      endedAt: null,
+      durationSeconds: null
+    });
+  }
+
+  const trimmedHistory = nextHistory.slice(-500);
+  await writeFile(statusPath, `${JSON.stringify(newStatus, null, 2)}\n`);
+  await writeFile(historyPath, `${JSON.stringify(trimmedHistory, null, 2)}\n`);
+  await setOutput('persist', String(profileChanged || presenceChanged));
+  await setOutput('notify', String(presenceChanged));
+
+  console.log(`Updated ${player.name}: ${player.status}${player.gameName ? ` — ${player.gameName}` : ''}`);
+} catch (error) {
+  await keepPreviousDataOnTemporaryFailure(error, previousStatus, history);
 }
-
-const payload = await response.json();
-const steamPlayer = payload?.response?.players?.[0];
-
-if (!steamPlayer) {
-  throw new Error('Steam profile was not found. Check profile visibility.');
-}
-
-const checkedAt = new Date().toISOString();
-const personaState = personaStates[steamPlayer.personastate] || 'unknown';
-const status = steamPlayer.gameextrainfo ? 'in-game' : personaState;
-
-const player = {
-  steamId: steamPlayer.steamid,
-  name: steamPlayer.personaname,
-  profileUrl: steamPlayer.profileurl,
-  avatar: steamPlayer.avatarfull,
-  status,
-  personaState,
-  gameName: steamPlayer.gameextrainfo || null,
-  gameId: steamPlayer.gameid || null,
-  lastLogoff: steamPlayer.lastlogoff
-    ? new Date(steamPlayer.lastlogoff * 1000).toISOString()
-    : null
-};
-
-const newStatus = {
-  configured: true,
-  checkedAt,
-  player
-};
-
-const previousPlayer = previousStatus?.player || null;
-const presenceChanged =
-  !previousStatus?.configured ||
-  previousPlayer?.status !== player.status ||
-  previousPlayer?.gameId !== player.gameId;
-
-const profileChanged =
-  JSON.stringify(comparablePlayer(previousPlayer)) !== JSON.stringify(comparablePlayer(player));
-
-const nextHistory = Array.isArray(history)
-  ? history.filter((entry) => entry && entry.startedAt).map((entry) => ({ ...entry }))
-  : [];
-
-if (presenceChanged) {
-  closeActiveHistoryEntry(nextHistory, checkedAt);
-  nextHistory.push({
-    status: player.status,
-    personaState: player.personaState,
-    gameName: player.gameName,
-    gameId: player.gameId,
-    startedAt: checkedAt,
-    endedAt: null,
-    durationSeconds: null
-  });
-}
-
-const trimmedHistory = nextHistory.slice(-500);
-await writeFile(statusPath, `${JSON.stringify(newStatus, null, 2)}\n`);
-await writeFile(historyPath, `${JSON.stringify(trimmedHistory, null, 2)}\n`);
-await setOutput('persist', String(profileChanged || presenceChanged));
-await setOutput('notify', String(presenceChanged));
-
-console.log(`Updated ${player.name}: ${player.status}${player.gameName ? ` — ${player.gameName}` : ''}`);

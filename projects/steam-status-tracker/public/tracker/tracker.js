@@ -12,6 +12,9 @@ const statusNames = {
   unknown: 'Неизвестно'
 };
 
+let loading = false;
+let resizeTimer = 0;
+
 function formatDate(value, fallback = 'Нет данных') {
   if (!value) return fallback;
   const date = new Date(value);
@@ -87,16 +90,20 @@ function formatHistoryRange(entry) {
     && start.getMonth() === end.getMonth()
     && start.getDate() === end.getDate();
 
-  if (sameDay) {
-    return `${startDate}, ${startTime} — ${timeFormatter.format(end)}`;
-  }
-
+  if (sameDay) return `${startDate}, ${startTime} — ${timeFormatter.format(end)}`;
   return `${formatHistoryPoint(start)} — ${formatHistoryPoint(end)}`;
 }
 
 function showMessage(text) {
-  $('#message-panel').textContent = text;
-  $('#message-panel').hidden = false;
+  const panel = $('#message-panel');
+  if (!panel) return;
+  panel.textContent = text;
+  panel.hidden = false;
+}
+
+function hideMessage() {
+  const panel = $('#message-panel');
+  if (panel) panel.hidden = true;
 }
 
 function createFact(label, value, emphasized = false) {
@@ -114,6 +121,8 @@ function createFact(label, value, emphasized = false) {
 }
 
 function limitScrollableList(list) {
+  if (!list) return;
+
   requestAnimationFrame(() => {
     const items = [...list.children];
     const shouldScroll = items.length > 3;
@@ -136,22 +145,39 @@ function limitScrollableList(list) {
 
 function renderPlayer(data) {
   const player = data.player;
-  $('#profile-avatar').src = player.avatar;
-  $('#profile-avatar').alt = `Аватар ${player.name}`;
-  $('#profile-name').textContent = player.name;
-  $('#profile-link').href = player.profileUrl;
-  $('#status-pill').className = `status-pill ${player.status}`;
-  $('#status-pill').textContent = statusNames[player.status] || statusNames.unknown;
-  $('#current-game').textContent = player.gameName || 'Нет запущенной игры';
-  $('#last-logoff').textContent = formatDate(player.lastLogoff);
-  $('#last-checked').textContent = formatDate(data.checkedAt, 'Ещё не проверялось');
-  $('#profile-card').hidden = false;
+  const avatar = $('#profile-avatar');
+  const name = $('#profile-name');
+  const link = $('#profile-link');
+  const statusPill = $('#status-pill');
+
+  if (avatar) {
+    avatar.src = player.avatar;
+    avatar.alt = `Аватар ${player.name}`;
+  }
+  if (name) name.textContent = player.name;
+  if (link) link.href = player.profileUrl;
+  if (statusPill) {
+    statusPill.className = `status-pill ${player.status}`;
+    statusPill.textContent = statusNames[player.status] || statusNames.unknown;
+  }
+
+  const currentGame = $('#current-game');
+  const lastLogoff = $('#last-logoff');
+  const lastChecked = $('#last-checked');
+  if (currentGame) currentGame.textContent = player.gameName || 'Нет запущенной игры';
+  if (lastLogoff) lastLogoff.textContent = formatDate(player.lastLogoff);
+  if (lastChecked) lastChecked.textContent = formatDate(data.checkedAt, 'Ещё не проверялось');
+
+  const profileCard = $('#profile-card');
+  if (profileCard) profileCard.hidden = false;
 }
 
 function renderGames(history) {
   const panel = $('#games-panel');
   const summary = $('#games-summary');
   const list = $('#games-list');
+  if (!panel || !summary || !list) return;
+
   summary.replaceChildren();
   list.replaceChildren();
 
@@ -185,8 +211,8 @@ function renderGames(history) {
     .sort((first, second) => new Date(second.latestAt) - new Date(first.latestAt))
     .slice(0, 6)
     .forEach((game) => {
-      const card = document.createElement('article');
-      card.className = 'game-summary-card';
+      const item = document.createElement('article');
+      item.className = 'game-summary-card';
 
       const title = document.createElement('h3');
       title.textContent = game.name;
@@ -197,16 +223,17 @@ function renderGames(history) {
 
       const count = document.createElement('p');
       count.className = 'game-sessions-count';
-      count.textContent = `${game.sessions} ${game.sessions === 1 ? 'запуск' : game.sessions < 5 ? 'запуска' : 'запусков'}`;
+      const plural = game.sessions === 1 ? 'запуск' : game.sessions < 5 ? 'запуска' : 'запусков';
+      count.textContent = `${game.sessions} ${plural}`;
 
-      card.append(title, total, count);
-      summary.append(card);
+      item.append(title, total, count);
+      summary.append(item);
     });
 
   sessions.slice(0, 24).forEach((session) => {
     const current = !session.endedAt;
-    const card = document.createElement('article');
-    card.className = 'game-session';
+    const item = document.createElement('article');
+    item.className = 'game-session';
 
     const icon = document.createElement('span');
     icon.className = 'game-session-icon';
@@ -232,8 +259,8 @@ function renderGames(history) {
     badge.textContent = current ? 'Сейчас' : 'Завершено';
 
     copy.append(title, facts);
-    card.append(icon, copy, badge);
-    list.append(card);
+    item.append(icon, copy, badge);
+    list.append(item);
   });
 
   panel.hidden = false;
@@ -271,11 +298,8 @@ function normalizeNetworkEntries(history) {
       continue;
     }
 
-    if (!previous.endedAt || !entry.endedAt) {
-      previous.endedAt = null;
-    } else if (new Date(entry.endedAt) > new Date(previous.endedAt)) {
-      previous.endedAt = entry.endedAt;
-    }
+    if (!previous.endedAt || !entry.endedAt) previous.endedAt = null;
+    else if (new Date(entry.endedAt) > new Date(previous.endedAt)) previous.endedAt = entry.endedAt;
 
     delete previous.durationSeconds;
   }
@@ -286,8 +310,9 @@ function normalizeNetworkEntries(history) {
 function renderNetworkHistory(history) {
   const panel = $('#history-panel');
   const list = $('#history-list');
-  list.replaceChildren();
+  if (!panel || !list) return;
 
+  list.replaceChildren();
   const entries = normalizeNetworkEntries(history);
 
   if (!entries.length) {
@@ -297,8 +322,8 @@ function renderNetworkHistory(history) {
 
   entries.forEach((entry) => {
     const current = !entry.endedAt;
-    const card = document.createElement('article');
-    card.className = `history-entry ${entry.status || 'unknown'}`;
+    const item = document.createElement('article');
+    item.className = `history-entry ${entry.status || 'unknown'}`;
 
     const markerWrap = document.createElement('span');
     markerWrap.className = 'history-marker-wrap';
@@ -329,7 +354,9 @@ function renderNetworkHistory(history) {
     duration.className = 'history-duration-row';
 
     const durationLabel = document.createElement('span');
-    durationLabel.textContent = current ? 'Уже в сети' : 'Длительность';
+    durationLabel.textContent = current
+      ? entry.status === 'offline' ? 'Уже не в сети' : 'Уже в сети'
+      : 'Длительность';
 
     const durationValue = document.createElement('strong');
     durationValue.textContent = formatDuration(entryDuration(entry));
@@ -337,8 +364,8 @@ function renderNetworkHistory(history) {
     duration.append(durationLabel, durationValue);
     top.append(title, badge);
     content.append(top, period, duration);
-    card.append(markerWrap, content);
-    list.append(card);
+    item.append(markerWrap, content);
+    list.append(item);
   });
 
   panel.hidden = false;
@@ -347,11 +374,20 @@ function renderNetworkHistory(history) {
 
 async function fetchJson(path, fallback = null) {
   const response = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
-  return response.ok ? response.json() : fallback;
+  if (!response.ok) return fallback;
+  return response.json();
+}
+
+function hideDataPanels() {
+  for (const selector of ['#profile-card', '#games-panel', '#history-panel']) {
+    const panel = $(selector);
+    if (panel) panel.hidden = true;
+  }
 }
 
 async function load() {
-  $('#message-panel').hidden = true;
+  if (loading || document.hidden) return;
+  loading = true;
 
   try {
     const [status, history] = await Promise.all([
@@ -360,22 +396,22 @@ async function load() {
     ]);
 
     if (!status?.configured || !status?.player) {
-      $('#profile-card').hidden = true;
-      $('#games-panel').hidden = true;
-      $('#history-panel').hidden = true;
+      hideDataPanels();
       showMessage(status?.message || 'Мониторинг Steam не настроен.');
       return;
     }
 
+    hideMessage();
     renderPlayer(status);
     renderGames(history);
     renderNetworkHistory(history);
   } catch (error) {
-    showMessage(error.message || 'Не удалось загрузить данные мониторинга.');
+    showMessage(error instanceof Error ? error.message : 'Не удалось загрузить данные мониторинга.');
+  } finally {
+    loading = false;
   }
 }
 
-let resizeTimer = 0;
 window.addEventListener('resize', () => {
   window.clearTimeout(resizeTimer);
   resizeTimer = window.setTimeout(() => {
@@ -384,5 +420,10 @@ window.addEventListener('resize', () => {
   }, 120);
 }, { passive: true });
 
+window.addEventListener('focus', load);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) load();
+});
+
 load();
-window.setInterval(load, 15_000);
+window.setInterval(load, 60_000);
