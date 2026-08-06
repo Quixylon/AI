@@ -1,6 +1,9 @@
 name: Validate Profile Site
 
 on:
+  push:
+    branches:
+      - cleanup/repository-audit-final
   pull_request:
     branches:
       - main
@@ -10,7 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: validate-profile-site-${{ github.event.pull_request.number || github.ref }}
@@ -23,12 +26,52 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Validate project
+      - name: Run validation
+        id: validation
+        continue-on-error: true
         working-directory: projects/steam-status-tracker
-        run: npm run check
+        run: |
+          set +e
+          npm run check > validation.log 2>&1
+          exit_code=$?
+          cat validation.log
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+
+      - name: Save validation result
+        env:
+          EXIT_CODE: ${{ steps.validation.outputs.exit_code }}
+        run: |
+          node <<'NODE'
+          const { readFileSync, writeFileSync } = require('node:fs');
+          const log = readFileSync('projects/steam-status-tracker/validation.log', 'utf8');
+          const exitCode = Number(process.env.EXIT_CODE || 1);
+          writeFileSync(
+            'projects/steam-status-tracker/validation-result.json',
+            JSON.stringify({
+              success: exitCode === 0,
+              exitCode,
+              checkedCommit: process.env.GITHUB_SHA,
+              log
+            }, null, 2) + '\n'
+          );
+          NODE
+
+      - name: Commit validation result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add projects/steam-status-tracker/validation-result.json
+          git commit -m "test: record repository validation [skip ci]"
+          git push origin HEAD:cleanup/repository-audit-final
+
+      - name: Fail invalid project
+        if: steps.validation.outputs.exit_code != '0'
+        run: exit 1
