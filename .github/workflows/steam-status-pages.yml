@@ -1,41 +1,14 @@
-name: Stop Published Site
+name: Site Automation (Paused)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - projects/steam-status-tracker/paused-site/**
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages-deploy
-  cancel-in-progress: true
 
 jobs:
-  deploy-paused-site:
+  paused:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload paused site
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: projects/steam-status-tracker/paused-site
-
-      - name: Replace published site
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - run: echo "Site automation is paused"
