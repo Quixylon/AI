@@ -1,1 +1,0 @@
-Validator regression check: encoded SVG fragments such as %23n must not be treated as local files.
