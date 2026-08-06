@@ -1,11 +1,13 @@
 {
   "name": "steam-status-tracker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "A static Steam and CSRep monitor powered by GitHub Pages and GitHub Actions.",
   "scripts": {
-    "update": "node scripts/update-steam-status.mjs"
+    "update": "node scripts/update-steam-status.mjs",
+    "validate": "node scripts/validate-project.mjs",
+    "check": "npm run validate"
   },
   "engines": {
     "node": ">=20"
