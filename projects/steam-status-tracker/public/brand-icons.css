@@ -1,0 +1,79 @@
+.link-icon {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.link-icon .brand-icon-svg {
+  width: 23px;
+  height: 23px;
+  fill: currentColor;
+  stroke: none;
+  transform: translateZ(0);
+  transition: transform 170ms ease, filter 170ms ease;
+}
+
+.link-icon .brand-icon-outline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.profile-link:hover .brand-icon-svg,
+.profile-link:focus-visible .brand-icon-svg {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
+.link-discord .link-icon {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.55), rgba(88, 101, 242, 0.17));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 22px rgba(88, 101, 242, 0.18);
+}
+
+.action-brand-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  color: #e6e8ef;
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.action-brand-icon svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 170ms ease, filter 170ms ease;
+}
+
+.floating-action:hover .action-brand-icon svg,
+.floating-action:focus-visible .action-brand-icon svg {
+  transform: scale(1.07);
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
+.guns-card .action-brand-icon {
+  color: #f1f2f6;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.045));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-icon .brand-icon-svg,
+  .action-brand-icon svg {
+    transition: none;
+  }
+}
