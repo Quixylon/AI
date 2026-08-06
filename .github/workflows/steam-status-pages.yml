@@ -1,14 +1,6 @@
 name: Steam Status Tracker
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/steam-status-pages.yml
-      - projects/steam-status-tracker/package.json
-      - projects/steam-status-tracker/public/**
-      - projects/steam-status-tracker/scripts/**
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
@@ -17,8 +9,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: status-pages-deploy
-  cancel-in-progress: true
+  group: pages-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -41,6 +33,7 @@ jobs:
 
       - name: Read Steam status
         id: steam
+        continue-on-error: true
         env:
           STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
           STEAM_ID64: ${{ vars.STEAM_ID64 }}
@@ -48,7 +41,7 @@ jobs:
         run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
 
       - name: Send GitHub Mobile notification
-        if: steps.steam.outputs.notify == 'true'
+        if: steps.steam.outcome == 'success' && steps.steam.outputs.notify == 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,7 +92,8 @@ jobs:
           gh issue comment 1 --repo "$GITHUB_REPOSITORY" --body-file /tmp/steam-notification.md
 
       - name: Save meaningful status changes
-        if: steps.steam.outputs.persist == 'true'
+        if: steps.steam.outcome == 'success' && steps.steam.outputs.persist == 'true'
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
