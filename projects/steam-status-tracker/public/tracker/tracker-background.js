@@ -12,15 +12,16 @@ let width = 0;
 let height = 0;
 let pixelRatio = 1;
 let particles = [];
-let lastFrame = performance.now();
+let animationFrame = 0;
 let resizeFrame = 0;
+let lastFrame = performance.now();
+let lastRenderedAt = 0;
 
 const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
   active: false,
-  down: false,
-  type: 'mouse'
+  down: false
 };
 
 function clampCoordinate(value, limit) {
@@ -42,7 +43,7 @@ function setPointerFromClient(clientX, clientY) {
 
 function createParticle(index, count) {
   const aspect = Math.max(0.55, width / Math.max(height, 1));
-  const columns = Math.max(7, Math.ceil(Math.sqrt(count * aspect)));
+  const columns = Math.max(6, Math.ceil(Math.sqrt(count * aspect)));
   const rows = Math.ceil(count / columns);
   const column = index % columns;
   const row = Math.floor(index / columns);
@@ -53,6 +54,7 @@ function createParticle(index, count) {
   const homeY = (row + 0.5) * cellHeight + (Math.random() - 0.5) * cellHeight * 0.58;
 
   return {
+    index,
     x: homeX,
     y: homeY,
     homeX,
@@ -62,12 +64,12 @@ function createParticle(index, count) {
     velocityX: 0,
     velocityY: 0,
     depth,
-    radius: 0.85 + depth * 1.85,
-    alpha: 0.38 + depth * 0.52,
+    radius: 0.8 + depth * 1.65,
+    alpha: 0.34 + depth * 0.48,
     phase: Math.random() * Math.PI * 2,
     orbitAngle: Math.random() * Math.PI * 2,
-    orbitRadius: 15 + Math.random() * 42,
-    maxOffset: 78 + depth * 72
+    orbitRadius: 15 + Math.random() * 38,
+    maxOffset: 65 + depth * 60
   };
 }
 
@@ -76,7 +78,7 @@ function resizeCanvas() {
   const bounds = canvas.getBoundingClientRect();
   const mobile = coarsePointerMedia.matches || (bounds.width || window.innerWidth) < 700;
 
-  pixelRatio = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
+  pixelRatio = Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 1.75);
   width = Math.max(1, Math.round(bounds.width || window.innerWidth));
   height = Math.max(1, Math.round(bounds.height || window.innerHeight));
 
@@ -91,13 +93,16 @@ function resizeCanvas() {
   pointer.active = false;
   pointer.down = false;
 
-  const areaCount = Math.round((width * height) / (mobile ? 11_500 : 7_600));
+  const areaCount = Math.round((width * height) / (mobile ? 17_000 : 12_000));
   const count = mobile
-    ? Math.min(88, Math.max(56, areaCount))
-    : Math.min(170, Math.max(105, areaCount));
+    ? Math.min(50, Math.max(30, areaCount))
+    : Math.min(100, Math.max(58, areaCount));
 
   particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
   lastFrame = performance.now();
+  lastRenderedAt = 0;
+
+  if (reducedMotionMedia.matches) renderFrame(performance.now());
 }
 
 function scheduleResize() {
@@ -106,9 +111,10 @@ function scheduleResize() {
 }
 
 function updateParticles(delta, timestamp) {
-  const active = pointer.active && !mobileMode();
+  const active = pointer.active && !mobileMode() && !reducedMotionMedia.matches;
   const spring = active ? 0.025 : 0.075;
   const damping = active ? 0.905 : 0.82;
+  const motionScale = reducedMotionMedia.matches ? 0 : 1;
 
   for (const particle of particles) {
     particle.phase += (0.006 + particle.depth * 0.004) * delta;
@@ -117,11 +123,10 @@ function updateParticles(delta, timestamp) {
 
     if (active) {
       const originDistance = Math.hypot(pointer.x - particle.homeX, pointer.y - particle.homeY);
-      const influence = (pointer.down ? 330 : 285) + particle.depth * 85;
+      const influence = (pointer.down ? 310 : 270) + particle.depth * 80;
 
       if (originDistance < influence) {
-        const orbitScale = pointer.down ? 0.88 : 1.08;
-        const orbit = particle.orbitRadius * orbitScale;
+        const orbit = particle.orbitRadius * (pointer.down ? 0.88 : 1.08);
         const drift = timestamp * 0.00014 * (0.65 + particle.depth);
         const targetX = pointer.x + Math.cos(particle.orbitAngle + drift) * orbit;
         const targetY = pointer.y + Math.sin(particle.orbitAngle + drift) * orbit;
@@ -129,7 +134,7 @@ function updateParticles(delta, timestamp) {
         const deltaY = targetY - particle.y;
         const distance = Math.hypot(deltaX, deltaY) || 1;
         const proximity = 1 - originDistance / influence;
-        const strength = proximity * (pointer.down ? 0.19 : 0.135) * (0.72 + particle.depth * 0.55);
+        const strength = proximity * (pointer.down ? 0.17 : 0.12) * (0.72 + particle.depth * 0.55);
 
         particle.velocityX += (deltaX / distance) * strength * delta;
         particle.velocityY += (deltaY / distance) * strength * delta;
@@ -153,7 +158,6 @@ function updateParticles(delta, timestamp) {
       particle.velocityY *= 0.4;
     }
 
-    const motionScale = reducedMotionMedia.matches ? 0.2 : 1;
     particle.renderX = particle.x + Math.cos(timestamp * 0.0005 + particle.phase) * particle.depth * 1.7 * motionScale;
     particle.renderY = particle.y + Math.sin(timestamp * 0.00042 + particle.phase) * particle.depth * 1.45 * motionScale;
   }
@@ -162,34 +166,51 @@ function updateParticles(delta, timestamp) {
 function drawParticleWeb() {
   const mobile = mobileMode();
   const threshold = mobile
-    ? Math.min(135, Math.max(102, Math.min(width, height) * 0.15))
-    : Math.min(165, Math.max(120, Math.min(width, height) * 0.16));
+    ? Math.min(128, Math.max(98, Math.min(width, height) * 0.145))
+    : Math.min(155, Math.max(112, Math.min(width, height) * 0.15));
+  const buckets = new Map();
 
-  for (let firstIndex = 0; firstIndex < particles.length; firstIndex += 1) {
-    const first = particles[firstIndex];
+  for (const particle of particles) {
+    const column = Math.floor(particle.renderX / threshold);
+    const row = Math.floor(particle.renderY / threshold);
+    const key = `${column}:${row}`;
+    const bucket = buckets.get(key) || [];
+    bucket.push(particle);
+    buckets.set(key, bucket);
+  }
 
-    for (let secondIndex = firstIndex + 1; secondIndex < particles.length; secondIndex += 1) {
-      const second = particles[secondIndex];
-      const distance = Math.hypot(first.renderX - second.renderX, first.renderY - second.renderY);
-      if (distance >= threshold) continue;
+  for (const first of particles) {
+    const column = Math.floor(first.renderX / threshold);
+    const row = Math.floor(first.renderY / threshold);
 
-      const depth = Math.min(first.depth, second.depth);
-      const alpha = (1 - distance / threshold) * (mobile ? 0.16 : 0.27) * depth;
-      context.strokeStyle = `rgba(178, 169, 255, ${alpha})`;
-      context.lineWidth = mobile ? 0.62 : 0.62 + depth * 0.48;
-      context.beginPath();
-      context.moveTo(first.renderX, first.renderY);
-      context.lineTo(second.renderX, second.renderY);
-      context.stroke();
+    for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+      for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+        const nearby = buckets.get(`${column + offsetX}:${row + offsetY}`) || [];
+
+        for (const second of nearby) {
+          if (second.index <= first.index) continue;
+          const distance = Math.hypot(first.renderX - second.renderX, first.renderY - second.renderY);
+          if (distance >= threshold) continue;
+
+          const depth = Math.min(first.depth, second.depth);
+          const alpha = (1 - distance / threshold) * (mobile ? 0.14 : 0.22) * depth;
+          context.strokeStyle = `rgba(178, 169, 255, ${alpha})`;
+          context.lineWidth = mobile ? 0.58 : 0.58 + depth * 0.42;
+          context.beginPath();
+          context.moveTo(first.renderX, first.renderY);
+          context.lineTo(second.renderX, second.renderY);
+          context.stroke();
+        }
+      }
     }
   }
 }
 
 function drawPointerLines() {
-  if (!pointer.active || mobileMode()) return;
+  if (!pointer.active || mobileMode() || reducedMotionMedia.matches) return;
 
-  const reach = pointer.down ? 315 : 285;
-  const maximumLines = pointer.down ? 17 : 13;
+  const reach = pointer.down ? 300 : 270;
+  const maximumLines = pointer.down ? 13 : 10;
   const nearby = particles
     .map((particle) => ({
       particle,
@@ -201,7 +222,7 @@ function drawPointerLines() {
 
   for (const { particle, distance } of nearby) {
     const proximity = 1 - distance / reach;
-    const alpha = proximity * (pointer.down ? 0.58 : 0.43);
+    const alpha = proximity * (pointer.down ? 0.5 : 0.36);
     const gradient = context.createLinearGradient(
       particle.renderX,
       particle.renderY,
@@ -212,31 +233,23 @@ function drawPointerLines() {
     gradient.addColorStop(1, `rgba(225, 219, 255, ${alpha})`);
 
     context.strokeStyle = gradient;
-    context.lineWidth = pointer.down ? 1.18 : 0.92;
+    context.lineWidth = pointer.down ? 1.05 : 0.85;
     context.beginPath();
     context.moveTo(particle.renderX, particle.renderY);
     context.lineTo(pointer.x, pointer.y);
     context.stroke();
   }
-
-  const glow = context.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, pointer.down ? 34 : 25);
-  glow.addColorStop(0, pointer.down ? 'rgba(230, 224, 255, 0.68)' : 'rgba(218, 211, 255, 0.52)');
-  glow.addColorStop(1, 'rgba(154, 137, 255, 0)');
-  context.fillStyle = glow;
-  context.beginPath();
-  context.arc(pointer.x, pointer.y, pointer.down ? 34 : 25, 0, Math.PI * 2);
-  context.fill();
 }
 
 function drawParticles(timestamp) {
   const mobile = mobileMode();
 
   for (const particle of particles) {
-    const pulse = 1 + Math.sin(timestamp * 0.0014 + particle.phase) * (reducedMotionMedia.matches ? 0.02 : 0.1);
+    const pulse = 1 + Math.sin(timestamp * 0.0014 + particle.phase) * (reducedMotionMedia.matches ? 0 : 0.08);
     context.beginPath();
-    context.fillStyle = `rgba(230, 233, 255, ${particle.alpha * (mobile ? 0.82 : 1)})`;
-    context.shadowColor = `rgba(167, 155, 255, ${particle.alpha * (mobile ? 0.42 : 0.68)})`;
-    context.shadowBlur = mobile ? 4 : 5 + particle.depth * 7;
+    context.fillStyle = `rgba(230, 233, 255, ${particle.alpha * (mobile ? 0.8 : 1)})`;
+    context.shadowColor = `rgba(167, 155, 255, ${particle.alpha * (mobile ? 0.36 : 0.58)})`;
+    context.shadowBlur = mobile ? 3 : 4 + particle.depth * 5;
     context.arc(particle.renderX, particle.renderY, particle.radius * pulse, 0, Math.PI * 2);
     context.fill();
   }
@@ -244,26 +257,46 @@ function drawParticles(timestamp) {
   context.shadowBlur = 0;
 }
 
-function animate(timestamp = 0) {
+function renderFrame(timestamp) {
   const delta = Math.min(2.1, Math.max(0.4, (timestamp - lastFrame) / 16.67));
   lastFrame = timestamp;
 
-  if (!document.hidden) {
-    context.clearRect(0, 0, width, height);
-    updateParticles(delta, timestamp);
-    drawParticleWeb();
-    drawPointerLines();
-    drawParticles(timestamp);
+  context.clearRect(0, 0, width, height);
+  updateParticles(delta, timestamp);
+  drawParticleWeb();
+  drawPointerLines();
+  drawParticles(timestamp);
+}
+
+function animate(timestamp = 0) {
+  animationFrame = 0;
+  if (document.hidden || reducedMotionMedia.matches) return;
+
+  const minimumFrameTime = mobileMode() ? 1000 / 30 : 0;
+  if (!minimumFrameTime || timestamp - lastRenderedAt >= minimumFrameTime) {
+    lastRenderedAt = timestamp;
+    renderFrame(timestamp);
   }
 
-  requestAnimationFrame(animate);
+  animationFrame = requestAnimationFrame(animate);
+}
+
+function startAnimation() {
+  if (animationFrame || document.hidden || reducedMotionMedia.matches) return;
+  lastFrame = performance.now();
+  animationFrame = requestAnimationFrame(animate);
+}
+
+function stopAnimation() {
+  if (!animationFrame) return;
+  cancelAnimationFrame(animationFrame);
+  animationFrame = 0;
 }
 
 window.addEventListener('pointermove', (event) => {
   if (event.pointerType === 'touch' || coarsePointerMedia.matches) return;
   setPointerFromClient(event.clientX, event.clientY);
   pointer.active = true;
-  pointer.type = event.pointerType || 'mouse';
 }, { passive: true });
 
 window.addEventListener('pointerdown', (event) => {
@@ -271,7 +304,6 @@ window.addEventListener('pointerdown', (event) => {
   setPointerFromClient(event.clientX, event.clientY);
   pointer.active = true;
   pointer.down = true;
-  pointer.type = event.pointerType || 'mouse';
 }, { passive: true });
 
 window.addEventListener('pointerup', () => {
@@ -295,8 +327,18 @@ window.addEventListener('blur', () => {
 window.addEventListener('resize', scheduleResize, { passive: true });
 window.addEventListener('orientationchange', scheduleResize, { passive: true });
 window.visualViewport?.addEventListener('resize', scheduleResize, { passive: true });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopAnimation();
+  else startAnimation();
+});
+
 coarsePointerMedia.addEventListener?.('change', scheduleResize);
-reducedMotionMedia.addEventListener?.('change', scheduleResize);
+reducedMotionMedia.addEventListener?.('change', () => {
+  stopAnimation();
+  resizeCanvas();
+  startAnimation();
+});
 
 resizeCanvas();
-requestAnimationFrame(animate);
+startAnimation();
