@@ -26,8 +26,10 @@ permissions:
   id-token: write
 
 concurrency:
-  group: publish-profile-site-${{ github.ref }}
-  cancel-in-progress: false
+  # Reuse the legacy group so a fresh run cancels the stale queued
+  # Steam Status Tracker deployment left by the deleted workflow.
+  group: steam-status-pages
+  cancel-in-progress: true
 
 jobs:
   validate:
