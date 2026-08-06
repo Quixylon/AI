@@ -1,24 +1,14 @@
-name: Stop Site Automation
+name: Site Automation (Paused)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/steam-status-pages.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: pages-deploy
-  cancel-in-progress: true
-
 jobs:
-  stop:
+  paused:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 2
     steps:
-      - name: Stop previous site jobs
-        run: echo "Site automation paused"
+      - run: echo "Site automation is paused"
