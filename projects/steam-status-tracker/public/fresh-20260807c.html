@@ -9,36 +9,36 @@
   <meta name="theme-color" content="#05060a" />
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="Профиль Qu’lon и трекер." />
-  <meta name="quixylon-build" content="liquid-tracker-cleanup-20260807c" />
+  <meta name="quixylon-build" content="liquid-runtime-fixed-20260807d" />
   <title>Qu’lon</title>
-  <link rel="stylesheet" href="./experience-1.css?v=4" />
-  <link rel="stylesheet" href="./experience-2.css?v=4" />
-  <link rel="stylesheet" href="./experience-3.css?v=4" />
-  <link rel="stylesheet" href="./experience-4.css?v=4" />
-  <link rel="stylesheet" href="./legacy-blueprint.css?v=2" />
-  <link rel="stylesheet" href="./liquid-tracker.css?v=3" />
+  <link rel="stylesheet" href="./experience-1.css?v=5" />
+  <link rel="stylesheet" href="./experience-2.css?v=5" />
+  <link rel="stylesheet" href="./experience-3.css?v=5" />
+  <link rel="stylesheet" href="./experience-4.css?v=5" />
+  <link rel="stylesheet" href="./legacy-blueprint.css?v=3" />
+  <link rel="stylesheet" href="./liquid-tracker.css?v=4" />
 </head>
 <body>
   <main style="min-height:100dvh;display:grid;place-items:center;color:#9ca9bd;font-family:system-ui;background:#05060a">Загрузка…</main>
   <script>
     (async () => {
-      const parts = ["./experience-shell-1.html?v=4", "./experience-shell-2.html?v=4", "./experience-shell-3.html?v=4"];
+      const parts = ["./experience-shell-1.html?v=5", "./experience-shell-2.html?v=5", "./experience-shell-3.html?v=5"];
       try {
         const responses = await Promise.all(parts.map(path => fetch(path, { cache: 'no-store' })));
         if (responses.some(response => !response.ok)) throw new Error('Не удалось загрузить интерфейс');
         document.body.innerHTML = (await Promise.all(responses.map(response => response.text()))).join('');
         const scripts = [
-          "./experience-1.js?v=4",
-          "./experience-2.js?v=4",
-          "./experience-3a.js?v=4",
-          "./experience-3b.js?v=4",
-          "./experience-3c.js?v=4",
-          "./experience-4.js?v=4",
-          "./experience-5.js?v=4",
-          "./experience-fixes.js?v=4",
-          "./legacy-blueprint.js?v=2",
-          "./liquid-legacy-bridge.js?v=3",
-          "./liquid-tracker.js?v=3"
+          "./experience-1.js?v=5",
+          "./experience-2.js?v=5",
+          "./experience-3a.js?v=5",
+          "./experience-3b.js?v=5",
+          "./experience-3c.js?v=5",
+          "./experience-4.js?v=5",
+          "./experience-5.js?v=5",
+          "./experience-fixes.js?v=5",
+          "./legacy-blueprint.js?v=3",
+          "./liquid-legacy-bridge.js?v=4",
+          "./liquid-tracker-loader.js?v=1"
         ];
         for (const source of scripts) {
           await new Promise((resolve, reject) => {
