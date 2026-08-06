@@ -1,5 +1,5 @@
 name: Publish GitHub Pages
-run-name: Publish current profile site
+run-name: Refresh data and publish profile site
 
 on:
   push:
@@ -8,30 +8,74 @@ on:
     paths:
       - .github/workflows/pages-publish.yml
       - projects/steam-status-tracker/public/**
+      - projects/steam-status-tracker/scripts/**
+      - projects/steam-status-tracker/package.json
   pull_request:
     branches:
       - main
     paths:
       - .github/workflows/pages-publish.yml
       - projects/steam-status-tracker/public/**
+      - projects/steam-status-tracker/scripts/**
+      - projects/steam-status-tracker/package.json
+  schedule:
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: profile-pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        if: github.event_name != 'pull_request'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Refresh Steam data
+        id: steam
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        env:
+          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+          STEAM_ID64: ${{ vars.STEAM_ID64 }}
+          STEAM_VANITY: ${{ vars.STEAM_VANITY }}
+        run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
+
+      - name: Save meaningful Steam changes
+        if: steps.steam.outputs.persist == 'true'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add projects/steam-status-tracker/public/data/status.json
+          git add projects/steam-status-tracker/public/data/history.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update Steam activity [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Validate project
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        working-directory: projects/steam-status-tracker
+        run: npm run check
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -43,7 +87,7 @@ jobs:
 
   deploy:
     if: github.event_name != 'pull_request'
-    needs: build
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
