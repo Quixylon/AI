@@ -51,12 +51,26 @@ function stripUrlSuffix(value) {
   return value.split('#', 1)[0].split('?', 1)[0];
 }
 
+function decodeReference(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function isExternalReference(value) {
-  return /^(?:[a-z]+:|\/\/|#)/i.test(value);
+  const normalized = value.trim();
+  const decoded = decodeReference(normalized);
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(normalized)
+    || decoded.startsWith('#');
 }
 
 async function validateLocalReference(sourceFile, rawReference) {
-  const reference = stripUrlSuffix(rawReference.trim());
+  const trimmedReference = rawReference.trim();
+  if (!trimmedReference || isExternalReference(trimmedReference)) return;
+
+  const reference = stripUrlSuffix(trimmedReference);
   if (!reference || isExternalReference(reference)) return;
 
   const resolved = path.resolve(path.dirname(sourceFile), reference);
