@@ -22,9 +22,13 @@ async function readJson(filePath, fallback) {
   try {
     return JSON.parse(await readFile(filePath, 'utf8'));
   } catch (error) {
-    if (error.code === 'ENOENT' || error instanceof SyntaxError) return fallback;
+    if (error instanceof SyntaxError || error?.code === 'ENOENT') return fallback;
     throw error;
   }
+}
+
+async function writeJson(filePath, value) {
+  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
 async function setOutput(name, value) {
@@ -66,7 +70,7 @@ async function fetchSteamJson(endpoint, description) {
   const response = await fetch(endpoint, {
     signal: AbortSignal.timeout(15_000),
     headers: {
-      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.5'
+      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.6'
     }
   });
 
@@ -96,25 +100,23 @@ async function resolveSteamId(apiKey) {
   return resolvedId;
 }
 
-async function keepPreviousDataOnTemporaryFailure(error, previousStatus, history) {
-  console.error(error instanceof Error ? error.message : error);
+async function keepLastSuccessfulData(message, previousStatus, history) {
+  console.error(message);
   await setOutput('persist', 'false');
   await setOutput('notify', 'false');
 
   if (previousStatus?.configured && previousStatus?.player) {
-    console.log('Steam is temporarily unavailable; keeping the last successful data.');
+    console.log('Keeping the last successful Steam data.');
     return;
   }
 
-  const placeholder = {
+  await writeJson(statusPath, {
     configured: false,
-    message: 'Steam временно недоступен. Следующая проверка выполнится автоматически.',
+    message: 'Steam-мониторинг временно недоступен. Следующая проверка выполнится автоматически.',
     checkedAt: null,
     player: null
-  };
-
-  await writeFile(statusPath, `${JSON.stringify(placeholder, null, 2)}\n`);
-  await writeFile(historyPath, `${JSON.stringify(Array.isArray(history) ? history : [], null, 2)}\n`);
+  });
+  await writeJson(historyPath, Array.isArray(history) ? history : []);
 }
 
 await mkdir(dataDirectory, { recursive: true });
@@ -124,91 +126,86 @@ const previousStatus = await readJson(statusPath, null);
 const history = await readJson(historyPath, []);
 
 if (!apiKey) {
-  const placeholder = {
-    configured: false,
-    message: 'Добавьте STEAM_API_KEY в GitHub Secrets, затем запустите workflow вручную.',
-    checkedAt: null,
-    player: null
-  };
+  await keepLastSuccessfulData('STEAM_API_KEY is not configured.', previousStatus, history);
+} else {
+  try {
+    const steamId = await resolveSteamId(apiKey);
+    const endpoint = new URL('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/');
+    endpoint.searchParams.set('key', apiKey);
+    endpoint.searchParams.set('steamids', steamId);
 
-  await writeFile(statusPath, `${JSON.stringify(placeholder, null, 2)}\n`);
-  await writeFile(historyPath, `${JSON.stringify(Array.isArray(history) ? history : [], null, 2)}\n`);
-  await setOutput('persist', String(previousStatus?.configured === true));
-  await setOutput('notify', 'false');
-  console.log('Steam monitoring is not configured yet.');
-  process.exit(0);
-}
+    const payload = await fetchSteamJson(endpoint, 'Steam Web API');
+    const steamPlayer = payload?.response?.players?.[0];
 
-try {
-  const steamId = await resolveSteamId(apiKey);
-  const endpoint = new URL('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/');
-  endpoint.searchParams.set('key', apiKey);
-  endpoint.searchParams.set('steamids', steamId);
+    if (!steamPlayer) {
+      throw new Error('Steam profile was not found. Check profile visibility and identifier settings.');
+    }
 
-  const payload = await fetchSteamJson(endpoint, 'Steam Web API');
-  const steamPlayer = payload?.response?.players?.[0];
+    const checkedAt = new Date().toISOString();
+    const personaState = personaStates[steamPlayer.personastate] || 'unknown';
+    const status = steamPlayer.gameextrainfo ? 'in-game' : personaState;
 
-  if (!steamPlayer) {
-    throw new Error('Steam profile was not found. Check profile visibility and identifier settings.');
-  }
+    const player = {
+      steamId: steamPlayer.steamid,
+      name: steamPlayer.personaname,
+      profileUrl: steamPlayer.profileurl,
+      avatar: steamPlayer.avatarfull,
+      status,
+      personaState,
+      gameName: steamPlayer.gameextrainfo || null,
+      gameId: steamPlayer.gameid || null,
+      lastLogoff: steamPlayer.lastlogoff
+        ? new Date(steamPlayer.lastlogoff * 1000).toISOString()
+        : null
+    };
 
-  const checkedAt = new Date().toISOString();
-  const personaState = personaStates[steamPlayer.personastate] || 'unknown';
-  const status = steamPlayer.gameextrainfo ? 'in-game' : personaState;
+    const previousPlayer = previousStatus?.player || null;
+    const presenceChanged =
+      !previousStatus?.configured ||
+      previousPlayer?.status !== player.status ||
+      previousPlayer?.gameId !== player.gameId;
 
-  const player = {
-    steamId: steamPlayer.steamid,
-    name: steamPlayer.personaname,
-    profileUrl: steamPlayer.profileurl,
-    avatar: steamPlayer.avatarfull,
-    status,
-    personaState,
-    gameName: steamPlayer.gameextrainfo || null,
-    gameId: steamPlayer.gameid || null,
-    lastLogoff: steamPlayer.lastlogoff
-      ? new Date(steamPlayer.lastlogoff * 1000).toISOString()
-      : null
-  };
+    const profileChanged =
+      JSON.stringify(comparablePlayer(previousPlayer)) !== JSON.stringify(comparablePlayer(player));
 
-  const newStatus = {
-    configured: true,
-    checkedAt,
-    player
-  };
+    const nextHistory = Array.isArray(history)
+      ? history
+        .filter((entry) => entry && entry.startedAt)
+        .map((entry) => ({ ...entry }))
+      : [];
 
-  const previousPlayer = previousStatus?.player || null;
-  const presenceChanged =
-    !previousStatus?.configured ||
-    previousPlayer?.status !== player.status ||
-    previousPlayer?.gameId !== player.gameId;
+    const activeEntry = nextHistory.at(-1);
+    const historyNeedsRepair =
+      !activeEntry ||
+      Boolean(activeEntry.endedAt) ||
+      activeEntry.status !== player.status ||
+      activeEntry.gameId !== player.gameId;
 
-  const profileChanged =
-    JSON.stringify(comparablePlayer(previousPlayer)) !== JSON.stringify(comparablePlayer(player));
+    if (presenceChanged || historyNeedsRepair) {
+      closeActiveHistoryEntry(nextHistory, checkedAt);
+      nextHistory.push({
+        status: player.status,
+        personaState: player.personaState,
+        gameName: player.gameName,
+        gameId: player.gameId,
+        startedAt: checkedAt,
+        endedAt: null,
+        durationSeconds: null
+      });
+    }
 
-  const nextHistory = Array.isArray(history)
-    ? history.filter((entry) => entry && entry.startedAt).map((entry) => ({ ...entry }))
-    : [];
-
-  if (presenceChanged) {
-    closeActiveHistoryEntry(nextHistory, checkedAt);
-    nextHistory.push({
-      status: player.status,
-      personaState: player.personaState,
-      gameName: player.gameName,
-      gameId: player.gameId,
-      startedAt: checkedAt,
-      endedAt: null,
-      durationSeconds: null
+    await writeJson(statusPath, {
+      configured: true,
+      checkedAt,
+      player
     });
+    await writeJson(historyPath, nextHistory.slice(-500));
+    await setOutput('persist', String(profileChanged || presenceChanged || historyNeedsRepair));
+    await setOutput('notify', String(presenceChanged));
+
+    console.log(`Updated ${player.name}: ${player.status}${player.gameName ? ` — ${player.gameName}` : ''}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await keepLastSuccessfulData(message, previousStatus, history);
   }
-
-  const trimmedHistory = nextHistory.slice(-500);
-  await writeFile(statusPath, `${JSON.stringify(newStatus, null, 2)}\n`);
-  await writeFile(historyPath, `${JSON.stringify(trimmedHistory, null, 2)}\n`);
-  await setOutput('persist', String(profileChanged || presenceChanged));
-  await setOutput('notify', String(presenceChanged));
-
-  console.log(`Updated ${player.name}: ${player.status}${player.gameName ? ` — ${player.gameName}` : ''}`);
-} catch (error) {
-  await keepPreviousDataOnTemporaryFailure(error, previousStatus, history);
 }
