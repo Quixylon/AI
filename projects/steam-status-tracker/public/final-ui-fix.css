@@ -1,0 +1,62 @@
+/* Character-wave, viewport-fit and selection overrides. */
+
+body,
+body *:not(input):not(textarea):not([contenteditable="true"]) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+img,
+svg {
+  -webkit-user-drag: none !important;
+}
+
+#profileDescription {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+#profileDescription .description-word {
+  display: inline-block !important;
+  position: relative !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  translate: none !important;
+  animation: none !important;
+}
+
+#profileDescription .description-char {
+  display: inline-block !important;
+  position: relative !important;
+  opacity: 1;
+  filter: none;
+  translate: 0 0;
+  animation: none !important;
+  transform-origin: 50% 70%;
+  will-change: translate, transform, color, text-shadow, opacity, filter;
+}
+
+@media (min-width: 721px) {
+  body.profile-desktop-locked #profileScreen.is-active {
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+
+  body.profile-desktop-locked #profileCard {
+    --profile-fit-y: 0px;
+    align-self: center !important;
+    justify-self: center !important;
+    translate: 0 var(--profile-fit-y) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #profileDescription .description-char {
+    opacity: 1 !important;
+    filter: none !important;
+    translate: 0 0 !important;
+    transform: none !important;
+    text-shadow: none !important;
+  }
+}

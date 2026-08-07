@@ -1,10 +1,11 @@
 (() => {
   'use strict';
 
-  const DESCRIPTION_MOTION_VERSION = '6';
+  const DESCRIPTION_MOTION_VERSION = '7';
   const reduceMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
   let descriptionMotionInstalled = false;
   let fitFrame = 0;
+  let fitCorrectionFrame = 0;
   let cardResizeObserver = null;
   let routeObserver = null;
   let shineFrame = 0;
@@ -32,87 +33,134 @@
     return panel;
   }
 
-  function ensureDescriptionWords() {
+  function splitGraphemes(text) {
+    if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+      const segmenter = new Intl.Segmenter('ru', { granularity: 'grapheme' });
+      return [...segmenter.segment(text)].map((part) => part.segment);
+    }
+    return Array.from(text);
+  }
+
+  function ensureDescriptionCharacters() {
     const description = document.getElementById('profileDescription');
     if (!description) return null;
 
-    if (!description.querySelector('.description-word')) {
-      const text = description.textContent.replace(/\s+/g, ' ').trim();
-      if (!text) return description;
-      description.replaceChildren();
-      description.setAttribute('aria-label', text);
-      text.split(/\s+/).forEach((word, index, words) => {
-        const span = document.createElement('span');
-        span.className = 'description-word';
-        span.textContent = word;
-        description.append(span);
-        if (index < words.length - 1) description.append(document.createTextNode(' '));
-      });
+    if (
+      description.dataset.liveCharacterMotion === DESCRIPTION_MOTION_VERSION &&
+      description.querySelector('.description-char')
+    ) {
+      return description;
     }
 
+    const text = (description.getAttribute('aria-label') || description.textContent)
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!text) return description;
+
+    // Kill every older word-level Web Animation before replacing the markup.
+    description.querySelectorAll('*').forEach((node) => {
+      node.getAnimations?.().forEach((animation) => animation.cancel());
+    });
+
+    description.dataset.liveCharacterMotion = DESCRIPTION_MOTION_VERSION;
+    description.replaceChildren();
+    description.setAttribute('aria-label', text);
+
+    let globalCharacterIndex = 0;
+    const wordNodes = [];
+    const words = text.split(/\s+/);
+
+    words.forEach((wordText, wordIndex) => {
+      const word = document.createElement('span');
+      word.className = 'description-word';
+      word.dataset.wordIndex = String(wordIndex);
+      word.style.setProperty('--word-index', String(wordIndex));
+
+      splitGraphemes(wordText).forEach((character, characterIndex) => {
+        const span = document.createElement('span');
+        span.className = 'description-char';
+        span.textContent = character;
+        span.dataset.wordIndex = String(wordIndex);
+        span.dataset.characterIndex = String(characterIndex);
+        span.dataset.globalCharacterIndex = String(globalCharacterIndex++);
+        span.style.setProperty('--word-index', String(wordIndex));
+        span.style.setProperty('--char-index', String(characterIndex));
+        word.append(span);
+      });
+
+      // Mark the wrapper as already handled by backup-exact-card.js so its
+      // legacy word animation cannot get reinstalled by its MutationObserver.
+      word.dataset.backupExactWave = '1';
+      wordNodes.push(word);
+      description.append(word);
+      if (wordIndex < words.length - 1) description.append(document.createTextNode(' '));
+    });
+
+    description.dataset.backupExactWave = `${description.textContent.trim()}::${wordNodes.length}`;
     return description;
   }
 
-  function resetDescriptionWord(word) {
-    word.getAnimations?.().forEach((animation) => animation.cancel());
-    word.style.setProperty('animation', 'none', 'important');
-    word.style.setProperty('position', 'relative', 'important');
-    word.style.removeProperty('top');
-    word.style.setProperty('opacity', '1');
-    word.style.setProperty('filter', 'none');
-    word.style.setProperty('translate', '0 0');
+  function resetDescriptionCharacter(character) {
+    character.getAnimations?.().forEach((animation) => animation.cancel());
+    character.style.setProperty('animation', 'none', 'important');
+    character.style.setProperty('opacity', '1');
+    character.style.setProperty('filter', 'none');
+    character.style.setProperty('translate', '0 0');
+    character.style.setProperty('color', '#c7ccd7');
+    character.style.setProperty('text-shadow', 'none');
   }
 
   function installDescriptionMotionOnce() {
     if (descriptionMotionInstalled) return;
 
-    const description = ensureDescriptionWords();
+    const description = ensureDescriptionCharacters();
     if (!description) return;
 
-    const words = [...description.querySelectorAll('.description-word')];
-    if (!words.length) return;
+    const characters = [...description.querySelectorAll('.description-char')];
+    if (!characters.length) return;
 
     descriptionMotionInstalled = true;
     description.dataset.liveDescriptionMotion = DESCRIPTION_MOTION_VERSION;
 
-    words.forEach((word, index) => {
-      resetDescriptionWord(word);
-      word.dataset.liveDescriptionMotion = DESCRIPTION_MOTION_VERSION;
-      word.style.setProperty('--word-index', String(index));
+    characters.forEach((character) => {
+      const wordIndex = Number(character.dataset.wordIndex || 0);
+      const characterIndex = Number(character.dataset.characterIndex || 0);
+      resetDescriptionCharacter(character);
+      character.dataset.liveDescriptionMotion = DESCRIPTION_MOTION_VERSION;
 
-      if (reduceMotionQuery.matches || typeof word.animate !== 'function') return;
+      if (reduceMotionQuery.matches || typeof character.animate !== 'function') return;
 
-      // Entrance is one-shot for this document load. It never gets reinstalled
-      // by status updates, route changes, BUILD ticks or resizing.
-      word.animate(
+      // One-time entrance. Characters inside the same word enter almost
+      // together, with only a tiny intra-word stagger.
+      character.animate(
         [
-          { opacity: 0, filter: 'blur(4px)' },
-          { opacity: 1, filter: 'blur(0)' }
+          { opacity: 0, filter: 'blur(3.5px)', transform: 'translate3d(0,5px,0)' },
+          { opacity: 1, filter: 'blur(0)', transform: 'translate3d(0,0,0)' }
         ],
         {
-          duration: 460,
-          delay: 70 + index * 28,
+          duration: 430,
+          delay: 55 + wordIndex * 32 + characterIndex * 9,
           easing: 'cubic-bezier(.2,.82,.2,1)',
           fill: 'both'
         }
       );
 
-      // Continuous wave: short cycle, small phase shift and linear travel
-      // between many points so every word is always moving instead of waiting
-      // several seconds for its next lift.
-      word.animate(
+      // Permanent character wave. Letters within one word have a small phase
+      // difference, while the whole word gets a larger shared phase shift.
+      // This keeps each word visually coherent without moving it as one block.
+      character.animate(
         [
           { offset: 0,    translate: '0 0px',    color: '#c7ccd7', textShadow: '0 0 0 rgba(172,159,255,0)' },
-          { offset: 0.16, translate: '0 -1.2px', color: '#d5d9e3', textShadow: '0 0 6px rgba(104,197,255,.06)' },
-          { offset: 0.32, translate: '0 -2.5px', color: '#eef0f6', textShadow: '0 0 11px rgba(172,159,255,.18), 0 0 4px rgba(104,197,255,.08)' },
-          { offset: 0.50, translate: '0 -1.35px', color: '#dde1ea', textShadow: '0 0 8px rgba(172,159,255,.10)' },
-          { offset: 0.68, translate: '0 0.35px', color: '#cdd2dd', textShadow: '0 0 4px rgba(104,197,255,.04)' },
-          { offset: 0.84, translate: '0 -0.9px', color: '#d9dde7', textShadow: '0 0 7px rgba(172,159,255,.08)' },
+          { offset: 0.15, translate: '0 -0.9px', color: '#d3d7e1', textShadow: '0 0 5px rgba(104,197,255,.05)' },
+          { offset: 0.31, translate: '0 -2.15px', color: '#eef0f6', textShadow: '0 0 10px rgba(172,159,255,.16), 0 0 4px rgba(104,197,255,.07)' },
+          { offset: 0.48, translate: '0 -1.25px', color: '#dde1ea', textShadow: '0 0 7px rgba(172,159,255,.09)' },
+          { offset: 0.65, translate: '0 0.25px', color: '#cdd2dd', textShadow: '0 0 3px rgba(104,197,255,.035)' },
+          { offset: 0.82, translate: '0 -0.75px', color: '#d9dde7', textShadow: '0 0 6px rgba(172,159,255,.07)' },
           { offset: 1,    translate: '0 0px',    color: '#c7ccd7', textShadow: '0 0 0 rgba(172,159,255,0)' }
         ],
         {
-          duration: 2300,
-          delay: index * -85,
+          duration: 1750,
+          delay: -(wordIndex * 78 + characterIndex * 14),
           iterations: Infinity,
           easing: 'linear',
           fill: 'both'
@@ -125,22 +173,20 @@
     const description = document.getElementById('profileDescription');
     if (!description) return;
 
-    description.querySelectorAll('.description-word').forEach((word) => {
-      word.getAnimations?.().forEach((animation) => animation.cancel());
-      word.style.setProperty('opacity', '1');
-      word.style.setProperty('filter', 'none');
-      word.style.setProperty('translate', '0 0');
-      word.style.setProperty('color', '#c7ccd7');
-      word.style.setProperty('text-shadow', 'none');
+    description.querySelectorAll('.description-char').forEach((character) => {
+      character.getAnimations?.().forEach((animation) => animation.cancel());
+      character.style.setProperty('opacity', '1');
+      character.style.setProperty('filter', 'none');
+      character.style.setProperty('translate', '0 0');
+      character.style.setProperty('transform', 'none');
+      character.style.setProperty('color', '#c7ccd7');
+      character.style.setProperty('text-shadow', 'none');
     });
   }
 
   function syncGlassShine() {
     shineFrame = 0;
 
-    // Update every glass surface from the same page-space pointer. Percentages
-    // are deliberately not clamped: when the cursor moves outside a card/button,
-    // the light moves outside it as well instead of freezing on the last edge.
     document.querySelectorAll('.backup-glass').forEach((element) => {
       const rect = element.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
@@ -191,17 +237,35 @@
     if (!card) return;
     if (!locked) {
       card.style.removeProperty('--profile-fit-scale');
+      card.style.removeProperty('--profile-fit-y');
       return;
     }
 
     cancelAnimationFrame(fitFrame);
+    cancelAnimationFrame(fitCorrectionFrame);
     fitFrame = requestAnimationFrame(() => {
       const naturalHeight = card.offsetHeight;
       if (!naturalHeight) return;
 
-      const availableHeight = Math.max(320, window.innerHeight - 40);
+      // Keep a real visual gutter above and below the transformed card. The old
+      // 0.78 floor was what allowed the bottom border to be clipped on shorter
+      // desktop viewports.
+      const availableHeight = Math.max(260, window.innerHeight - 72);
       const scale = Math.min(1, availableHeight / naturalHeight);
-      card.style.setProperty('--profile-fit-scale', String(Math.max(0.78, scale)));
+      card.style.setProperty('--profile-fit-scale', String(Math.max(0.5, scale)));
+      card.style.setProperty('--profile-fit-y', '0px');
+
+      fitCorrectionFrame = requestAnimationFrame(() => {
+        const rect = card.getBoundingClientRect();
+        const topLimit = 22;
+        const bottomLimit = window.innerHeight - 22;
+        let shift = 0;
+
+        if (rect.bottom > bottomLimit) shift -= rect.bottom - bottomLimit;
+        if (rect.top + shift < topLimit) shift += topLimit - (rect.top + shift);
+
+        card.style.setProperty('--profile-fit-y', `${shift.toFixed(2)}px`);
+      });
     });
   }
 
@@ -264,20 +328,30 @@
     document.getElementById('profileCard')?.classList.add('backup-glass');
   }
 
+  function disableImageDragging(root = document) {
+    root.querySelectorAll('img').forEach((image) => {
+      image.draggable = false;
+      image.setAttribute('draggable', 'false');
+    });
+  }
+
   function initialApply() {
     installGlass();
     ensureUnifiedIntroPanel();
     installDescriptionMotionOnce();
+    disableImageDragging();
     fitDesktopProfile();
   }
 
   addEventListener('pageshow', () => {
     installGlass();
     ensureUnifiedIntroPanel();
+    disableImageDragging();
     fitDesktopProfile();
     requestAnimationFrame(syncGlassShine);
   });
   addEventListener('hashchange', () => requestAnimationFrame(() => {
+    disableImageDragging();
     fitDesktopProfile();
     syncGlassShine();
   }));
