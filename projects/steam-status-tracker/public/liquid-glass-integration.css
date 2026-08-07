@@ -1,7 +1,6 @@
 /* LiquidGlass integration layer.
    WebGL effect is provided by @ybouane/liquidglass. */
 
-/* Slightly larger type everywhere without redesigning the proportions. */
 html {
   font-size: 17px !important;
 }
@@ -37,9 +36,7 @@ html {
   letter-spacing: normal;
 }
 
-/* Make selection impossible visually and behaviorally. JS additionally clears
-   any existing Selection object because CSS alone does not always remove an
-   already-created browser selection highlight. */
+/* Hard no-selection everywhere except actual editable fields. */
 html,
 body,
 body *:not(input):not(textarea):not([contenteditable="true"]),
@@ -64,8 +61,6 @@ canvas {
   user-drag: none !important;
 }
 
-/* Keep normal interaction. Disabling selection must never disable links,
-   buttons, images or their nested labels/icons. */
 a,
 button,
 [role="button"],
@@ -82,9 +77,24 @@ button,
   touch-action: manipulation;
 }
 
-/* Every LiquidGlass root receives a real scene child. The library cannot sample
-   the root's own background, so this sibling supplies visible stars and a cursor
-   glow for the WebGL refraction to bend. */
+/* The large profile card is intentionally NOT a LiquidGlass WebGL target.
+   It keeps the proven dark backup-glass material, so the page can never be
+   washed out by an empty WebGL capture again. */
+#profileCard.backup-glass {
+  background:
+    radial-gradient(720px circle at var(--backup-shine-x, 50%) var(--backup-shine-y, 28%), rgba(164, 149, 255, .085), transparent 48%),
+    linear-gradient(155deg, rgba(27, 29, 42, .62), rgba(8, 10, 15, .50)),
+    rgba(12, 14, 21, .50) !important;
+  border-color: rgba(255,255,255,.15) !important;
+  box-shadow:
+    0 42px 135px rgba(0,0,0,.50),
+    0 0 0 1px rgba(147,130,255,.045),
+    inset 0 1px 0 rgba(255,255,255,.095),
+    inset 0 -1px 0 rgba(255,255,255,.03) !important;
+}
+
+/* LiquidGlass needs a capturable sibling scene. Keep it dark and subtle so it
+   cannot turn parent layouts into visible white panels. */
 .liquidglass-scene-root {
   position: relative !important;
   isolation: isolate !important;
@@ -93,57 +103,47 @@ button,
 .liquidglass-scene-proxy {
   position: absolute !important;
   inset: 0 !important;
-  z-index: -2 !important;
+  z-index: -1 !important;
   pointer-events: none !important;
   border-radius: inherit;
-  opacity: .92;
-  background-image:
-    radial-gradient(260px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(190, 180, 255, .24), rgba(95, 176, 255, .08) 34%, transparent 72%),
-    radial-gradient(circle, rgba(236, 239, 255, .72) 0 1px, transparent 1.45px),
-    radial-gradient(circle, rgba(147, 132, 255, .48) 0 .9px, transparent 1.35px),
-    radial-gradient(circle, rgba(105, 201, 255, .34) 0 .75px, transparent 1.2px);
-  background-position: 0 0, 3px 5px, 21px 31px, 47px 17px;
-  background-size: auto, 46px 46px, 68px 68px, 91px 91px;
-  background-attachment: scroll;
-  filter: saturate(1.12);
+  opacity: .28;
+  background:
+    radial-gradient(240px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(184,172,255,.30), rgba(90,170,255,.10) 35%, transparent 72%),
+    radial-gradient(circle, rgba(236,239,255,.74) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(147,132,255,.46) 0 .85px, transparent 1.3px),
+    linear-gradient(145deg, rgba(18,21,31,.72), rgba(7,9,15,.74));
+  background-position: 0 0, 4px 7px, 29px 23px, 0 0;
+  background-size: auto, 52px 52px, 78px 78px, auto;
 }
 
-/* Before/after LiquidGlass initializes, clear the old CSS glass paint so the
-   WebGL canvas is actually visible. */
+/* Keep a dark substrate under the WebGL output. The shader canvas now sits
+   above the substrate instead of behind a transparent element. */
 .liquidglass-preparing,
 .liquidglass-ready {
-  background: transparent !important;
-  background-image: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-
-.liquidglass-preparing.backup-glass,
-.liquidglass-ready.backup-glass {
-  border-color: transparent !important;
-}
-
-.liquidglass-preparing.backup-glass::before,
-.liquidglass-preparing.backup-glass::after,
-.liquidglass-ready.backup-glass::before,
-.liquidglass-ready.backup-glass::after {
-  content: none !important;
-  display: none !important;
-}
-
-/* LiquidGlass injects its WebGL canvas as the first child. Keep it behind the
-   live content while letting the shader shadow/refraction halo extend outside. */
-.liquidglass-ready {
+  position: relative !important;
   isolation: isolate !important;
   overflow: visible !important;
+  background:
+    linear-gradient(145deg, rgba(31,35,50,.58), rgba(10,13,21,.50)),
+    rgba(10,13,21,.48) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow:
+    0 14px 30px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.075) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
   --liquid-pointer-x: 50%;
   --liquid-pointer-y: 50%;
 }
 
+/* The library injects the shader canvas as first child. Lowering its CSS opacity
+   lets the dark substrate survive even if a browser/WebGL path clears to white. */
 .liquidglass-ready > canvas:first-child {
+  position: absolute !important;
+  z-index: 0 !important;
+  opacity: .42 !important;
   pointer-events: none !important;
-  filter: saturate(1.12) contrast(1.035);
+  filter: saturate(1.08) contrast(1.03) brightness(.82);
 }
 
 .liquidglass-ready > :not(canvas) {
@@ -151,11 +151,8 @@ button,
   z-index: 2;
 }
 
-/* Cursor lighting sits above the shader and below the live content. It uses the
-   exact same pointer coordinates as the scene proxy, so the visible highlight
-   and the refracted glow travel together. */
-.liquidglass-ready::after,
-.liquidglass-ready.backup-glass::after {
+/* Cursor highlight above shader, below content. */
+.liquidglass-ready::after {
   content: "" !important;
   display: block !important;
   position: absolute !important;
@@ -164,24 +161,23 @@ button,
   border-radius: inherit !important;
   pointer-events: none !important;
   background:
-    radial-gradient(190px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(255,255,255,.18), rgba(184,172,255,.10) 30%, rgba(100,201,255,.035) 52%, transparent 74%) !important;
+    radial-gradient(180px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(255,255,255,.15), rgba(181,169,255,.08) 34%, rgba(98,194,255,.028) 54%, transparent 75%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.16),
-    inset 0 -1px 0 rgba(255,255,255,.035) !important;
+    inset 0 1px 0 rgba(255,255,255,.13),
+    inset 0 -1px 0 rgba(255,255,255,.025) !important;
   mix-blend-mode: screen;
-  opacity: .88;
+  opacity: .82;
 }
 
-/* Preserve each existing shape while the WebGL material supplies the surface. */
-#profileCard.liquidglass-ready { border-radius: 36px !important; }
-.profile-intro-panel.liquidglass-ready { border-radius: 24px !important; }
 .tracker-topbar.liquidglass-ready,
 .tracker-tabs.liquidglass-ready,
 .platform-card.liquidglass-ready,
 .detail-card.liquidglass-ready,
 .stats-card.liquidglass-ready,
 .history-panel.liquidglass-ready,
-.activity-card.liquidglass-ready { border-radius: 24px !important; }
+.activity-card.liquidglass-ready {
+  border-radius: 24px !important;
+}
 
 .social-link.liquidglass-ready,
 .action-button.liquidglass-ready,
@@ -192,38 +188,26 @@ button,
 .copy-button.liquidglass-ready,
 .retry-button.liquidglass-ready,
 .refresh-button.liquidglass-ready {
-  border-color: transparent !important;
+  border-color: rgba(255,255,255,.13) !important;
 }
 
-/* Profile controls should feel detached from the card. Use the independent CSS
-   translate property so existing transforms and LiquidGlass rendering survive. */
+/* Profile buttons keep the requested gentle floating motion. */
 #profileCard .social-link.liquidglass-ready,
 #profileCard .profile-actions-stack > .liquidglass-ready {
   animation: liquid-profile-button-float 4.4s ease-in-out infinite !important;
   will-change: translate;
 }
 
-#profileCard .social-link.liquidglass-ready:nth-child(2n) {
-  animation-delay: -1.15s !important;
-}
-
-#profileCard .social-link.liquidglass-ready:nth-child(3n) {
-  animation-delay: -2.25s !important;
-}
-
-#profileCard .profile-actions-stack > .liquidglass-ready:nth-child(1) {
-  animation-delay: -.75s !important;
-}
-
-#profileCard .profile-actions-stack > .liquidglass-ready:nth-child(2) {
-  animation-delay: -2.55s !important;
-}
+#profileCard .social-link.liquidglass-ready:nth-child(2n) { animation-delay: -1.15s !important; }
+#profileCard .social-link.liquidglass-ready:nth-child(3n) { animation-delay: -2.25s !important; }
+#profileCard .profile-actions-stack > .liquidglass-ready:nth-child(1) { animation-delay: -.75s !important; }
+#profileCard .profile-actions-stack > .liquidglass-ready:nth-child(2) { animation-delay: -2.55s !important; }
 
 @keyframes liquid-profile-button-float {
   0%, 100% { translate: 0 0; }
-  28% { translate: 0 -2px; }
-  52% { translate: 0 -3.5px; }
-  76% { translate: 0 -1px; }
+  28% { translate: 0 -1.5px; }
+  52% { translate: 0 -3px; }
+  76% { translate: 0 -.8px; }
 }
 
 #profileCard .social-link.liquidglass-ready:hover,
@@ -231,17 +215,14 @@ button,
   filter: brightness(1.08) saturate(1.08);
 }
 
-/* Native focus remains usable even though the old painted border is removed. */
 .liquidglass-ready:focus-visible {
-  outline: 2px solid rgba(210, 205, 255, .78) !important;
+  outline: 2px solid rgba(210,205,255,.78) !important;
   outline-offset: 3px !important;
 }
 
 @media (max-width: 720px) {
   html { font-size: 16.5px !important; }
-  #profileCard.liquidglass-ready { border-radius: 30px !important; }
 
-  /* Continuous bobbing on touch screens is distracting and wastes battery. */
   #profileCard .social-link.liquidglass-ready,
   #profileCard .profile-actions-stack > .liquidglass-ready {
     animation-duration: 5.2s !important;
