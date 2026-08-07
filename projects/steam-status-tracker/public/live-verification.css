@@ -1,0 +1,89 @@
+/* Final visible overrides for the profile card, description wave and deploy marker. */
+
+#profileCard.backup-glass {
+  background:
+    radial-gradient(900px circle at var(--backup-shine-x, 50%) var(--backup-shine-y, 28%), rgba(184, 172, 255, 0.10), transparent 45%),
+    linear-gradient(155deg, rgba(30, 33, 48, 0.34), rgba(8, 10, 16, 0.20)),
+    rgba(10, 12, 18, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.32) brightness(1.08) !important;
+  backdrop-filter: blur(28px) saturate(1.32) brightness(1.08) !important;
+  box-shadow:
+    0 42px 135px rgba(0, 0, 0, 0.44),
+    0 0 0 1px rgba(147, 130, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+#profileCard.backup-glass::before {
+  background:
+    radial-gradient(560px circle at var(--backup-shine-x, 50%) var(--backup-shine-y, 28%), rgba(205, 196, 255, 0.20), transparent 49%),
+    linear-gradient(135deg, rgba(255,255,255,.09), transparent 30%, rgba(100,201,255,.035) 72%, transparent) !important;
+}
+
+#profileDescription .description-word {
+  display: inline-block !important;
+  transform: translate3d(0, 0, 0);
+  will-change: transform, color, text-shadow;
+  animation-name: verified-description-wave !important;
+  animation-duration: 2.8s !important;
+  animation-timing-function: ease-in-out !important;
+  animation-iteration-count: infinite !important;
+  animation-fill-mode: both !important;
+  animation-play-state: running !important;
+}
+
+@keyframes verified-description-wave {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    color: #c7ccd7;
+    text-shadow: 0 0 0 rgba(172,159,255,0);
+  }
+  35% {
+    transform: translate3d(0, -3px, 0);
+    color: #f2f3f8;
+    text-shadow: 0 0 12px rgba(172,159,255,.22);
+  }
+  62% {
+    transform: translate3d(0, 1.5px, 0);
+    color: #d9dde8;
+    text-shadow: 0 0 8px rgba(104,197,255,.12);
+  }
+}
+
+#deployProof {
+  position: fixed;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 2147483647;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 999px;
+  background: rgba(8,10,16,.54);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+  backdrop-filter: blur(14px) saturate(1.25);
+  color: rgba(244,246,252,.82);
+  box-shadow: 0 8px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+  font: 600 10px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: .03em;
+  pointer-events: none;
+  user-select: none;
+}
+
+#deployProof .deploy-proof__pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .8;
+  animation: deploy-proof-pulse 1s ease-in-out infinite;
+}
+
+@keyframes deploy-proof-pulse {
+  0%,100% { transform: scale(.72); opacity: .45; }
+  50% { transform: scale(1); opacity: 1; }
+}
