@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const DESCRIPTION_MOTION_VERSION = '3';
+  const DESCRIPTION_MOTION_VERSION = '4';
   const reduceMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
   let fitFrame = 0;
   let cardResizeObserver = null;
@@ -32,10 +32,10 @@
     word.getAnimations?.().forEach((animation) => animation.cancel());
     word.style.setProperty('animation', 'none', 'important');
     word.style.setProperty('position', 'relative', 'important');
-    word.style.setProperty('top', '0px');
+    word.style.removeProperty('top');
     word.style.setProperty('opacity', '1');
     word.style.setProperty('filter', 'none');
-    word.style.setProperty('transform', 'none');
+    word.style.setProperty('translate', '0 0');
   }
 
   function installContinuousDescriptionMotion(force = false) {
@@ -52,59 +52,59 @@
 
       if (reduceMotionQuery.matches || typeof word.animate !== 'function') return;
 
-      // One-time soft entrance. The continuous animation below uses `top`, not
-      // transform, so both effects can run together without cancelling each other.
+      // Entrance only fades/blurs. The permanent wave owns movement by itself,
+      // so two animations never fight over the same transform property.
       word.animate(
         [
-          { opacity: 0, filter: 'blur(4px)', transform: 'translateY(7px)' },
-          { opacity: 1, filter: 'blur(0)', transform: 'translateY(0)' }
+          { opacity: 0, filter: 'blur(4px)' },
+          { opacity: 1, filter: 'blur(0)' }
         ],
         {
-          duration: 520,
-          delay: 120 + index * 42,
+          duration: 500,
+          delay: 110 + index * 38,
           easing: 'cubic-bezier(.2,.82,.2,1)',
           fill: 'both'
         }
       );
 
-      // Permanent, clearly visible word wave. Negative delays make the wave
-      // already alive on first paint instead of waiting for a full cycle.
+      // Individual `translate` is compositor-friendly and avoids the layout
+      // reflow caused by the old animated `top` property.
       word.animate(
         [
           {
             offset: 0,
-            top: '0px',
+            translate: '0 0px',
             color: '#c7ccd7',
             textShadow: '0 0 0 rgba(172,159,255,0)'
           },
           {
-            offset: 0.32,
-            top: '-3.2px',
+            offset: 0.25,
+            translate: '0 -1.2px',
+            color: '#d8dce6',
+            textShadow: '0 0 7px rgba(104,197,255,.08)'
+          },
+          {
+            offset: 0.5,
+            translate: '0 -2.8px',
             color: '#f3f4fa',
-            textShadow: '0 0 14px rgba(172,159,255,.28), 0 0 6px rgba(104,197,255,.12)'
+            textShadow: '0 0 13px rgba(172,159,255,.23), 0 0 5px rgba(104,197,255,.10)'
           },
           {
-            offset: 0.56,
-            top: '1px',
-            color: '#d7dbe5',
-            textShadow: '0 0 7px rgba(104,197,255,.10)'
-          },
-          {
-            offset: 0.76,
-            top: '-1.3px',
-            color: '#e5e7ef',
-            textShadow: '0 0 10px rgba(172,159,255,.15)'
+            offset: 0.75,
+            translate: '0 -1.1px',
+            color: '#dde0e9',
+            textShadow: '0 0 8px rgba(172,159,255,.10)'
           },
           {
             offset: 1,
-            top: '0px',
+            translate: '0 0px',
             color: '#c7ccd7',
             textShadow: '0 0 0 rgba(172,159,255,0)'
           }
         ],
         {
-          duration: 2800,
-          delay: index * -150,
+          duration: 4200,
+          delay: index * -175,
           iterations: Infinity,
           easing: 'ease-in-out',
           fill: 'both'
@@ -141,8 +141,6 @@
       const naturalHeight = card.offsetHeight;
       if (!naturalHeight) return;
 
-      // Leave a little room for the card's pointer tilt/shadow while ensuring
-      // the profile never creates a vertical document scrollbar on desktop.
       const availableHeight = Math.max(320, window.innerHeight - 40);
       const scale = Math.min(1, availableHeight / naturalHeight);
       card.style.setProperty('--profile-fit-scale', String(Math.max(0.78, scale)));

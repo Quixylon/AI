@@ -21,39 +21,59 @@
     linear-gradient(135deg, rgba(255,255,255,.09), transparent 30%, rgba(100,201,255,.035) 72%, transparent) !important;
 }
 
-/* The intro was two different intrinsic widths, which produced the visible
-   L-shaped block on desktop. Keep both halves on one shared axis/width. */
+/* Force both halves of the intro panel to the exact same center line.
+   Relative centering is deliberate here because older styles contain
+   !important margin/transform rules for the description. */
 #profileCard .hello-row,
 #profileCard #profileDescription {
-  width: min(100%, 410px) !important;
-  max-width: 410px !important;
+  position: relative !important;
+  left: 50% !important;
+  width: min(100%, 420px) !important;
+  max-width: 420px !important;
   box-sizing: border-box !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  transform: translateX(-50%) !important;
 }
 
 #profileCard .hello-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
   margin-top: 30px !important;
   margin-bottom: 0 !important;
+  padding: 18px 28px 11px !important;
+  border-radius: 24px 24px 0 0 !important;
 }
 
 #profileCard #profileDescription,
 #profileCard .hello-row + #profileDescription {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+  padding: 9px 28px 25px !important;
+  border-radius: 0 0 24px 24px !important;
+  text-align: left !important;
 }
 
-/* JS owns the word animation. Keeping CSS animation disabled avoids the old
-   cascade fighting the Web Animations API. */
+#profileCard .hello-row::before,
+#profileCard .hello-row::after,
+#profileCard #profileDescription::before,
+#profileCard #profileDescription::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* JS owns the word animation. `translate` is independent from the old
+   transform:none!important rule, so it can stay compositor-smooth. */
 #profileDescription .description-word {
   display: inline-block !important;
   position: relative !important;
-  top: 0;
   opacity: 1;
   filter: none;
-  transform: none;
   animation: none !important;
-  will-change: top, color, text-shadow, opacity, filter, transform;
+  translate: 0 0;
+  will-change: translate, color, text-shadow, opacity, filter;
 }
 
 /* On desktop the profile is a single viewport card, not a document to scroll.
@@ -96,10 +116,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   #profileDescription .description-word {
-    top: 0 !important;
     opacity: 1 !important;
     filter: none !important;
-    transform: none !important;
+    translate: 0 0 !important;
     text-shadow: none !important;
   }
 }
