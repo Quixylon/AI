@@ -91,10 +91,10 @@
     canvas.style.height = `${height}px`;
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-    const areaCount = Math.round((width * height) / (lowPowerMode() ? 16000 : 12500));
+    const areaCount = Math.round((width * height) / (lowPowerMode() ? 13000 : 9000));
     const count = lowPowerMode()
-      ? Math.min(52, Math.max(30, areaCount))
-      : Math.min(96, Math.max(54, areaCount));
+      ? Math.min(68, Math.max(36, areaCount))
+      : Math.min(142, Math.max(72, areaCount));
 
     particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
     lastFrame = performance.now();
@@ -174,7 +174,7 @@
 
     for (const { particle, distance } of nearby) {
       context.strokeStyle = `rgba(207, 199, 255, ${(1 - distance / 225) * 0.3})`;
-      context.lineWidth = 0.75;
+      context.lineWidth = 1.15;
       context.beginPath();
       context.moveTo(particle.renderX, particle.renderY);
       context.lineTo(pointer.x, pointer.y);
