@@ -1,0 +1,153 @@
+/* Exact visual behavior restored from backup/working-site-2026-08-07, adapted to the new shell IDs. */
+
+body {
+  background:
+    radial-gradient(circle at 50% 24%, rgba(31, 34, 59, 0.84) 0, rgba(10, 11, 18, 0.9) 44%, #05060a 100%) !important;
+}
+
+/* Archived static background layers. */
+.archive-fallback-stars,
+.archive-aurora,
+.archive-noise,
+.archive-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.archive-fallback-stars {
+  z-index: -4;
+  opacity: 0.34;
+  background-repeat: repeat;
+  animation: archive-stars-drift 30s linear infinite;
+}
+
+.archive-fallback-stars-one {
+  background-image:
+    radial-gradient(circle, rgba(226, 230, 255, 0.86) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(140, 130, 255, 0.56) 0 0.9px, transparent 1.4px);
+  background-position: 0 0, 36px 52px;
+  background-size: 92px 92px, 126px 126px;
+}
+
+.archive-fallback-stars-two {
+  opacity: 0.18;
+  background-image:
+    radial-gradient(circle, rgba(100, 201, 255, 0.72) 0 1.1px, transparent 1.7px);
+  background-position: 17px 29px;
+  background-size: 152px 152px;
+  animation-duration: 44s;
+  animation-direction: reverse;
+}
+
+@keyframes archive-stars-drift {
+  to { transform: translate3d(-44px, 34px, 0); }
+}
+
+.archive-aurora {
+  z-index: -3;
+  width: 56vw;
+  height: 56vw;
+  min-width: 520px;
+  min-height: 520px;
+  border-radius: 50%;
+  filter: blur(115px);
+  opacity: 0.16;
+  animation: archive-aurora-drift 14s ease-in-out infinite alternate;
+}
+
+.archive-aurora-one {
+  top: -30vw;
+  right: -18vw;
+  bottom: auto;
+  left: auto;
+  background: #7659ff;
+}
+
+.archive-aurora-two {
+  top: auto;
+  right: auto;
+  bottom: -34vw;
+  left: -20vw;
+  background: #209fde;
+  animation-delay: -5s;
+}
+
+@keyframes archive-aurora-drift {
+  to {
+    transform: translate3d(5vw, 4vw, 0) scale(1.1);
+    opacity: 0.24;
+  }
+}
+
+.archive-noise {
+  z-index: -2;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");
+}
+
+.archive-vignette {
+  z-index: -1;
+  background:
+    radial-gradient(circle at center, transparent 18%, rgba(3, 4, 8, 0.32) 68%, rgba(1, 2, 5, 0.76) 100%),
+    linear-gradient(180deg, rgba(5, 6, 10, 0), rgba(5, 6, 10, 0.25));
+}
+
+#particleCanvas {
+  z-index: -5 !important;
+  opacity: 1 !important;
+}
+
+/* The archived description animation, literally transplanted. */
+#profileDescription .description-word {
+  display: inline-block !important;
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(7px);
+  animation:
+    archive-description-word-in 500ms cubic-bezier(.2, .8, .2, 1) forwards,
+    archive-description-word-living 5.4s ease-in-out infinite !important;
+  animation-delay:
+    var(--word-entry-delay, 170ms),
+    var(--word-flow-delay, 0ms) !important;
+  will-change: color, text-shadow, opacity, filter, transform;
+}
+
+@keyframes archive-description-word-in {
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes archive-description-word-living {
+  0%, 100% {
+    color: #c7ccd7;
+    text-shadow: 0 0 0 rgba(172, 159, 255, 0);
+  }
+
+  42% {
+    color: #e2e4ec;
+    text-shadow: 0 0 10px rgba(172, 159, 255, 0.11);
+  }
+
+  58% {
+    color: #d3d6e0;
+    text-shadow: 0 0 6px rgba(104, 197, 255, 0.07);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-fallback-stars,
+  .archive-aurora,
+  #profileDescription .description-word {
+    animation: none !important;
+  }
+
+  #profileDescription .description-word {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
