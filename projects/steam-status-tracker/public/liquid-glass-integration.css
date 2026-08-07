@@ -1,0 +1,124 @@
+/* LiquidGlass integration layer.
+   WebGL effect is provided by @ybouane/liquidglass. */
+
+/* Make selection impossible visually and behaviorally. JS additionally clears
+   any existing Selection object because CSS alone does not always remove an
+   already-created browser selection highlight. */
+html,
+body,
+body *:not(input):not(textarea):not([contenteditable="true"]),
+body *:not(input):not(textarea):not([contenteditable="true"])::before,
+body *:not(input):not(textarea):not([contenteditable="true"])::after {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+body *::selection {
+  background: transparent !important;
+}
+
+img,
+picture,
+svg,
+canvas {
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+}
+
+/* Keep normal interaction. Disabling selection must never disable links,
+   buttons, images or their nested labels/icons. */
+a,
+button,
+[role="button"],
+.social-link,
+.action-button,
+.ghost-button,
+.back-link,
+.tab-link,
+.filter-button,
+.copy-button,
+.retry-button,
+.refresh-button {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+}
+
+/* Before/after LiquidGlass initializes, clear the old CSS glass paint so the
+   WebGL canvas is actually visible. The class is removed on init failure. */
+.liquidglass-preparing,
+.liquidglass-ready {
+  background: transparent !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+.liquidglass-preparing.backup-glass,
+.liquidglass-ready.backup-glass {
+  border-color: transparent !important;
+}
+
+.liquidglass-preparing.backup-glass::before,
+.liquidglass-preparing.backup-glass::after,
+.liquidglass-ready.backup-glass::before,
+.liquidglass-ready.backup-glass::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* LiquidGlass injects its WebGL canvas as the first child. Keep it behind the
+   live content while letting the shader shadow/refraction halo extend outside. */
+.liquidglass-ready {
+  isolation: isolate !important;
+  overflow: visible !important;
+}
+
+.liquidglass-ready > canvas:first-child {
+  pointer-events: none !important;
+}
+
+.liquidglass-ready > :not(canvas) {
+  position: relative;
+  z-index: 2;
+}
+
+/* Preserve each existing shape while the WebGL material supplies the surface. */
+#profileCard.liquidglass-ready { border-radius: 36px !important; }
+.profile-intro-panel.liquidglass-ready { border-radius: 24px !important; }
+.tracker-topbar.liquidglass-ready,
+.tracker-tabs.liquidglass-ready,
+.platform-card.liquidglass-ready,
+.detail-card.liquidglass-ready,
+.stats-card.liquidglass-ready,
+.history-panel.liquidglass-ready,
+.activity-card.liquidglass-ready { border-radius: 24px !important; }
+
+.social-link.liquidglass-ready,
+.action-button.liquidglass-ready,
+.ghost-button.liquidglass-ready,
+.back-link.liquidglass-ready,
+.tab-link.liquidglass-ready,
+.filter-button.liquidglass-ready,
+.copy-button.liquidglass-ready,
+.retry-button.liquidglass-ready,
+.refresh-button.liquidglass-ready {
+  border-color: transparent !important;
+}
+
+/* Native focus remains usable even though the old painted border is removed. */
+.liquidglass-ready:focus-visible {
+  outline: 2px solid rgba(210, 205, 255, .72) !important;
+  outline-offset: 3px !important;
+}
+
+@media (max-width: 720px) {
+  #profileCard.liquidglass-ready { border-radius: 30px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquidglass-ready {
+    transition: none !important;
+  }
+}
