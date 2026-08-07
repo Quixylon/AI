@@ -9,40 +9,40 @@
   <meta name="theme-color" content="#05060a" />
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="Профиль Qu’lon и трекер." />
-  <meta name="quixylon-build" content="archive-wave-no-stripes-20260807-1707" />
+  <meta name="quixylon-build" content="archive-visible-wave-background-20260807-1940" />
   <title>Qu’lon</title>
-  <link rel="stylesheet" href="./experience-1.css?v=9" />
-  <link rel="stylesheet" href="./experience-2.css?v=9" />
-  <link rel="stylesheet" href="./experience-3.css?v=9" />
-  <link rel="stylesheet" href="./experience-4.css?v=9" />
-  <link rel="stylesheet" href="./polish-core.css?v=5" />
-  <link rel="stylesheet" href="./polish-tracker.css?v=5" />
-  <link rel="stylesheet" href="./profile-polish-fix.css?v=3" />
-  <link rel="stylesheet" href="./archive-faithful.css?v=2" />
+  <link rel="stylesheet" href="./experience-1.css?v=1940" />
+  <link rel="stylesheet" href="./experience-2.css?v=1940" />
+  <link rel="stylesheet" href="./experience-3.css?v=1940" />
+  <link rel="stylesheet" href="./experience-4.css?v=1940" />
+  <link rel="stylesheet" href="./polish-core.css?v=1940" />
+  <link rel="stylesheet" href="./polish-tracker.css?v=1940" />
+  <link rel="stylesheet" href="./profile-polish-fix.css?v=1940" />
+  <link rel="stylesheet" href="./archive-faithful.css?v=1940" />
+  <link rel="stylesheet" href="./archive-final-fix.css?v=1940" />
 </head>
 <body>
   <script>
     (async () => {
-      const parts = ["./experience-shell-1.html?v=9", "./experience-shell-2.html?v=9", "./experience-shell-3.html?v=9"];
+      const parts = ["./experience-shell-1.html?v=1940", "./experience-shell-2.html?v=1940", "./experience-shell-3.html?v=1940"];
       try {
         const responses = await Promise.all(parts.map(path => fetch(path, { cache: 'no-store' })));
         if (responses.some(response => !response.ok)) throw new Error('Не удалось загрузить интерфейс');
         document.body.innerHTML = (await Promise.all(responses.map(response => response.text()))).join('');
         const scripts = [
-          "./experience-1.js?v=9",
-          "./experience-2.js?v=9",
-          "./experience-3a.js?v=9",
-          "./experience-3b.js?v=9",
-          "./experience-3c.js?v=9",
-          "./experience-4.js?v=9",
-          "./experience-5.js?v=9",
-          "./experience-fixes.js?v=9",
-          "./polish-icons.js?v=4",
-          "./polish-background.js?v=4",
-          "./archive-disable-refraction.js?v=1",
-          "./archive-faithful-background.js?v=2",
-          "./polish-ui.js?v=4",
-          "./archive-description-motion.js?v=2"
+          "./experience-1.js?v=1940",
+          "./experience-2.js?v=1940",
+          "./experience-3a.js?v=1940",
+          "./experience-3b.js?v=1940",
+          "./experience-3c.js?v=1940",
+          "./experience-4.js?v=1940",
+          "./experience-5.js?v=1940",
+          "./experience-fixes.js?v=1940",
+          "./polish-icons.js?v=1940",
+          "./archive-faithful-background.js?v=1940",
+          "./polish-ui.js?v=1940",
+          "./archive-description-motion.js?v=1940",
+          "./archive-final-fix.js?v=1940"
         ];
         for (const source of scripts) {
           await new Promise((resolve, reject) => {
