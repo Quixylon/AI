@@ -1,0 +1,91 @@
+/* Final archive fix: keep the archived particle field visible and make its word wave clearly physical. */
+
+/* The archived canvas must sit above the body paint, but below every app surface. */
+#particleCanvas {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0.96 !important;
+  pointer-events: none !important;
+}
+
+.archive-fallback-stars,
+.archive-aurora {
+  z-index: 0 !important;
+}
+
+.archive-noise,
+.archive-vignette {
+  z-index: 1 !important;
+}
+
+.app-shell {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* No striped/refraction canvases anywhere. */
+.refraction-canvas {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Same archive cadence: 5.4 s cycle + -180 ms per word, now with a visible vertical crest. */
+@keyframes archive-description-word-living {
+  0%, 100% {
+    color: #c7ccd7;
+    text-shadow: 0 0 0 rgba(172, 159, 255, 0);
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: brightness(1);
+  }
+
+  30% {
+    color: #d3d7e1;
+    text-shadow: 0 0 5px rgba(104, 197, 255, 0.06);
+    transform: translate3d(0, -1px, 0) scale(1.002);
+    filter: brightness(1.02);
+  }
+
+  44% {
+    color: #f2efff;
+    text-shadow:
+      0 0 13px rgba(172, 159, 255, 0.22),
+      0 0 5px rgba(104, 197, 255, 0.11);
+    transform: translate3d(0, -4px, 0) scale(1.018);
+    filter: brightness(1.12);
+  }
+
+  56% {
+    color: #e2e4ec;
+    text-shadow: 0 0 9px rgba(172, 159, 255, 0.12);
+    transform: translate3d(0, -1.5px, 0) scale(1.007);
+    filter: brightness(1.05);
+  }
+
+  68% {
+    color: #d0d5df;
+    text-shadow: 0 0 4px rgba(104, 197, 255, 0.05);
+    transform: translate3d(0, 1px, 0) scale(0.998);
+    filter: brightness(1.01);
+  }
+}
+
+#profileDescription .description-word {
+  display: inline-block !important;
+  transform-origin: 50% 75% !important;
+  will-change: transform, color, text-shadow, filter !important;
+}
+
+/* Do not let the older reduced-motion overrides silently kill the requested wave. */
+@media (prefers-reduced-motion: reduce) {
+  #profileDescription .description-word {
+    animation-name: archive-description-word-living !important;
+    animation-duration: 5.4s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-iteration-count: infinite !important;
+  }
+}
