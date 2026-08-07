@@ -1,0 +1,164 @@
+/* Stable translucent UI after removing the experimental LiquidGlass/WebGL layer. */
+
+html {
+  font-size: 17px !important;
+}
+
+#profileDescription {
+  font-size: 1.02rem !important;
+  line-height: 1.72 !important;
+}
+
+#profileCard .social-link__label,
+#profileCard .action-button,
+#profileCard .ghost-button,
+#profileCard .status-pill,
+#profileCard .profile-meta__value {
+  font-size: .94rem !important;
+}
+
+#profileCard .profile-meta__label,
+.tracker-eyebrow,
+.platform-updated,
+.data-item__label,
+.sync-text {
+  font-size: .76rem !important;
+}
+
+.backup-glass {
+  border-color: rgba(255,255,255,.14) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.060), rgba(255,255,255,.018)),
+    rgba(10,12,19,.34) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.16) brightness(1.025) !important;
+  backdrop-filter: blur(20px) saturate(1.16) brightness(1.025) !important;
+  box-shadow:
+    0 15px 34px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.075),
+    inset 0 -1px 0 rgba(255,255,255,.022) !important;
+}
+
+#profileCard.backup-glass {
+  background:
+    radial-gradient(680px circle at var(--backup-shine-x, 50%) var(--backup-shine-y, 28%), rgba(169,156,255,.085), transparent 50%),
+    linear-gradient(155deg, rgba(28,31,45,.56), rgba(8,10,16,.42)),
+    rgba(10,12,19,.40) !important;
+  border: 1px solid rgba(255,255,255,.145) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.20) brightness(1.025) !important;
+  backdrop-filter: blur(28px) saturate(1.20) brightness(1.025) !important;
+  box-shadow:
+    0 38px 118px rgba(0,0,0,.46),
+    0 0 0 1px rgba(147,130,255,.04),
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 -1px 0 rgba(255,255,255,.025) !important;
+}
+
+#profileCard.backup-glass::before {
+  opacity: .70 !important;
+  background:
+    radial-gradient(470px circle at var(--backup-shine-x, 50%) var(--backup-shine-y, 28%), rgba(198,190,255,.13), transparent 53%),
+    linear-gradient(135deg, rgba(255,255,255,.045), transparent 34%, rgba(100,201,255,.018) 72%, transparent) !important;
+}
+
+.social-link.backup-glass,
+.action-button.backup-glass,
+.ghost-button.backup-glass,
+.back-link.backup-glass,
+.tab-link.backup-glass,
+.filter-button.backup-glass,
+.copy-button.backup-glass,
+.status-pill.backup-glass,
+.mini-badge.backup-glass {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.078), rgba(255,255,255,.020)),
+    rgba(13,16,25,.30) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  -webkit-backdrop-filter: blur(17px) saturate(1.14) brightness(1.025) !important;
+  backdrop-filter: blur(17px) saturate(1.14) brightness(1.025) !important;
+  box-shadow:
+    0 11px 27px rgba(0,0,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.072),
+    inset 0 -1px 0 rgba(255,255,255,.018) !important;
+}
+
+.social-link.backup-glass:hover,
+.action-button.backup-glass:hover,
+.ghost-button.backup-glass:hover,
+.back-link.backup-glass:hover,
+.tab-link.backup-glass:hover,
+.filter-button.backup-glass:hover,
+.copy-button.backup-glass:hover {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.11), rgba(255,255,255,.030)),
+    rgba(16,19,30,.36) !important;
+  border-color: rgba(255,255,255,.17) !important;
+}
+
+#profileCard .social-link.backup-glass,
+#profileCard .profile-actions-stack > .backup-glass {
+  animation: stable-profile-button-float 4.8s ease-in-out infinite !important;
+  will-change: translate;
+}
+
+#profileCard .social-link.backup-glass:nth-child(2n) { animation-delay: -1.2s !important; }
+#profileCard .social-link.backup-glass:nth-child(3n) { animation-delay: -2.35s !important; }
+#profileCard .profile-actions-stack > .backup-glass:nth-child(1) { animation-delay: -.8s !important; }
+#profileCard .profile-actions-stack > .backup-glass:nth-child(2) { animation-delay: -2.6s !important; }
+
+@keyframes stable-profile-button-float {
+  0%,100% { translate: 0 0; }
+  30% { translate: 0 -1.2px; }
+  55% { translate: 0 -2.4px; }
+  78% { translate: 0 -.6px; }
+}
+
+@media (min-width: 721px) {
+  html.profile-desktop-locked,
+  body.profile-desktop-locked {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  body.profile-desktop-locked .app-shell {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    padding-top: 28px !important;
+    padding-bottom: 32px !important;
+    overflow: visible !important;
+  }
+
+  body.profile-desktop-locked #profileScreen.is-active {
+    height: 100% !important;
+    min-height: 0 !important;
+    grid-template-rows: minmax(0,1fr) !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  body.profile-desktop-locked #profileCard {
+    transform-origin: 50% 50% !important;
+  }
+}
+
+.liquidglass-scene-proxy,
+.cursor-liquid-lens,
+.refraction-canvas {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 720px) {
+  html { font-size: 16.5px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #profileCard .social-link.backup-glass,
+  #profileCard .profile-actions-stack > .backup-glass {
+    animation: none !important;
+    translate: 0 0 !important;
+  }
+}
