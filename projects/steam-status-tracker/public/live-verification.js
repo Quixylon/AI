@@ -1,11 +1,33 @@
 (() => {
   'use strict';
 
-  const DESCRIPTION_MOTION_VERSION = '4';
+  const DESCRIPTION_MOTION_VERSION = '5';
   const reduceMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+  let descriptionMotionInstalled = false;
   let fitFrame = 0;
   let cardResizeObserver = null;
   let routeObserver = null;
+
+  function ensureUnifiedIntroPanel() {
+    const card = document.getElementById('profileCard');
+    const hello = card?.querySelector('.hello-row');
+    const description = document.getElementById('profileDescription');
+    if (!card || !hello || !description) return null;
+
+    let panel = card.querySelector('.profile-intro-panel');
+    if (!panel) {
+      panel = document.createElement('section');
+      panel.className = 'profile-intro-panel';
+      panel.setAttribute('aria-label', 'Приветствие');
+      hello.parentNode.insertBefore(panel, hello);
+      panel.append(hello, description);
+    } else {
+      if (hello.parentNode !== panel) panel.append(hello);
+      if (description.parentNode !== panel) panel.append(description);
+    }
+
+    return panel;
+  }
 
   function ensureDescriptionWords() {
     const description = document.getElementById('profileDescription');
@@ -38,37 +60,42 @@
     word.style.setProperty('translate', '0 0');
   }
 
-  function installContinuousDescriptionMotion(force = false) {
+  function installDescriptionMotionOnce() {
+    if (descriptionMotionInstalled) return;
+
     const description = ensureDescriptionWords();
     if (!description) return;
 
     const words = [...description.querySelectorAll('.description-word')];
-    words.forEach((word, index) => {
-      if (!force && word.dataset.liveDescriptionMotion === DESCRIPTION_MOTION_VERSION) return;
+    if (!words.length) return;
 
+    descriptionMotionInstalled = true;
+    description.dataset.liveDescriptionMotion = DESCRIPTION_MOTION_VERSION;
+
+    words.forEach((word, index) => {
       resetDescriptionWord(word);
       word.dataset.liveDescriptionMotion = DESCRIPTION_MOTION_VERSION;
       word.style.setProperty('--word-index', String(index));
 
       if (reduceMotionQuery.matches || typeof word.animate !== 'function') return;
 
-      // Entrance only fades/blurs. The permanent wave owns movement by itself,
-      // so two animations never fight over the same transform property.
+      // This entrance runs exactly once for the lifetime of the document.
+      // Route changes, live status updates and BUILD ticks never reinstall it.
       word.animate(
         [
           { opacity: 0, filter: 'blur(4px)' },
           { opacity: 1, filter: 'blur(0)' }
         ],
         {
-          duration: 500,
-          delay: 110 + index * 38,
+          duration: 520,
+          delay: 90 + index * 34,
           easing: 'cubic-bezier(.2,.82,.2,1)',
           fill: 'both'
         }
       );
 
-      // Individual `translate` is compositor-friendly and avoids the layout
-      // reflow caused by the old animated `top` property.
+      // Permanent smooth wave. It changes only compositor-friendly translate
+      // plus paint-only color/glow, never opacity or layout properties.
       word.animate(
         [
           {
@@ -79,21 +106,21 @@
           },
           {
             offset: 0.25,
-            translate: '0 -1.2px',
-            color: '#d8dce6',
-            textShadow: '0 0 7px rgba(104,197,255,.08)'
+            translate: '0 -1px',
+            color: '#d7dbe5',
+            textShadow: '0 0 7px rgba(104,197,255,.07)'
           },
           {
             offset: 0.5,
-            translate: '0 -2.8px',
-            color: '#f3f4fa',
-            textShadow: '0 0 13px rgba(172,159,255,.23), 0 0 5px rgba(104,197,255,.10)'
+            translate: '0 -2.2px',
+            color: '#eef0f6',
+            textShadow: '0 0 11px rgba(172,159,255,.18), 0 0 4px rgba(104,197,255,.08)'
           },
           {
             offset: 0.75,
-            translate: '0 -1.1px',
-            color: '#dde0e9',
-            textShadow: '0 0 8px rgba(172,159,255,.10)'
+            translate: '0 -0.8px',
+            color: '#d9dde7',
+            textShadow: '0 0 7px rgba(172,159,255,.08)'
           },
           {
             offset: 1,
@@ -103,13 +130,27 @@
           }
         ],
         {
-          duration: 4200,
-          delay: index * -175,
+          duration: 5000,
+          delay: index * -155,
           iterations: Infinity,
           easing: 'ease-in-out',
           fill: 'both'
         }
       );
+    });
+  }
+
+  function stopDescriptionMotionForReducedMode() {
+    const description = document.getElementById('profileDescription');
+    if (!description) return;
+
+    description.querySelectorAll('.description-word').forEach((word) => {
+      word.getAnimations?.().forEach((animation) => animation.cancel());
+      word.style.setProperty('opacity', '1');
+      word.style.setProperty('filter', 'none');
+      word.style.setProperty('translate', '0 0');
+      word.style.setProperty('color', '#c7ccd7');
+      word.style.setProperty('text-shadow', 'none');
     });
   }
 
@@ -206,21 +247,28 @@
     document.getElementById('profileCard')?.classList.add('backup-glass');
   }
 
-  function apply(forceDescription = false) {
+  function initialApply() {
     installGlass();
-    installContinuousDescriptionMotion(forceDescription);
+    ensureUnifiedIntroPanel();
+    installDescriptionMotionOnce();
     fitDesktopProfile();
   }
 
-  addEventListener('pageshow', () => apply(false));
-  addEventListener('hashchange', () => requestAnimationFrame(() => apply(false)));
+  // Navigation and viewport changes may refit the card, but they must never
+  // restart the description entrance animation.
+  addEventListener('pageshow', () => {
+    installGlass();
+    ensureUnifiedIntroPanel();
+    fitDesktopProfile();
+  });
+  addEventListener('hashchange', () => requestAnimationFrame(fitDesktopProfile));
   addEventListener('resize', fitDesktopProfile, { passive: true });
 
-  reduceMotionQuery.addEventListener?.('change', () => apply(true));
+  reduceMotionQuery.addEventListener?.('change', () => {
+    if (reduceMotionQuery.matches) stopDescriptionMotionForReducedMode();
+  });
 
-  apply(false);
+  initialApply();
   installDesktopProfileWatcher();
   installDeployProof();
-  setTimeout(() => apply(false), 250);
-  setTimeout(() => apply(false), 1200);
 })();
