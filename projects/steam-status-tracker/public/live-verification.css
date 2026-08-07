@@ -21,51 +21,67 @@
     linear-gradient(135deg, rgba(255,255,255,.09), transparent 30%, rgba(100,201,255,.035) 72%, transparent) !important;
 }
 
-/* Force both halves of the intro panel to the exact same center line.
-   Relative centering is deliberate here because older styles contain
-   !important margin/transform rules for the description. */
-#profileCard .hello-row,
-#profileCard #profileDescription {
+/* One real panel, not two adjacent translucent blocks. JS wraps the existing
+   hello row and description into this section without changing their content. */
+#profileCard .profile-intro-panel {
   position: relative !important;
-  left: 50% !important;
   width: min(100%, 420px) !important;
   max-width: 420px !important;
   box-sizing: border-box !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  transform: translateX(-50%) !important;
+  margin: 30px auto 0 !important;
+  padding: 19px 28px 24px !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, 0.028) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
 }
 
-#profileCard .hello-row {
+#profileCard .profile-intro-panel .hello-row,
+#profileCard .profile-intro-panel #profileDescription {
+  position: static !important;
+  left: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+#profileCard .profile-intro-panel .hello-row {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 9px !important;
-  margin-top: 30px !important;
-  margin-bottom: 0 !important;
-  padding: 18px 28px 11px !important;
-  border-radius: 24px 24px 0 0 !important;
+  margin-bottom: 13px !important;
 }
 
-#profileCard #profileDescription,
-#profileCard .hello-row + #profileDescription {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding: 9px 28px 25px !important;
-  border-radius: 0 0 24px 24px !important;
+#profileCard .profile-intro-panel #profileDescription {
   text-align: left !important;
+  line-height: 1.68 !important;
 }
 
-#profileCard .hello-row::before,
-#profileCard .hello-row::after,
-#profileCard #profileDescription::before,
-#profileCard #profileDescription::after {
+#profileCard .profile-intro-panel::before,
+#profileCard .profile-intro-panel::after,
+#profileCard .profile-intro-panel .hello-row::before,
+#profileCard .profile-intro-panel .hello-row::after,
+#profileCard .profile-intro-panel #profileDescription::before,
+#profileCard .profile-intro-panel #profileDescription::after {
   display: none !important;
   content: none !important;
 }
 
-/* JS owns the word animation. `translate` is independent from the old
-   transform:none!important rule, so it can stay compositor-smooth. */
+/* JS owns the word animation. The one-time entrance uses opacity/filter;
+   the permanent motion uses only individual translate + color/glow. */
 #profileDescription .description-word {
   display: inline-block !important;
   position: relative !important;
@@ -111,6 +127,13 @@
       rotateX(var(--rx, 0deg))
       rotateY(var(--ry, 0deg))
       scale(var(--profile-fit-scale)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  #profileCard .profile-intro-panel {
+    width: 100% !important;
+    padding: 18px 22px 22px !important;
   }
 }
 
