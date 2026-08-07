@@ -67,17 +67,13 @@
 
 /* A soft real WebGL refraction lens follows the cursor over the main card. It
    has no visible hard rim: only the locally distorted card/background remains. */
-#profileScreen {
-  position: relative !important;
-}
-
 .cursor-liquid-lens {
-  position: absolute !important;
+  position: fixed !important;
   left: 0 !important;
   top: 0 !important;
   width: 190px !important;
   height: 190px !important;
-  z-index: 20 !important;
+  z-index: 2147483000 !important;
   border-radius: 50% !important;
   pointer-events: none !important;
   opacity: 0 !important;
