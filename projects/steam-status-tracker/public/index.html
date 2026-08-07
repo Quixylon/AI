@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" class="app-booting">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
@@ -9,36 +9,35 @@
   <meta name="theme-color" content="#05060a" />
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="Профиль Qu’lon и трекер." />
-  <meta name="quixylon-build" content="liquid-runtime-fixed-20260807d" />
+  <meta name="quixylon-build" content="polished-refractive-ui-20260807b" />
   <title>Qu’lon</title>
-  <link rel="stylesheet" href="./experience-1.css?v=5" />
-  <link rel="stylesheet" href="./experience-2.css?v=5" />
-  <link rel="stylesheet" href="./experience-3.css?v=5" />
-  <link rel="stylesheet" href="./experience-4.css?v=5" />
-  <link rel="stylesheet" href="./legacy-blueprint.css?v=3" />
-  <link rel="stylesheet" href="./liquid-tracker.css?v=4" />
+  <link rel="stylesheet" href="./experience-1.css?v=6" />
+  <link rel="stylesheet" href="./experience-2.css?v=6" />
+  <link rel="stylesheet" href="./experience-3.css?v=6" />
+  <link rel="stylesheet" href="./experience-4.css?v=6" />
+  <link rel="stylesheet" href="./polish-core.css?v=2" />
+  <link rel="stylesheet" href="./polish-tracker.css?v=2" />
 </head>
 <body>
-  <main style="min-height:100dvh;display:grid;place-items:center;color:#9ca9bd;font-family:system-ui;background:#05060a">Загрузка…</main>
   <script>
     (async () => {
-      const parts = ["./experience-shell-1.html?v=5", "./experience-shell-2.html?v=5", "./experience-shell-3.html?v=5"];
+      const parts = ["./experience-shell-1.html?v=6", "./experience-shell-2.html?v=6", "./experience-shell-3.html?v=6"];
       try {
         const responses = await Promise.all(parts.map(path => fetch(path, { cache: 'no-store' })));
         if (responses.some(response => !response.ok)) throw new Error('Не удалось загрузить интерфейс');
         document.body.innerHTML = (await Promise.all(responses.map(response => response.text()))).join('');
         const scripts = [
-          "./experience-1.js?v=5",
-          "./experience-2.js?v=5",
-          "./experience-3a.js?v=5",
-          "./experience-3b.js?v=5",
-          "./experience-3c.js?v=5",
-          "./experience-4.js?v=5",
-          "./experience-5.js?v=5",
-          "./experience-fixes.js?v=5",
-          "./legacy-blueprint.js?v=3",
-          "./liquid-legacy-bridge.js?v=4",
-          "./liquid-tracker-loader.js?v=1"
+          "./experience-1.js?v=6",
+          "./experience-2.js?v=6",
+          "./experience-3a.js?v=6",
+          "./experience-3b.js?v=6",
+          "./experience-3c.js?v=6",
+          "./experience-4.js?v=6",
+          "./experience-5.js?v=6",
+          "./experience-fixes.js?v=6",
+          "./polish-icons.js?v=1",
+          "./polish-background.js?v=1",
+          "./polish-ui.js?v=1"
         ];
         for (const source of scripts) {
           await new Promise((resolve, reject) => {
@@ -50,6 +49,8 @@
           });
         }
       } catch (error) {
+        document.documentElement.classList.remove('app-booting');
+        document.documentElement.classList.add('app-ready');
         document.body.innerHTML = '<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;color:#f5f7fb;font-family:system-ui;background:#05060a;text-align:center"><div><h1>Не удалось загрузить сайт</h1><p style="color:#9ca9bd">Обнови страницу ещё раз.</p></div></main>';
         console.error(error);
       }
