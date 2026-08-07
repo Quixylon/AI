@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru" class="app-booting">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="theme-color" content="#05060a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Профиль Qu’lon и трекер." />
+  <meta name="quixylon-build" content="profile-polish-20260807-1615" />
+  <title>Qu’lon</title>
+  <link rel="stylesheet" href="./experience-1.css?v=1615" />
+  <link rel="stylesheet" href="./experience-2.css?v=1615" />
+  <link rel="stylesheet" href="./experience-3.css?v=1615" />
+  <link rel="stylesheet" href="./experience-4.css?v=1615" />
+  <link rel="stylesheet" href="./polish-core.css?v=1615" />
+  <link rel="stylesheet" href="./polish-tracker.css?v=1615" />
+  <link rel="stylesheet" href="./profile-polish-fix.css?v=1615" />
+</head>
+<body>
+  <script>
+    (async () => {
+      const parts = ["./experience-shell-1.html?v=1615", "./experience-shell-2.html?v=1615", "./experience-shell-3.html?v=1615"];
+      try {
+        const responses = await Promise.all(parts.map(path => fetch(path, { cache: 'no-store' })));
+        if (responses.some(response => !response.ok)) throw new Error('Не удалось загрузить интерфейс');
+        document.body.innerHTML = (await Promise.all(responses.map(response => response.text()))).join('');
+        const scripts = [
+          "./experience-1.js?v=1615",
+          "./experience-2.js?v=1615",
+          "./experience-3a.js?v=1615",
+          "./experience-3b.js?v=1615",
+          "./experience-3c.js?v=1615",
+          "./experience-4.js?v=1615",
+          "./experience-5.js?v=1615",
+          "./experience-fixes.js?v=1615",
+          "./polish-icons.js?v=1615",
+          "./polish-background.js?v=1615",
+          "./polish-ui.js?v=1615"
+        ];
+        for (const source of scripts) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = source;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.append(script);
+          });
+        }
+      } catch (error) {
+        document.documentElement.classList.remove('app-booting');
+        document.documentElement.classList.add('app-ready');
+        document.body.innerHTML = '<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;color:#f5f7fb;font-family:system-ui;background:#05060a;text-align:center"><div><h1>Не удалось загрузить сайт</h1><p style="color:#9ca9bd">Обнови страницу ещё раз.</p></div></main>';
+        console.error(error);
+      }
+    })();
+  </script>
+</body>
+</html>
