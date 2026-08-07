@@ -2,12 +2,13 @@
   'use strict';
 
   const LIQUID_GLASS_URL = 'https://cdn.jsdelivr.net/npm/@ybouane/liquidglass@1.0.3/dist/index.js';
-  const MAX_INSTANCES = 14;
+  const MAX_INSTANCES = 15;
 
   const cardSelector = [
     '#profileCard',
     '.profile-intro-panel',
     '.tracker-topbar',
+    '.tracker-tabs',
     '.platform-card',
     '.detail-card',
     '.stats-card',
@@ -35,6 +36,9 @@
   let rebuildTimer = 0;
   let rebuilding = false;
   let rebuildAgain = false;
+  let pointerFrame = 0;
+  let pointerX = innerWidth / 2;
+  let pointerY = innerHeight / 2;
 
   function isEditable(target) {
     const element = target instanceof Element ? target : target?.parentElement;
@@ -47,6 +51,11 @@
   }
 
   function installSelectionGuard() {
+    const clearUnlessEditable = (event) => {
+      if (isEditable(event?.target)) return;
+      clearSelection();
+    };
+
     document.addEventListener('selectstart', (event) => {
       if (isEditable(event.target)) return;
       event.preventDefault();
@@ -60,9 +69,8 @@
       selection.removeAllRanges();
     }, true);
 
-    document.addEventListener('pointerdown', (event) => {
-      if (!isEditable(event.target)) clearSelection();
-    }, true);
+    document.addEventListener('pointerdown', clearUnlessEditable, true);
+    document.addEventListener('mousedown', clearUnlessEditable, true);
 
     document.addEventListener('dragstart', (event) => {
       const element = event.target instanceof Element ? event.target : null;
@@ -102,31 +110,55 @@
     return element.matches(buttonSelector);
   }
 
+  function isProfileButton(element) {
+    return Boolean(element.closest('#profileCard')) && isButtonSurface(element);
+  }
+
   function configFor(element) {
     const button = isButtonSurface(element);
+    const profileButton = isProfileButton(element);
     const isMainCard = element.id === 'profileCard';
-    const isSmallButton = button && (element.matches('.copy-button,.filter-button,.tab-link,.back-link'));
+    const isSmallButton = button && element.matches('.copy-button,.filter-button,.tab-link,.back-link');
 
+    // Stronger-than-default values on purpose: the old integration was so
+    // subtle that the WebGL refraction was almost indistinguishable from CSS blur.
     return {
-      blurAmount: isMainCard ? 0.18 : button ? 0.16 : 0.21,
-      refraction: isMainCard ? 0.48 : button ? 0.74 : 0.61,
-      chromAberration: button ? 0.035 : 0.026,
-      edgeHighlight: button ? 0.16 : 0.11,
-      specular: button ? 0.18 : 0.12,
-      fresnel: button ? 0.92 : 0.78,
-      distortion: button ? 0.018 : 0.012,
+      blurAmount: isMainCard ? 0.10 : button ? 0.075 : 0.12,
+      refraction: isMainCard ? 0.72 : button ? 0.96 : 0.84,
+      chromAberration: button ? 0.070 : 0.045,
+      edgeHighlight: button ? 0.34 : 0.22,
+      specular: button ? 0.42 : 0.28,
+      fresnel: button ? 1.0 : 0.96,
+      distortion: button ? 0.035 : 0.022,
       cornerRadius: radiusOf(element, button ? 16 : 24),
-      zRadius: isSmallButton ? 12 : button ? 17 : isMainCard ? 30 : 22,
-      opacity: 0.97,
-      saturation: 0.08,
-      tintStrength: 0.055,
-      brightness: -0.015,
-      shadowOpacity: button ? 0.24 : 0.32,
-      shadowSpread: button ? 8 : 12,
-      shadowOffsetY: button ? 1 : 2,
+      zRadius: isSmallButton ? 14 : button ? 20 : isMainCard ? 34 : 25,
+      opacity: isMainCard ? 0.92 : button ? 0.90 : 0.93,
+      saturation: 0.14,
+      tintStrength: button ? 0.085 : 0.07,
+      brightness: button ? 0.025 : 0.005,
+      shadowOpacity: button ? 0.36 : 0.38,
+      shadowSpread: button ? 11 : 14,
+      shadowOffsetY: button ? 2 : 3,
+      // Keep clickable profile controls clickable. Their visual floating motion
+      // is CSS-driven; LiquidGlass's `floating:true` is drag mode and calls
+      // preventDefault on pointerdown, which is wrong for navigation buttons.
       floating: false,
-      button
+      button: button || profileButton
     };
+  }
+
+  function ensureSceneProxy(root) {
+    root.classList.add('liquidglass-scene-root');
+
+    let proxy = [...root.children].find((child) => child.classList?.contains('liquidglass-scene-proxy'));
+    if (!proxy) {
+      proxy = document.createElement('div');
+      proxy.className = 'liquidglass-scene-proxy';
+      proxy.setAttribute('aria-hidden', 'true');
+      root.insertBefore(proxy, root.firstChild);
+    }
+
+    return proxy;
   }
 
   function collectGroups() {
@@ -150,7 +182,12 @@
     }
 
     return [...groups.entries()]
-      .map(([root, elements]) => ({ root, elements, depth: depthOf(root) }))
+      .map(([root, elements]) => ({
+        root,
+        elements,
+        proxy: ensureSceneProxy(root),
+        depth: depthOf(root)
+      }))
       .sort((a, b) => b.depth - a.depth)
       .slice(0, MAX_INSTANCES);
   }
@@ -163,11 +200,59 @@
   }
 
   function destroyInstances() {
-    for (const instance of instances.reverse()) {
-      try { instance.destroy(); } catch (error) { console.warn('LiquidGlass destroy:', error); }
+    for (const record of instances.reverse()) {
+      try { record.instance.destroy(); } catch (error) { console.warn('LiquidGlass destroy:', error); }
     }
     instances = [];
     removeSurfaceState();
+  }
+
+  function percentAt(rect, x, y) {
+    return {
+      x: ((x - rect.left) / Math.max(1, rect.width)) * 100,
+      y: ((y - rect.top) / Math.max(1, rect.height)) * 100
+    };
+  }
+
+  function nearRect(rect, x, y, margin = 320) {
+    return x >= rect.left - margin && x <= rect.right + margin && y >= rect.top - margin && y <= rect.bottom + margin;
+  }
+
+  function applyPointerLighting() {
+    pointerFrame = 0;
+
+    for (const record of instances) {
+      const rootRect = record.root.getBoundingClientRect();
+      if (!rootRect.width || !rootRect.height) continue;
+
+      const rootPoint = percentAt(rootRect, pointerX, pointerY);
+      record.root.style.setProperty('--liquid-pointer-x', `${rootPoint.x.toFixed(2)}%`);
+      record.root.style.setProperty('--liquid-pointer-y', `${rootPoint.y.toFixed(2)}%`);
+      record.proxy.style.setProperty('--liquid-pointer-x', `${rootPoint.x.toFixed(2)}%`);
+      record.proxy.style.setProperty('--liquid-pointer-y', `${rootPoint.y.toFixed(2)}%`);
+
+      for (const element of record.elements) {
+        const rect = element.getBoundingClientRect();
+        if (!rect.width || !rect.height) continue;
+        const point = percentAt(rect, pointerX, pointerY);
+        element.style.setProperty('--liquid-pointer-x', `${point.x.toFixed(2)}%`);
+        element.style.setProperty('--liquid-pointer-y', `${point.y.toFixed(2)}%`);
+      }
+
+      // The dotted proxy is part of the scene sampled by the shader. Re-render
+      // nearby roots as the cursor light crosses them so the glow is refracted,
+      // not merely painted on top of the glass.
+      if (nearRect(rootRect, pointerX, pointerY)) {
+        try { record.instance.markChanged(record.proxy); } catch {}
+      }
+    }
+  }
+
+  function queuePointerLighting(event) {
+    if (event?.pointerType === 'touch') return;
+    if (Number.isFinite(event?.clientX)) pointerX = event.clientX;
+    if (Number.isFinite(event?.clientY)) pointerY = event.clientY;
+    if (!pointerFrame) pointerFrame = requestAnimationFrame(applyPointerLighting);
   }
 
   async function rebuild() {
@@ -190,17 +275,18 @@
           root: group.root,
           glassElements: group.elements,
           defaults: {
-            blurAmount: 0.18,
-            refraction: 0.64,
-            chromAberration: 0.03,
-            edgeHighlight: 0.12,
-            specular: 0.14,
-            fresnel: 0.82,
-            tintStrength: 0.05,
-            shadowOpacity: 0.28
+            blurAmount: 0.10,
+            refraction: 0.84,
+            chromAberration: 0.05,
+            edgeHighlight: 0.24,
+            specular: 0.30,
+            fresnel: 0.96,
+            distortion: 0.024,
+            tintStrength: 0.07,
+            shadowOpacity: 0.36
           }
         });
-        instances.push(instance);
+        instances.push({ ...group, instance });
         group.elements.forEach((element) => {
           element.classList.remove('liquidglass-preparing');
           element.classList.add('liquidglass-ready');
@@ -214,6 +300,7 @@
 
     if (initialized) document.body.classList.add('liquidglass-active');
     rebuilding = false;
+    requestAnimationFrame(applyPointerLighting);
 
     if (rebuildAgain) scheduleRebuild(60);
   }
@@ -228,6 +315,7 @@
       if (mutation.type !== 'childList' || mutation.addedNodes.length === 0) continue;
       for (const node of mutation.addedNodes) {
         if (!(node instanceof Element)) continue;
+        if (node.classList?.contains('liquidglass-scene-proxy')) continue;
         if (node.matches?.(surfaceSelector) || node.querySelector?.(surfaceSelector)) return true;
         if (node.matches?.('img')) node.draggable = false;
         node.querySelectorAll?.('img').forEach((image) => image.draggable = false);
@@ -238,6 +326,14 @@
 
   async function start() {
     installSelectionGuard();
+
+    addEventListener('pointermove', queuePointerLighting, { passive: true });
+    addEventListener('pointerdown', queuePointerLighting, { passive: true });
+    addEventListener('resize', () => {
+      pointerX = Math.min(pointerX, innerWidth);
+      pointerY = Math.min(pointerY, innerHeight);
+      if (!pointerFrame) pointerFrame = requestAnimationFrame(applyPointerLighting);
+    }, { passive: true });
 
     try {
       const module = await import(LIQUID_GLASS_URL);
