@@ -21,12 +21,16 @@
     linear-gradient(135deg, rgba(255,255,255,.09), transparent 30%, rgba(100,201,255,.035) 72%, transparent) !important;
 }
 
-/* One real panel, not two adjacent translucent blocks. JS wraps the existing
-   hello row and description into this section without changing their content. */
-#profileCard .profile-intro-panel {
+/* A single physical panel. Older files style .hello-row and #profileDescription
+   separately, so everything inside the wrapper is reset aggressively here. */
+#profileCard .profile-card__content > .profile-intro-panel {
   position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
   width: min(100%, 420px) !important;
   max-width: 420px !important;
+  min-width: 0 !important;
   box-sizing: border-box !important;
   margin: 30px auto 0 !important;
   padding: 19px 28px 24px !important;
@@ -36,15 +40,25 @@
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  overflow: visible !important;
+  transform: none !important;
+  translate: none !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
 }
 
-#profileCard .profile-intro-panel .hello-row,
-#profileCard .profile-intro-panel #profileDescription {
-  position: static !important;
+#profileCard .profile-card__content > .profile-intro-panel > .hello-row,
+#profileCard .profile-card__content > .profile-intro-panel > #profileDescription {
+  position: relative !important;
+  inset: auto !important;
   left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  display: block !important;
+  flex: 0 0 auto !important;
   width: 100% !important;
-  max-width: none !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   box-sizing: border-box !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -55,19 +69,22 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   transform: none !important;
+  translate: none !important;
 }
 
-#profileCard .profile-intro-panel .hello-row {
+#profileCard .profile-card__content > .profile-intro-panel > .hello-row {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 9px !important;
-  margin-bottom: 13px !important;
+  margin-bottom: 12px !important;
 }
 
-#profileCard .profile-intro-panel #profileDescription {
+#profileCard .profile-card__content > .profile-intro-panel > #profileDescription {
   text-align: left !important;
   line-height: 1.68 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
 }
 
 #profileCard .profile-intro-panel::before,
@@ -80,8 +97,7 @@
   content: none !important;
 }
 
-/* JS owns the word animation. The one-time entrance uses opacity/filter;
-   the permanent motion uses only individual translate + color/glow. */
+/* JS owns the word animation. Entrance is one-shot; the living wave is always on. */
 #profileDescription .description-word {
   display: inline-block !important;
   position: relative !important;
@@ -92,9 +108,27 @@
   will-change: translate, color, text-shadow, opacity, filter;
 }
 
-/* On desktop the profile is a single viewport card, not a document to scroll.
-   JS adds this class only while the profile route is active, so tracker pages
-   keep their normal vertical scrolling. */
+/* Guns first, then exactly one full-width tracker button. */
+#profileCard .profile-actions-stack {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin-top: 14px !important;
+}
+
+#profileCard .profile-actions-stack > #gunsProfileButton,
+#profileCard .profile-actions-stack > .profile-tracker-cta {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  justify-self: stretch !important;
+}
+
+#profileCard .profile-actions-stack > #gunsProfileButton { order: 1 !important; }
+#profileCard .profile-actions-stack > .profile-tracker-cta { order: 2 !important; }
+
+/* On desktop the profile is a single viewport card, not a document to scroll. */
 @media (min-width: 721px) {
   html.profile-desktop-locked,
   body.profile-desktop-locked {
@@ -131,7 +165,7 @@
 }
 
 @media (max-width: 720px) {
-  #profileCard .profile-intro-panel {
+  #profileCard .profile-card__content > .profile-intro-panel {
     width: 100% !important;
     padding: 18px 22px 22px !important;
   }
