@@ -17,7 +17,7 @@ body {
 
 .archive-fallback-stars {
   z-index: -4;
-  opacity: 0.34;
+  opacity: 0.38;
   background-repeat: repeat;
   animation: archive-stars-drift 30s linear infinite;
 }
@@ -25,17 +25,19 @@ body {
 .archive-fallback-stars-one {
   background-image:
     radial-gradient(circle, rgba(226, 230, 255, 0.86) 0 1px, transparent 1.5px),
-    radial-gradient(circle, rgba(140, 130, 255, 0.56) 0 0.9px, transparent 1.4px);
-  background-position: 0 0, 36px 52px;
-  background-size: 92px 92px, 126px 126px;
+    radial-gradient(circle, rgba(140, 130, 255, 0.56) 0 0.9px, transparent 1.4px),
+    radial-gradient(circle, rgba(100, 201, 255, 0.42) 0 0.75px, transparent 1.2px);
+  background-position: 0 0, 36px 52px, 18px 31px;
+  background-size: 82px 82px, 112px 112px, 138px 138px;
 }
 
 .archive-fallback-stars-two {
-  opacity: 0.18;
+  opacity: 0.22;
   background-image:
-    radial-gradient(circle, rgba(100, 201, 255, 0.72) 0 1.1px, transparent 1.7px);
-  background-position: 17px 29px;
-  background-size: 152px 152px;
+    radial-gradient(circle, rgba(100, 201, 255, 0.72) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.38) 0 0.72px, transparent 1.2px);
+  background-position: 17px 29px, 48px 19px;
+  background-size: 132px 132px, 96px 96px;
   animation-duration: 44s;
   animation-direction: reverse;
 }
