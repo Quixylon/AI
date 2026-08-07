@@ -1,12 +1,13 @@
 (() => {
   'use strict';
 
-  function installDescriptionWave() {
+  function installArchivedDescription() {
     const description = document.getElementById('profileDescription');
     if (!description) return;
 
     if (!description.querySelector('.description-word')) {
       const text = description.textContent.replace(/\s+/g, ' ').trim();
+      if (!text) return;
       description.replaceChildren();
       description.setAttribute('aria-label', text);
       text.split(/\s+/).forEach((word, index, words) => {
@@ -18,16 +19,19 @@
       });
     }
 
-    const words = [...description.querySelectorAll('.description-word')];
-    words.forEach((word, index) => {
+    description.querySelectorAll('.description-word').forEach((word, index) => {
+      if (word.dataset.exactArchiveDescription === '1') return;
+
+      // backup-exact-card.js installs Web Animations first. Remove them once,
+      // then restart the literal archived CSS animation from a clean state.
       word.getAnimations?.().forEach((animation) => animation.cancel());
-      word.style.setProperty('animation-delay', `${index * -130}ms`, 'important');
-      word.style.setProperty('animation-name', 'verified-description-wave', 'important');
-      word.style.setProperty('animation-duration', '2.8s', 'important');
-      word.style.setProperty('animation-timing-function', 'ease-in-out', 'important');
-      word.style.setProperty('animation-iteration-count', 'infinite', 'important');
-      word.style.setProperty('animation-fill-mode', 'both', 'important');
-      word.style.setProperty('animation-play-state', 'running', 'important');
+      word.style.setProperty('--word-index', String(index));
+      word.style.setProperty('--word-entry-delay', `${170 + index * 45}ms`);
+      word.style.setProperty('--word-flow-delay', `${index * -180}ms`);
+      word.style.setProperty('animation', 'none', 'important');
+      void word.offsetWidth;
+      word.style.removeProperty('animation');
+      word.dataset.exactArchiveDescription = '1';
     });
   }
 
@@ -69,12 +73,13 @@
 
   function apply() {
     installGlass();
-    installDescriptionWave();
+    installArchivedDescription();
   }
 
+  // Deliberately no document-wide MutationObserver here: the live BUILD tick
+  // changes every second and used to restart the text animation every second.
   addEventListener('pageshow', apply);
   addEventListener('hashchange', apply);
-  new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
 
   apply();
   installDeployProof();
