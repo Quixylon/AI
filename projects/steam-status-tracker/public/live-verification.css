@@ -1,4 +1,4 @@
-/* Final visible overrides for the profile card, description wave and deploy marker. */
+/* Final visible overrides for the profile card, archived description animation and deploy marker. */
 
 #profileCard.backup-glass {
   background:
@@ -21,33 +21,44 @@
     linear-gradient(135deg, rgba(255,255,255,.09), transparent 30%, rgba(100,201,255,.035) 72%, transparent) !important;
 }
 
+/* Literal animation from backup/working-site-2026-08-07. */
 #profileDescription .description-word {
   display: inline-block !important;
-  transform: translate3d(0, 0, 0);
-  will-change: transform, color, text-shadow;
-  animation-name: verified-description-wave !important;
-  animation-duration: 2.8s !important;
-  animation-timing-function: ease-in-out !important;
-  animation-iteration-count: infinite !important;
-  animation-fill-mode: both !important;
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(7px);
+  animation:
+    archive-description-word-in 500ms cubic-bezier(.2, .8, .2, 1) forwards,
+    archive-description-word-living 5.4s ease-in-out infinite !important;
+  animation-delay:
+    var(--word-entry-delay, 170ms),
+    var(--word-flow-delay, 0ms) !important;
   animation-play-state: running !important;
+  will-change: color, text-shadow, opacity, filter, transform;
 }
 
-@keyframes verified-description-wave {
+@keyframes archive-description-word-in {
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes archive-description-word-living {
   0%, 100% {
-    transform: translate3d(0, 0, 0);
     color: #c7ccd7;
-    text-shadow: 0 0 0 rgba(172,159,255,0);
+    text-shadow: 0 0 0 rgba(172, 159, 255, 0);
   }
-  35% {
-    transform: translate3d(0, -3px, 0);
-    color: #f2f3f8;
-    text-shadow: 0 0 12px rgba(172,159,255,.22);
+
+  42% {
+    color: #e2e4ec;
+    text-shadow: 0 0 10px rgba(172, 159, 255, 0.11);
   }
-  62% {
-    transform: translate3d(0, 1.5px, 0);
-    color: #d9dde8;
-    text-shadow: 0 0 8px rgba(104,197,255,.12);
+
+  58% {
+    color: #d3d6e0;
+    text-shadow: 0 0 6px rgba(104, 197, 255, 0.07);
   }
 }
 
