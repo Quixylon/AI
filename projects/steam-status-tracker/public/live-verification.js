@@ -1,12 +1,15 @@
 (() => {
   'use strict';
 
-  const DESCRIPTION_MOTION_VERSION = '5';
+  const DESCRIPTION_MOTION_VERSION = '6';
   const reduceMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
   let descriptionMotionInstalled = false;
   let fitFrame = 0;
   let cardResizeObserver = null;
   let routeObserver = null;
+  let shineFrame = 0;
+  let shinePointerX = innerWidth / 2;
+  let shinePointerY = innerHeight / 2;
 
   function ensureUnifiedIntroPanel() {
     const card = document.getElementById('profileCard');
@@ -79,61 +82,39 @@
 
       if (reduceMotionQuery.matches || typeof word.animate !== 'function') return;
 
-      // This entrance runs exactly once for the lifetime of the document.
-      // Route changes, live status updates and BUILD ticks never reinstall it.
+      // Entrance is one-shot for this document load. It never gets reinstalled
+      // by status updates, route changes, BUILD ticks or resizing.
       word.animate(
         [
           { opacity: 0, filter: 'blur(4px)' },
           { opacity: 1, filter: 'blur(0)' }
         ],
         {
-          duration: 520,
-          delay: 90 + index * 34,
+          duration: 460,
+          delay: 70 + index * 28,
           easing: 'cubic-bezier(.2,.82,.2,1)',
           fill: 'both'
         }
       );
 
-      // Permanent smooth wave. It changes only compositor-friendly translate
-      // plus paint-only color/glow, never opacity or layout properties.
+      // Continuous wave: short cycle, small phase shift and linear travel
+      // between many points so every word is always moving instead of waiting
+      // several seconds for its next lift.
       word.animate(
         [
-          {
-            offset: 0,
-            translate: '0 0px',
-            color: '#c7ccd7',
-            textShadow: '0 0 0 rgba(172,159,255,0)'
-          },
-          {
-            offset: 0.25,
-            translate: '0 -1px',
-            color: '#d7dbe5',
-            textShadow: '0 0 7px rgba(104,197,255,.07)'
-          },
-          {
-            offset: 0.5,
-            translate: '0 -2.2px',
-            color: '#eef0f6',
-            textShadow: '0 0 11px rgba(172,159,255,.18), 0 0 4px rgba(104,197,255,.08)'
-          },
-          {
-            offset: 0.75,
-            translate: '0 -0.8px',
-            color: '#d9dde7',
-            textShadow: '0 0 7px rgba(172,159,255,.08)'
-          },
-          {
-            offset: 1,
-            translate: '0 0px',
-            color: '#c7ccd7',
-            textShadow: '0 0 0 rgba(172,159,255,0)'
-          }
+          { offset: 0,    translate: '0 0px',    color: '#c7ccd7', textShadow: '0 0 0 rgba(172,159,255,0)' },
+          { offset: 0.16, translate: '0 -1.2px', color: '#d5d9e3', textShadow: '0 0 6px rgba(104,197,255,.06)' },
+          { offset: 0.32, translate: '0 -2.5px', color: '#eef0f6', textShadow: '0 0 11px rgba(172,159,255,.18), 0 0 4px rgba(104,197,255,.08)' },
+          { offset: 0.50, translate: '0 -1.35px', color: '#dde1ea', textShadow: '0 0 8px rgba(172,159,255,.10)' },
+          { offset: 0.68, translate: '0 0.35px', color: '#cdd2dd', textShadow: '0 0 4px rgba(104,197,255,.04)' },
+          { offset: 0.84, translate: '0 -0.9px', color: '#d9dde7', textShadow: '0 0 7px rgba(172,159,255,.08)' },
+          { offset: 1,    translate: '0 0px',    color: '#c7ccd7', textShadow: '0 0 0 rgba(172,159,255,0)' }
         ],
         {
-          duration: 5000,
-          delay: index * -155,
+          duration: 2300,
+          delay: index * -85,
           iterations: Infinity,
-          easing: 'ease-in-out',
+          easing: 'linear',
           fill: 'both'
         }
       );
@@ -152,6 +133,42 @@
       word.style.setProperty('color', '#c7ccd7');
       word.style.setProperty('text-shadow', 'none');
     });
+  }
+
+  function syncGlassShine() {
+    shineFrame = 0;
+
+    // Update every glass surface from the same page-space pointer. Percentages
+    // are deliberately not clamped: when the cursor moves outside a card/button,
+    // the light moves outside it as well instead of freezing on the last edge.
+    document.querySelectorAll('.backup-glass').forEach((element) => {
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      if (rect.bottom < 0 || rect.top > innerHeight || rect.right < 0 || rect.left > innerWidth) return;
+
+      const x = ((shinePointerX - rect.left) / rect.width) * 100;
+      const y = ((shinePointerY - rect.top) / rect.height) * 100;
+      element.style.setProperty('--backup-shine-x', `${x.toFixed(2)}%`);
+      element.style.setProperty('--backup-shine-y', `${y.toFixed(2)}%`);
+    });
+  }
+
+  function queueGlassShine(event) {
+    if (event?.pointerType === 'touch') return;
+    if (Number.isFinite(event?.clientX)) shinePointerX = event.clientX;
+    if (Number.isFinite(event?.clientY)) shinePointerY = event.clientY;
+    if (!shineFrame) shineFrame = requestAnimationFrame(syncGlassShine);
+  }
+
+  function installGlobalGlassShineTracking() {
+    addEventListener('pointermove', queueGlassShine, { passive: true });
+    addEventListener('pointerdown', queueGlassShine, { passive: true });
+    addEventListener('resize', () => {
+      shinePointerX = Math.min(shinePointerX, innerWidth);
+      shinePointerY = Math.min(shinePointerY, innerHeight);
+      if (!shineFrame) shineFrame = requestAnimationFrame(syncGlassShine);
+    }, { passive: true });
+    syncGlassShine();
   }
 
   function isDesktopProfileActive() {
@@ -254,14 +271,16 @@
     fitDesktopProfile();
   }
 
-  // Navigation and viewport changes may refit the card, but they must never
-  // restart the description entrance animation.
   addEventListener('pageshow', () => {
     installGlass();
     ensureUnifiedIntroPanel();
     fitDesktopProfile();
+    requestAnimationFrame(syncGlassShine);
   });
-  addEventListener('hashchange', () => requestAnimationFrame(fitDesktopProfile));
+  addEventListener('hashchange', () => requestAnimationFrame(() => {
+    fitDesktopProfile();
+    syncGlassShine();
+  }));
   addEventListener('resize', fitDesktopProfile, { passive: true });
 
   reduceMotionQuery.addEventListener?.('change', () => {
@@ -270,5 +289,6 @@
 
   initialApply();
   installDesktopProfileWatcher();
+  installGlobalGlassShineTracking();
   installDeployProof();
 })();
