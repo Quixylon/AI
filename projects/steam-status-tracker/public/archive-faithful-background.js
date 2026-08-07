@@ -7,6 +7,30 @@
   const coarse = matchMedia('(hover:none),(pointer:coarse)');
   const reduced = matchMedia('(prefers-reduced-motion:reduce)');
 
+  function installArchiveLayers() {
+    const layers = [
+      ['archive-fallback-stars archive-fallback-stars-one'],
+      ['archive-fallback-stars archive-fallback-stars-two'],
+      ['archive-aurora archive-aurora-one'],
+      ['archive-aurora archive-aurora-two'],
+      ['archive-noise'],
+      ['archive-vignette']
+    ];
+
+    for (const [className] of layers) {
+      const primary = className.split(' ')[0];
+      const qualifier = className.split(' ')[1];
+      const selector = qualifier ? `.${primary}.${qualifier}` : `.${primary}`;
+      if (document.querySelector(selector)) continue;
+      const layer = document.createElement('div');
+      layer.className = className;
+      layer.setAttribute('aria-hidden', 'true');
+      document.body.insertBefore(layer, document.querySelector('.app-shell') || document.body.firstChild);
+    }
+  }
+
+  installArchiveLayers();
+
   let width = 0;
   let height = 0;
   let pixelRatio = 1;
@@ -21,7 +45,6 @@
     down: false
   };
 
-  const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
   const lowPowerMode = () => coarse.matches || reduced.matches || width < 700;
 
   function createParticle(index, count) {
@@ -91,6 +114,7 @@
       if (pointer.down) {
         const originDistance = Math.hypot(pointer.x - particle.homeX, pointer.y - particle.homeY);
         const influence = 225 + particle.depth * 95;
+
         if (originDistance < influence) {
           const orbit = particle.attractRadius * (0.8 + particle.depth * 0.55);
           const driftAngle = particle.attractAngle + timestamp * 0.00018 * (particle.depth + 0.4);
@@ -108,6 +132,7 @@
         const deltaY = particle.y - pointer.y;
         const distance = Math.hypot(deltaX, deltaY) || 1;
         const influence = 105 + particle.depth * 55;
+
         if (distance < influence) {
           const push = (1 - distance / influence) * 0.012 * particle.depth;
           particle.velocityX += (deltaX / distance) * push * delta;
@@ -136,10 +161,11 @@
     }
   }
 
-  // Deliberate deviation from the archived background: points are NOT linked to each other.
-  // Only pointer interaction creates temporary lines, as requested.
+  // User-requested deviation: unlike the archived drawWeb(), particles never link to other particles.
+  // During a press, only the nearest particles link to the pointer itself.
   function drawPointerLines() {
     if (!context || !pointer.active || !pointer.down) return;
+
     const nearby = particles
       .map((particle) => ({ particle, distance: Math.hypot(particle.renderX - pointer.x, particle.renderY - pointer.y) }))
       .filter((item) => item.distance < 225)
@@ -167,9 +193,9 @@
     const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00014) * 0.08);
     const focusY = pointer.active ? pointer.y : height * (0.43 + Math.cos(timestamp * 0.00012) * 0.06);
     const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.58);
-    glow.addColorStop(0, pointer.down ? 'rgba(151,126,255,.22)' : 'rgba(135,109,255,.15)');
-    glow.addColorStop(0.38, 'rgba(44,132,213,.065)');
-    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    glow.addColorStop(0, pointer.down ? 'rgba(151, 126, 255, 0.22)' : 'rgba(135, 109, 255, 0.15)');
+    glow.addColorStop(0.38, 'rgba(44, 132, 213, 0.065)');
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
     context.fillStyle = glow;
     context.fillRect(0, 0, width, height);
 
@@ -178,12 +204,13 @@
     for (const particle of particles) {
       const pulse = 1 + Math.sin(timestamp * 0.0013 + particle.phase) * (reduced.matches ? 0 : 0.07);
       context.beginPath();
-      context.fillStyle = `rgba(225,229,255,${particle.alpha})`;
-      context.shadowColor = `rgba(157,147,255,${particle.alpha * 0.45})`;
+      context.fillStyle = `rgba(225, 229, 255, ${particle.alpha})`;
+      context.shadowColor = `rgba(157, 147, 255, ${particle.alpha * 0.45})`;
       context.shadowBlur = lowPowerMode() ? 3 : 4 + particle.depth * 4;
       context.arc(particle.renderX, particle.renderY, particle.radius * pulse, 0, Math.PI * 2);
       context.fill();
     }
+
     context.shadowBlur = 0;
 
     if (scheduleNext && !document.hidden && !reduced.matches) {
@@ -250,7 +277,6 @@
   resizeCanvas();
   start();
 
-  // Keep the existing Safari-safe glass refraction pointed at the restored canvas.
-  if (Q.refraction?.source !== canvas && Q.refraction) Q.refraction.source = canvas;
+  if (Q.refraction) Q.refraction.source = canvas;
   Q.archiveBackground = { canvas, start, stop, resize: resizeCanvas };
 })();
