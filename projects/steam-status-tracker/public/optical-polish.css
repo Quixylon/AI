@@ -1,0 +1,147 @@
+/* Final optical polish: keep the profile dark, make small LiquidGlass surfaces
+   actually refract the cursor light, and guarantee a visible desktop gutter. */
+
+/* The full profile card stays dark and restrained. */
+#profileCard.backup-glass {
+  background:
+    radial-gradient(620px circle at var(--backup-shine-x, 50%) var(--backup-shine-y, 28%), rgba(164, 151, 255, .075), transparent 51%),
+    linear-gradient(155deg, rgba(27, 30, 43, .54), rgba(8, 10, 16, .43)),
+    rgba(9, 11, 17, .42) !important;
+  border: 1px solid rgba(255,255,255,.145) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(1.22) brightness(1.025) !important;
+  backdrop-filter: blur(25px) saturate(1.22) brightness(1.025) !important;
+  box-shadow:
+    0 34px 110px rgba(0,0,0,.44),
+    0 0 0 1px rgba(145,130,255,.035),
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 -1px 0 rgba(255,255,255,.025) !important;
+}
+
+#profileCard.backup-glass::before {
+  opacity: .62 !important;
+  background:
+    radial-gradient(420px circle at var(--backup-shine-x, 50%) var(--backup-shine-y, 28%), rgba(201, 194, 255, .115), transparent 54%),
+    linear-gradient(135deg, rgba(255,255,255,.045), transparent 35%, rgba(104,201,255,.018) 74%, transparent) !important;
+}
+
+/* Profile button roots carry the scene that LiquidGlass samples. Keep the scene
+   visually dark, but make the moving light and stars strong enough to bend. */
+#profileCard .liquidglass-scene-proxy {
+  opacity: .54 !important;
+  background:
+    radial-gradient(150px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(221,216,255,.40), rgba(111,184,255,.16) 31%, rgba(87,116,255,.055) 52%, transparent 73%),
+    radial-gradient(circle, rgba(242,244,255,.68) 0 .85px, transparent 1.35px),
+    radial-gradient(circle, rgba(157,145,255,.42) 0 .7px, transparent 1.2px),
+    radial-gradient(circle, rgba(102,199,255,.28) 0 .65px, transparent 1.15px),
+    linear-gradient(145deg, rgba(13,16,25,.74), rgba(6,8,14,.78)) !important;
+  background-position: 0 0, 5px 7px, 25px 19px, 41px 37px, 0 0 !important;
+  background-size: auto, 42px 42px, 61px 61px, 83px 83px, auto !important;
+}
+
+/* Remove the painted-plastic look. The WebGL image should do most of the work. */
+#profileCard .liquidglass-preparing,
+#profileCard .liquidglass-ready {
+  background: rgba(15, 18, 28, .31) !important;
+  border: 1px solid rgba(255,255,255,.105) !important;
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.19),
+    inset 0 1px 0 rgba(255,255,255,.055) !important;
+  -webkit-backdrop-filter: blur(7px) saturate(1.04) !important;
+  backdrop-filter: blur(7px) saturate(1.04) !important;
+}
+
+#profileCard .liquidglass-ready > canvas:first-child {
+  opacity: .68 !important;
+  filter: saturate(1.13) contrast(1.055) brightness(.80) !important;
+}
+
+/* The old overlaid radial highlight was the bright vertical stripe in the
+   screenshot. Keep only a very faint surface glint; refraction comes from WebGL. */
+#profileCard .liquidglass-ready::after {
+  background:
+    radial-gradient(120px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(255,255,255,.075), rgba(180,172,255,.022) 38%, transparent 72%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.075) !important;
+  opacity: .34 !important;
+  mix-blend-mode: screen !important;
+}
+
+/* A soft real WebGL refraction lens follows the cursor over the main card. It
+   has no visible hard rim: only the locally distorted card/background remains. */
+#profileScreen {
+  position: relative !important;
+}
+
+.cursor-liquid-lens {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 190px !important;
+  height: 190px !important;
+  z-index: 20 !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: opacity .16s ease !important;
+  transform: translate3d(-999px,-999px,0);
+  isolation: isolate;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  will-change: transform, opacity;
+}
+
+.cursor-liquid-lens.is-visible {
+  opacity: .72 !important;
+}
+
+.cursor-liquid-lens > canvas:first-child {
+  position: absolute !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  opacity: .72 !important;
+  filter: saturate(1.12) contrast(1.055) brightness(.74) !important;
+  -webkit-mask-image: radial-gradient(circle at center, #000 0 38%, rgba(0,0,0,.96) 52%, rgba(0,0,0,.50) 66%, transparent 79%) !important;
+  mask-image: radial-gradient(circle at center, #000 0 38%, rgba(0,0,0,.96) 52%, rgba(0,0,0,.50) 66%, transparent 79%) !important;
+}
+
+/* The page itself never scrolls on desktop, but ancestors must not clip the
+   transformed card. A larger real gutter is reserved before scaling. */
+@media (min-width: 721px) {
+  html.profile-desktop-locked,
+  body.profile-desktop-locked {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.profile-desktop-locked .app-shell {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    padding-top: 30px !important;
+    padding-bottom: 34px !important;
+    overflow: visible !important;
+  }
+
+  body.profile-desktop-locked #profileScreen.is-active {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    place-items: center !important;
+  }
+
+  body.profile-desktop-locked #profileCard {
+    --profile-safe-scale: 1;
+    --profile-safe-y: 0px;
+    transform-origin: 50% 50% !important;
+    transform:
+      perspective(1100px)
+      rotateX(var(--rx, 0deg))
+      rotateY(var(--ry, 0deg))
+      scale(var(--profile-safe-scale)) !important;
+    translate: 0 var(--profile-safe-y) !important;
+  }
+}
+
+@media (max-width: 720px), (prefers-reduced-motion: reduce) {
+  .cursor-liquid-lens { display: none !important; }
+}
