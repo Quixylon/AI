@@ -1,6 +1,42 @@
 /* LiquidGlass integration layer.
    WebGL effect is provided by @ybouane/liquidglass. */
 
+/* Slightly larger type everywhere without redesigning the proportions. */
+html {
+  font-size: 17px !important;
+}
+
+#profileDescription {
+  font-size: 1.02rem !important;
+  line-height: 1.72 !important;
+}
+
+#profileCard .social-link__label,
+#profileCard .action-button,
+#profileCard .ghost-button,
+#profileCard .status-pill,
+#profileCard .profile-meta__value {
+  font-size: .94rem !important;
+}
+
+#profileCard .profile-meta__label,
+.tracker-eyebrow,
+.platform-updated,
+.data-item__label,
+.sync-text {
+  font-size: .76rem !important;
+}
+
+.tracker-layout,
+.tracker-layout button,
+.tracker-layout a,
+.tracker-layout p,
+.tracker-layout span,
+.tracker-layout strong,
+.tracker-layout summary {
+  letter-spacing: normal;
+}
+
 /* Make selection impossible visually and behaviorally. JS additionally clears
    any existing Selection object because CSS alone does not always remove an
    already-created browser selection highlight. */
@@ -15,7 +51,9 @@ body *:not(input):not(textarea):not([contenteditable="true"])::after {
 }
 
 body *::selection {
+  color: inherit !important;
   background: transparent !important;
+  text-shadow: inherit !important;
 }
 
 img,
@@ -44,8 +82,34 @@ button,
   touch-action: manipulation;
 }
 
+/* Every LiquidGlass root receives a real scene child. The library cannot sample
+   the root's own background, so this sibling supplies visible stars and a cursor
+   glow for the WebGL refraction to bend. */
+.liquidglass-scene-root {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+.liquidglass-scene-proxy {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  border-radius: inherit;
+  opacity: .92;
+  background-image:
+    radial-gradient(260px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(190, 180, 255, .24), rgba(95, 176, 255, .08) 34%, transparent 72%),
+    radial-gradient(circle, rgba(236, 239, 255, .72) 0 1px, transparent 1.45px),
+    radial-gradient(circle, rgba(147, 132, 255, .48) 0 .9px, transparent 1.35px),
+    radial-gradient(circle, rgba(105, 201, 255, .34) 0 .75px, transparent 1.2px);
+  background-position: 0 0, 3px 5px, 21px 31px, 47px 17px;
+  background-size: auto, 46px 46px, 68px 68px, 91px 91px;
+  background-attachment: scroll;
+  filter: saturate(1.12);
+}
+
 /* Before/after LiquidGlass initializes, clear the old CSS glass paint so the
-   WebGL canvas is actually visible. The class is removed on init failure. */
+   WebGL canvas is actually visible. */
 .liquidglass-preparing,
 .liquidglass-ready {
   background: transparent !important;
@@ -73,15 +137,39 @@ button,
 .liquidglass-ready {
   isolation: isolate !important;
   overflow: visible !important;
+  --liquid-pointer-x: 50%;
+  --liquid-pointer-y: 50%;
 }
 
 .liquidglass-ready > canvas:first-child {
   pointer-events: none !important;
+  filter: saturate(1.12) contrast(1.035);
 }
 
 .liquidglass-ready > :not(canvas) {
   position: relative;
   z-index: 2;
+}
+
+/* Cursor lighting sits above the shader and below the live content. It uses the
+   exact same pointer coordinates as the scene proxy, so the visible highlight
+   and the refracted glow travel together. */
+.liquidglass-ready::after,
+.liquidglass-ready.backup-glass::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(190px circle at var(--liquid-pointer-x, 50%) var(--liquid-pointer-y, 50%), rgba(255,255,255,.18), rgba(184,172,255,.10) 30%, rgba(100,201,255,.035) 52%, transparent 74%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(255,255,255,.035) !important;
+  mix-blend-mode: screen;
+  opacity: .88;
 }
 
 /* Preserve each existing shape while the WebGL material supplies the surface. */
@@ -107,18 +195,65 @@ button,
   border-color: transparent !important;
 }
 
+/* Profile controls should feel detached from the card. Use the independent CSS
+   translate property so existing transforms and LiquidGlass rendering survive. */
+#profileCard .social-link.liquidglass-ready,
+#profileCard .profile-actions-stack > .liquidglass-ready {
+  animation: liquid-profile-button-float 4.4s ease-in-out infinite !important;
+  will-change: translate;
+}
+
+#profileCard .social-link.liquidglass-ready:nth-child(2n) {
+  animation-delay: -1.15s !important;
+}
+
+#profileCard .social-link.liquidglass-ready:nth-child(3n) {
+  animation-delay: -2.25s !important;
+}
+
+#profileCard .profile-actions-stack > .liquidglass-ready:nth-child(1) {
+  animation-delay: -.75s !important;
+}
+
+#profileCard .profile-actions-stack > .liquidglass-ready:nth-child(2) {
+  animation-delay: -2.55s !important;
+}
+
+@keyframes liquid-profile-button-float {
+  0%, 100% { translate: 0 0; }
+  28% { translate: 0 -2px; }
+  52% { translate: 0 -3.5px; }
+  76% { translate: 0 -1px; }
+}
+
+#profileCard .social-link.liquidglass-ready:hover,
+#profileCard .profile-actions-stack > .liquidglass-ready:hover {
+  filter: brightness(1.08) saturate(1.08);
+}
+
 /* Native focus remains usable even though the old painted border is removed. */
 .liquidglass-ready:focus-visible {
-  outline: 2px solid rgba(210, 205, 255, .72) !important;
+  outline: 2px solid rgba(210, 205, 255, .78) !important;
   outline-offset: 3px !important;
 }
 
 @media (max-width: 720px) {
+  html { font-size: 16.5px !important; }
   #profileCard.liquidglass-ready { border-radius: 30px !important; }
+
+  /* Continuous bobbing on touch screens is distracting and wastes battery. */
+  #profileCard .social-link.liquidglass-ready,
+  #profileCard .profile-actions-stack > .liquidglass-ready {
+    animation-duration: 5.2s !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .liquidglass-ready {
+  .liquidglass-ready,
+  #profileCard .social-link.liquidglass-ready,
+  #profileCard .profile-actions-stack > .liquidglass-ready {
     transition: none !important;
+    animation: none !important;
+    translate: 0 0 !important;
   }
 }
