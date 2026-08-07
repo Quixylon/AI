@@ -1,0 +1,240 @@
+/* Exact backup-card behavior adapted to the unified shell.
+   Source: backup/working-site-2026-08-07 styles.css + main-card-effects.css + cat-root-fix.css. */
+
+/* Keep the archived background visible behind the glass. */
+#particleCanvas {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+
+.archive-fallback-stars,
+.archive-aurora {
+  z-index: 0 !important;
+}
+
+.archive-noise,
+.archive-vignette {
+  z-index: 1 !important;
+}
+
+.app-shell {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* Restore the old translucent card material instead of a flat opaque panel. */
+.backup-glass {
+  --backup-shine-x: 50%;
+  --backup-shine-y: 28%;
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background:
+    linear-gradient(155deg, rgba(27, 29, 42, 0.64), rgba(8, 10, 15, 0.48)),
+    rgba(12, 14, 21, 0.48) !important;
+  box-shadow:
+    0 30px 88px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(147, 130, 255, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.17) brightness(1.03) !important;
+  backdrop-filter: blur(30px) saturate(1.17) brightness(1.03) !important;
+}
+
+.backup-glass::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  display: block !important;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(520px circle at var(--backup-shine-x) var(--backup-shine-y), rgba(184, 172, 255, 0.15), transparent 48%),
+    linear-gradient(135deg, rgba(255,255,255,.055), transparent 28%, rgba(100,201,255,.025) 72%, transparent) !important;
+}
+
+.backup-glass::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  display: block !important;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 90px rgba(102, 85, 255, 0.045),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.022) !important;
+}
+
+.backup-glass > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* The profile card uses the exact visual weight of the archived card. */
+#profileCard.backup-glass {
+  border-radius: 36px !important;
+  background:
+    linear-gradient(155deg, rgba(27, 29, 42, 0.66), rgba(8, 10, 15, 0.50)),
+    rgba(12, 14, 21, 0.50) !important;
+  box-shadow:
+    0 42px 135px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(147, 130, 255, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.095),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Smaller controls should stay lighter than the main panes. */
+.social-link.backup-glass,
+.action-button.backup-glass,
+.ghost-button.backup-glass,
+.back-link.backup-glass,
+.tab-link.backup-glass,
+.filter-button.backup-glass,
+.copy-button.backup-glass,
+.status-pill.backup-glass,
+.mini-badge.backup-glass {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.025)),
+    rgba(10, 12, 19, 0.32) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.20) brightness(1.04) !important;
+  backdrop-filter: blur(18px) saturate(1.20) brightness(1.04) !important;
+  box-shadow:
+    0 14px 32px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+/* Remove the failed striped-refraction implementation completely. */
+.refraction-canvas {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Exact archive description behavior. The actual looping animation is also
+   installed through Web Animations in backup-exact-card.js so Safari cannot
+   suppress it through the old cascade. */
+#profileDescription .description-word {
+  display: inline-block !important;
+  opacity: 1;
+  filter: none;
+  transform: translateY(0);
+  animation: none !important;
+  will-change: color, text-shadow, opacity, filter, transform;
+}
+
+/* Exact archived cat button geometry and idle wave, adapted from #dancing-cat. */
+#catButton,
+#catButton:hover,
+#catButton:focus-visible {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: inline-grid !important;
+  width: 1.55em !important;
+  height: 1.55em !important;
+  min-width: 0 !important;
+  place-items: center !important;
+  margin: -0.2em -0.16em -0.2em -0.08em !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  color: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  font: inherit !important;
+  font-size: 1.7rem !important;
+  line-height: 1 !important;
+  cursor: pointer;
+  touch-action: manipulation;
+  transform-origin: 70% 80% !important;
+  -webkit-tap-highlight-color: transparent;
+  animation: backup-cat-wave 2.8s 1s ease-in-out infinite !important;
+}
+
+#catButton::before,
+#catButton::after,
+#catButton .cat-svg,
+#catHint {
+  display: none !important;
+  content: none !important;
+}
+
+#catButton.backup-cat-reacting {
+  animation-play-state: paused !important;
+}
+
+@keyframes backup-cat-wave {
+  0%, 72%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  78% {
+    transform: rotate(-10deg) translateY(-2px);
+  }
+  84% {
+    transform: rotate(9deg) translateY(-1px);
+  }
+  90% {
+    transform: rotate(-5deg) translateY(0);
+  }
+}
+
+/* Preserve the archived animated title/handle/greeting. */
+#profileName {
+  display: inline-block;
+  color: transparent !important;
+  background: linear-gradient(108deg,#f8f8fc 0%,#f8f8fc 32%,#c7bbff 44%,#fff 52%,#aebfff 62%,#f8f8fc 76%,#f8f8fc 100%) !important;
+  background-position: 125% 50%;
+  background-size: 260% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  filter: drop-shadow(0 13px 28px rgba(0,0,0,.38));
+  animation: backup-profile-name-shimmer 7.2s linear infinite, backup-profile-name-breathe 4.8s ease-in-out infinite !important;
+}
+
+#profileHandle {
+  animation: backup-handle-living 4.2s ease-in-out infinite !important;
+}
+
+.hello-title {
+  animation: backup-greeting-living 4.6s ease-in-out infinite !important;
+}
+
+@keyframes backup-profile-name-shimmer {
+  from { background-position: 125% 50%; }
+  to { background-position: -135% 50%; }
+}
+
+@keyframes backup-profile-name-breathe {
+  0%,100% { transform: translate3d(0,0,0) scale(1); filter: drop-shadow(0 13px 28px rgba(0,0,0,.38)) drop-shadow(0 0 8px rgba(173,158,255,.03)); }
+  50% { transform: translate3d(0,-1.5px,0) scale(1.006); filter: drop-shadow(0 15px 31px rgba(0,0,0,.4)) drop-shadow(0 0 17px rgba(173,158,255,.12)); }
+}
+
+@keyframes backup-handle-living {
+  0%,100% { letter-spacing:.12em; color:#b0a4ff; text-shadow:0 0 0 rgba(176,164,255,0); transform:translateY(0); }
+  50% { letter-spacing:.135em; color:#c7beff; text-shadow:0 0 15px rgba(176,164,255,.28); transform:translateY(-1px); }
+}
+
+@keyframes backup-greeting-living {
+  0%,100% { color:#f8f8fc; text-shadow:0 0 0 rgba(190,180,255,0); transform:translateY(0); }
+  50% { color:#fff; text-shadow:0 0 14px rgba(190,180,255,.17); transform:translateY(-1px); }
+}
+
+@media (max-width: 720px) {
+  #profileCard.backup-glass {
+    border-radius: 30px !important;
+  }
+
+  .backup-glass {
+    -webkit-backdrop-filter: blur(24px) saturate(1.16) brightness(1.03) !important;
+    backdrop-filter: blur(24px) saturate(1.16) brightness(1.03) !important;
+  }
+}
