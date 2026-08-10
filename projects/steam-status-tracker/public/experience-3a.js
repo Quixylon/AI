@@ -75,7 +75,7 @@ function renderOverview() {
   const steam=state.steam.status;
   renderOverviewCard('steam', steam ? {
     name:steam.player.name,id:steam.player.steamId,status:steam.player.gameName?`В игре: ${steam.player.gameName}`:statusLabel('steam',steam.player.status),
-    activity:steam.player.gameName?`App ID: ${steam.player.gameId||'не указан'}`:`Persona: ${statusLabel('steam',steam.player.personaState)}`,
+    activity:steam.player.gameName?`App ID: ${steam.player.gameId||'не указан'}`:'Игра не запущена',
     checkedAt:steam.checkedAt,badge:steam.configured===false?'Не настроено':statusLabel('steam',steam.player.status),tone:steam.player.status,
     avatar:steam.player.avatar,avatarVersion:steam.player.avatarVersion,profileUrl:steam.player.profileUrl,error:state.steam.error,loading:state.steam.loading
   } : emptyOverviewModel('steam'));
