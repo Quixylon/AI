@@ -1,0 +1,333 @@
+/* Tracker readability and visual hierarchy — 2026-08-10 */
+
+/* The profile can stay decorative; the tracker should be quiet and readable. */
+html:has(#trackerScreen.is-active) .archive-fallback-stars,
+html:has(#trackerScreen.is-active) .archive-aurora,
+html:has(#trackerScreen.is-active) .ambient,
+html:has(#trackerScreen.is-active) #particleCanvas {
+  display: none !important;
+}
+
+html:has(#trackerScreen.is-active) body {
+  background:
+    radial-gradient(circle at 50% -12%, rgba(91, 77, 170, .20), transparent 38%),
+    linear-gradient(180deg, #080a12 0%, #05070d 100%) !important;
+}
+
+#trackerScreen {
+  color: #f5f7fc !important;
+}
+
+#trackerScreen .tracker-layout {
+  gap: 20px !important;
+}
+
+#trackerScreen .tracker-topbar,
+#trackerScreen .tracker-tabs,
+#trackerScreen .platform-card,
+#trackerScreen .detail-card,
+#trackerScreen .stats-card,
+#trackerScreen .history-panel {
+  border-color: rgba(255,255,255,.14) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.022)),
+    rgba(10,13,22,.64) !important;
+  box-shadow:
+    0 18px 44px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.085) !important;
+}
+
+/* Header hierarchy. */
+#trackerEyebrow {
+  margin-bottom: 6px !important;
+  color: rgba(212,205,255,.88) !important;
+  font-size: .82rem !important;
+  font-weight: 760 !important;
+  letter-spacing: .12em !important;
+}
+
+#trackerTitle {
+  font-size: clamp(2.45rem,3.3vw,3.75rem) !important;
+  line-height: .98 !important;
+  letter-spacing: -.048em !important;
+}
+
+#trackerLastUpdate {
+  color: rgba(229,235,246,.78) !important;
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+}
+
+/* Navigation should look clickable and selected state should be obvious. */
+.tracker-tabs {
+  background: rgba(11,14,24,.72) !important;
+  border-color: rgba(255,255,255,.15) !important;
+}
+
+.tab-link {
+  min-height: 50px !important;
+  padding: 0 12px !important;
+  color: rgba(219,226,239,.70) !important;
+  font-size: .96rem !important;
+  font-weight: 720 !important;
+}
+
+.tab-link:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.06) !important;
+}
+
+.tab-link.is-active,
+.tab-link[aria-selected="true"] {
+  color: #fff !important;
+  background: linear-gradient(135deg, rgba(166,148,255,.40), rgba(93,175,227,.16)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.20),
+    0 8px 20px rgba(60,48,121,.22) !important;
+}
+
+/* Cards: larger text and stronger hierarchy. */
+.platform-card,
+.detail-card,
+.stats-card,
+.history-panel {
+  padding: 25px !important;
+}
+
+.platform-name {
+  color: #f7f9fd !important;
+  font-size: 1.08rem !important;
+  font-weight: 780 !important;
+}
+
+.platform-card .platform-logo {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.mini-badge {
+  padding: 9px 12px !important;
+  font-size: .78rem !important;
+  font-weight: 760 !important;
+  background: rgba(255,255,255,.07) !important;
+}
+
+.mini-badge[data-state="online"] {
+  color: #bdebd0 !important;
+  border-color: rgba(119,201,154,.30) !important;
+  background: rgba(70,157,108,.10) !important;
+}
+
+.mini-badge[data-state="warning"] {
+  color: #f1dfad !important;
+  border-color: rgba(213,183,110,.30) !important;
+  background: rgba(176,139,55,.10) !important;
+}
+
+.mini-badge[data-state="error"] {
+  color: #f0bcc1 !important;
+  border-color: rgba(217,121,130,.30) !important;
+  background: rgba(173,73,83,.10) !important;
+}
+
+.identity-copy h2,
+.identity-copy h3,
+.detail-title h2 {
+  color: #fbfcff !important;
+  font-size: 1.34rem !important;
+  font-weight: 780 !important;
+}
+
+.identity-copy p,
+.detail-title p,
+.detail-title__platform,
+.platform-updated,
+.data-item__label {
+  color: rgba(198,208,225,.82) !important;
+}
+
+.platform-status strong,
+#steamDetailMainStatus,
+#discordDetailMainStatus,
+#telegramDetailMainStatus {
+  color: #fbfcff !important;
+  font-size: 1.16rem !important;
+  line-height: 1.35 !important;
+}
+
+.platform-status p,
+.detail-status-banner p,
+.panel-title p,
+.timeline-entry p,
+#trackerScreen .empty-state,
+#trackerScreen .stale-banner,
+#trackerScreen .error-banner {
+  color: rgba(220,228,241,.78) !important;
+  font-size: .98rem !important;
+  line-height: 1.52 !important;
+}
+
+.detail-status-banner {
+  background: rgba(255,255,255,.055) !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+}
+
+.status-orb {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.data-grid {
+  gap: 0 !important;
+}
+
+.data-item {
+  min-height: 62px !important;
+  padding: 14px 6px !important;
+  border-bottom-color: rgba(255,255,255,.095) !important;
+}
+
+.data-item__label {
+  margin-bottom: 7px !important;
+  font-size: .82rem !important;
+  font-weight: 650 !important;
+}
+
+.data-item__value,
+.stat-row span,
+.stat-row strong {
+  font-size: 1rem !important;
+  line-height: 1.35 !important;
+}
+
+.data-item__value,
+.stat-row strong {
+  color: #f4f7fd !important;
+}
+
+.panel-title h3 {
+  color: #fbfcff !important;
+  font-size: 1.18rem !important;
+  font-weight: 780 !important;
+}
+
+.stat-row {
+  min-height: 48px !important;
+  border-bottom-color: rgba(255,255,255,.085) !important;
+}
+
+.timeline-entry {
+  padding: 15px 16px !important;
+  border-color: rgba(255,255,255,.105) !important;
+  background: rgba(255,255,255,.045) !important;
+}
+
+.timeline-entry strong,
+.timeline-entry h4 {
+  color: #fbfcff !important;
+}
+
+/* Controls must read as controls, not decoration. */
+.action-button,
+.ghost-button,
+.copy-button,
+.filter-button {
+  min-height: 44px !important;
+  font-size: .91rem !important;
+  font-weight: 720 !important;
+}
+
+.action-button {
+  background: linear-gradient(135deg, rgba(164,146,255,.25), rgba(93,174,226,.12)) !important;
+  border-color: rgba(174,162,255,.22) !important;
+}
+
+.ghost-button,
+.copy-button,
+.filter-button {
+  background: rgba(255,255,255,.05) !important;
+}
+
+.copy-button,
+.filter-button {
+  min-height: 37px !important;
+  font-size: .8rem !important;
+}
+
+.filter-button.is-active {
+  color: #fff !important;
+  background: rgba(161,143,255,.18) !important;
+  border-color: rgba(181,169,255,.24) !important;
+}
+
+/* One-line explanation makes each tab self-explanatory. */
+#trackerOverviewView::before,
+#steamView::before,
+#discordView::before,
+#telegramView::before {
+  display: block;
+  grid-column: 1 / -1;
+  margin: 0 0 12px !important;
+  color: rgba(211,219,234,.78);
+  font-size: .98rem;
+  line-height: 1.45;
+}
+
+#trackerOverviewView::before {
+  content: "Сводка по платформам — текущий статус и быстрый переход к подробностям.";
+}
+
+#steamView::before {
+  content: "Steam — текущий статус, игра, длительность сессии и история активности.";
+}
+
+#discordView::before {
+  content: "Discord — профиль и активность, которую Discord разрешает передавать.";
+}
+
+#telegramView::before {
+  content: "Telegram — доступные данные профиля и состояние интеграции.";
+}
+
+@media (max-width: 820px) {
+  #trackerTitle {
+    font-size: clamp(2.1rem,7vw,3rem) !important;
+  }
+
+  .platform-card,
+  .detail-card,
+  .stats-card,
+  .history-panel {
+    padding: 21px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  #trackerEyebrow {
+    font-size: .73rem !important;
+  }
+
+  #trackerLastUpdate {
+    font-size: .91rem !important;
+  }
+
+  .tab-link {
+    min-height: 43px !important;
+    padding: 0 5px !important;
+    font-size: .81rem !important;
+  }
+
+  .platform-card,
+  .detail-card,
+  .stats-card,
+  .history-panel {
+    padding: 18px !important;
+  }
+
+  #trackerOverviewView::before,
+  #steamView::before,
+  #discordView::before,
+  #telegramView::before {
+    font-size: .91rem !important;
+  }
+}
