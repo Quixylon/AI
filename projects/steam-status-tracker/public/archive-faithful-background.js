@@ -35,7 +35,6 @@
   let height = 0;
   let pixelRatio = 1;
   let particles = [];
-  let lightBursts = [];
   let animationFrame = 0;
   let lastFrame = performance.now();
 
@@ -80,26 +79,6 @@
     };
   }
 
-  function createLightBurst(x, y) {
-    const rayCount = lowPowerMode() ? 8 : 13;
-    const rays = Array.from({ length: rayCount }, () => ({
-      angle: Math.random() * Math.PI * 2,
-      length: 48 + Math.random() * 92,
-      width: 0.9 + Math.random() * 1.65,
-      alpha: 0.42 + Math.random() * 0.42
-    }));
-
-    lightBursts.push({
-      x,
-      y,
-      bornAt: performance.now(),
-      duration: lowPowerMode() ? 520 : 680,
-      rays
-    });
-
-    if (lightBursts.length > 4) lightBursts.shift();
-  }
-
   function resizeCanvas() {
     if (!canvas || !context) return;
 
@@ -118,7 +97,6 @@
       : Math.min(142, Math.max(72, areaCount));
 
     particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
-    lightBursts = [];
     lastFrame = performance.now();
     if (reduced.matches) drawBackground(performance.now(), false);
   }
@@ -206,62 +184,23 @@
     }
   }
 
-  function drawLightBursts(timestamp) {
-    if (!context || !lightBursts.length) return;
+  function drawPressGlow() {
+    if (!context || !pointer.active || !pointer.down) return;
+
+    const radius = lowPowerMode() ? 170 : 230;
+    const glow = context.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, radius);
+    glow.addColorStop(0, 'rgba(255, 255, 255, 0.18)');
+    glow.addColorStop(0.22, 'rgba(214, 208, 255, 0.14)');
+    glow.addColorStop(0.48, 'rgba(150, 139, 242, 0.085)');
+    glow.addColorStop(0.74, 'rgba(86, 133, 209, 0.035)');
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
     context.save();
-    context.globalCompositeOperation = 'lighter';
-
-    lightBursts = lightBursts.filter((burst) => {
-      const progress = Math.min(1, Math.max(0, (timestamp - burst.bornAt) / burst.duration));
-      if (progress >= 1) return false;
-
-      const energy = Math.pow(1 - progress, 1.7);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const radius = 38 + eased * 170;
-      const glow = context.createRadialGradient(burst.x, burst.y, 0, burst.x, burst.y, radius);
-      glow.addColorStop(0, `rgba(244, 241, 255, ${0.38 * energy})`);
-      glow.addColorStop(0.18, `rgba(191, 179, 255, ${0.28 * energy})`);
-      glow.addColorStop(0.48, `rgba(104, 154, 245, ${0.12 * energy})`);
-      glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      context.fillStyle = glow;
-      context.beginPath();
-      context.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
-      context.fill();
-
-      for (const ray of burst.rays) {
-        const rayLength = ray.length * (0.62 + eased * 0.62);
-        const start = 4 + eased * 7;
-        const x1 = burst.x + Math.cos(ray.angle) * start;
-        const y1 = burst.y + Math.sin(ray.angle) * start;
-        const x2 = burst.x + Math.cos(ray.angle) * rayLength;
-        const y2 = burst.y + Math.sin(ray.angle) * rayLength;
-        const gradient = context.createLinearGradient(x1, y1, x2, y2);
-        gradient.addColorStop(0, `rgba(238, 234, 255, ${ray.alpha * energy})`);
-        gradient.addColorStop(0.38, `rgba(177, 164, 255, ${ray.alpha * energy * 0.48})`);
-        gradient.addColorStop(1, 'rgba(121, 158, 244, 0)');
-        context.strokeStyle = gradient;
-        context.lineWidth = ray.width * (1 - progress * 0.28);
-        context.beginPath();
-        context.moveTo(x1, y1);
-        context.lineTo(x2, y2);
-        context.stroke();
-      }
-
-      if (progress < 0.46) {
-        const coreAlpha = (1 - progress / 0.46) * 0.78;
-        context.fillStyle = `rgba(249, 247, 255, ${coreAlpha})`;
-        context.shadowColor = `rgba(184, 173, 255, ${coreAlpha})`;
-        context.shadowBlur = 18;
-        context.beginPath();
-        context.arc(burst.x, burst.y, 2.2 + (1 - progress) * 2.2, 0, Math.PI * 2);
-        context.fill();
-        context.shadowBlur = 0;
-      }
-
-      return true;
-    });
-
+    context.globalCompositeOperation = 'screen';
+    context.fillStyle = glow;
+    context.beginPath();
+    context.arc(pointer.x, pointer.y, radius, 0, Math.PI * 2);
+    context.fill();
     context.restore();
   }
 
@@ -276,14 +215,14 @@
     const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00014) * 0.08);
     const focusY = pointer.active ? pointer.y : height * (0.43 + Math.cos(timestamp * 0.00012) * 0.06);
     const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.58);
-    glow.addColorStop(0, pointer.down ? 'rgba(151, 126, 255, 0.27)' : 'rgba(135, 109, 255, 0.15)');
-    glow.addColorStop(0.38, pointer.down ? 'rgba(55, 143, 226, 0.085)' : 'rgba(44, 132, 213, 0.065)');
+    glow.addColorStop(0, 'rgba(135, 109, 255, 0.15)');
+    glow.addColorStop(0.38, 'rgba(44, 132, 213, 0.065)');
     glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
     context.fillStyle = glow;
     context.fillRect(0, 0, width, height);
 
+    drawPressGlow();
     drawPointerLines();
-    drawLightBursts(timestamp);
 
     for (const particle of particles) {
       const pulse = 1 + Math.sin(timestamp * 0.0013 + particle.phase) * (reduced.matches ? 0 : 0.07);
@@ -329,7 +268,6 @@
     pointer.y = event.clientY;
     pointer.active = true;
     pointer.down = true;
-    createLightBurst(pointer.x, pointer.y);
     start();
   }, { passive: true });
 
