@@ -35,6 +35,7 @@
   let height = 0;
   let pixelRatio = 1;
   let particles = [];
+  let lightBursts = [];
   let animationFrame = 0;
   let lastFrame = performance.now();
 
@@ -75,8 +76,28 @@
       phase: Math.random() * Math.PI * 2,
       attractAngle: Math.random() * Math.PI * 2,
       attractRadius: 13 + Math.random() * 28,
-      maxOffset: 42 + depth * 46
+      maxOffset: 92 + depth * 110
     };
+  }
+
+  function createLightBurst(x, y) {
+    const rayCount = lowPowerMode() ? 8 : 13;
+    const rays = Array.from({ length: rayCount }, () => ({
+      angle: Math.random() * Math.PI * 2,
+      length: 48 + Math.random() * 92,
+      width: 0.9 + Math.random() * 1.65,
+      alpha: 0.42 + Math.random() * 0.42
+    }));
+
+    lightBursts.push({
+      x,
+      y,
+      bornAt: performance.now(),
+      duration: lowPowerMode() ? 520 : 680,
+      rays
+    });
+
+    if (lightBursts.length > 4) lightBursts.shift();
   }
 
   function resizeCanvas() {
@@ -97,13 +118,14 @@
       : Math.min(142, Math.max(72, areaCount));
 
     particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
+    lightBursts = [];
     lastFrame = performance.now();
     if (reduced.matches) drawBackground(performance.now(), false);
   }
 
   function updateParticles(delta, timestamp) {
-    const spring = pointer.down ? 0.018 : 0.058;
-    const damping = pointer.down ? 0.92 : 0.82;
+    const spring = pointer.down ? 0.012 : 0.058;
+    const damping = pointer.down ? 0.935 : 0.82;
     const motionScale = reduced.matches ? 0 : 1;
 
     for (const particle of particles) {
@@ -113,17 +135,18 @@
 
       if (pointer.down) {
         const originDistance = Math.hypot(pointer.x - particle.homeX, pointer.y - particle.homeY);
-        const influence = 225 + particle.depth * 95;
+        const influence = 350 + particle.depth * 140;
 
         if (originDistance < influence) {
-          const orbit = particle.attractRadius * (0.8 + particle.depth * 0.55);
-          const driftAngle = particle.attractAngle + timestamp * 0.00018 * (particle.depth + 0.4);
+          const orbit = particle.attractRadius * (0.72 + particle.depth * 0.52);
+          const driftAngle = particle.attractAngle + timestamp * 0.0002 * (particle.depth + 0.4);
           const targetX = pointer.x + Math.cos(driftAngle) * orbit;
           const targetY = pointer.y + Math.sin(driftAngle) * orbit;
           const deltaX = targetX - particle.x;
           const deltaY = targetY - particle.y;
           const distance = Math.hypot(deltaX, deltaY) || 1;
-          const strength = (1 - originDistance / influence) * 0.115 * (0.65 + particle.depth * 0.55);
+          const falloff = 1 - originDistance / influence;
+          const strength = Math.pow(falloff, 0.82) * 0.185 * (0.72 + particle.depth * 0.62);
           particle.velocityX += (deltaX / distance) * strength * delta;
           particle.velocityY += (deltaY / distance) * strength * delta;
         }
@@ -152,8 +175,8 @@
         const scale = particle.maxOffset / offset;
         particle.x = particle.homeX + offsetX * scale;
         particle.y = particle.homeY + offsetY * scale;
-        particle.velocityX *= 0.42;
-        particle.velocityY *= 0.42;
+        particle.velocityX *= 0.46;
+        particle.velocityY *= 0.46;
       }
 
       particle.renderX = particle.x + Math.cos(timestamp * 0.00042 + particle.phase) * particle.depth * 1.6 * motionScale;
@@ -161,25 +184,85 @@
     }
   }
 
-  // User-requested deviation: unlike the archived drawWeb(), particles never link to other particles.
-  // During a press, only the nearest particles link to the pointer itself.
+  // During a press, the nearest particles link to the pointer itself.
   function drawPointerLines() {
     if (!context || !pointer.active || !pointer.down) return;
 
+    const lineRange = 315;
     const nearby = particles
       .map((particle) => ({ particle, distance: Math.hypot(particle.renderX - pointer.x, particle.renderY - pointer.y) }))
-      .filter((item) => item.distance < 225)
+      .filter((item) => item.distance < lineRange)
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 7);
+      .slice(0, 9);
 
     for (const { particle, distance } of nearby) {
-      context.strokeStyle = `rgba(207, 199, 255, ${(1 - distance / 225) * 0.3})`;
-      context.lineWidth = 1.15;
+      const visibility = 1 - distance / lineRange;
+      context.strokeStyle = `rgba(207, 199, 255, ${visibility * 0.38})`;
+      context.lineWidth = 1.55 + particle.depth * 0.55;
       context.beginPath();
       context.moveTo(particle.renderX, particle.renderY);
       context.lineTo(pointer.x, pointer.y);
       context.stroke();
     }
+  }
+
+  function drawLightBursts(timestamp) {
+    if (!context || !lightBursts.length) return;
+
+    context.save();
+    context.globalCompositeOperation = 'lighter';
+
+    lightBursts = lightBursts.filter((burst) => {
+      const progress = Math.min(1, Math.max(0, (timestamp - burst.bornAt) / burst.duration));
+      if (progress >= 1) return false;
+
+      const energy = Math.pow(1 - progress, 1.7);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const radius = 38 + eased * 170;
+      const glow = context.createRadialGradient(burst.x, burst.y, 0, burst.x, burst.y, radius);
+      glow.addColorStop(0, `rgba(244, 241, 255, ${0.38 * energy})`);
+      glow.addColorStop(0.18, `rgba(191, 179, 255, ${0.28 * energy})`);
+      glow.addColorStop(0.48, `rgba(104, 154, 245, ${0.12 * energy})`);
+      glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      context.fillStyle = glow;
+      context.beginPath();
+      context.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
+      context.fill();
+
+      for (const ray of burst.rays) {
+        const rayLength = ray.length * (0.62 + eased * 0.62);
+        const start = 4 + eased * 7;
+        const x1 = burst.x + Math.cos(ray.angle) * start;
+        const y1 = burst.y + Math.sin(ray.angle) * start;
+        const x2 = burst.x + Math.cos(ray.angle) * rayLength;
+        const y2 = burst.y + Math.sin(ray.angle) * rayLength;
+        const gradient = context.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, `rgba(238, 234, 255, ${ray.alpha * energy})`);
+        gradient.addColorStop(0.38, `rgba(177, 164, 255, ${ray.alpha * energy * 0.48})`);
+        gradient.addColorStop(1, 'rgba(121, 158, 244, 0)');
+        context.strokeStyle = gradient;
+        context.lineWidth = ray.width * (1 - progress * 0.28);
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+      }
+
+      if (progress < 0.46) {
+        const coreAlpha = (1 - progress / 0.46) * 0.78;
+        context.fillStyle = `rgba(249, 247, 255, ${coreAlpha})`;
+        context.shadowColor = `rgba(184, 173, 255, ${coreAlpha})`;
+        context.shadowBlur = 18;
+        context.beginPath();
+        context.arc(burst.x, burst.y, 2.2 + (1 - progress) * 2.2, 0, Math.PI * 2);
+        context.fill();
+        context.shadowBlur = 0;
+      }
+
+      return true;
+    });
+
+    context.restore();
   }
 
   function drawBackground(timestamp = 0, scheduleNext = true) {
@@ -193,13 +276,14 @@
     const focusX = pointer.active ? pointer.x : width * (0.5 + Math.sin(timestamp * 0.00014) * 0.08);
     const focusY = pointer.active ? pointer.y : height * (0.43 + Math.cos(timestamp * 0.00012) * 0.06);
     const glow = context.createRadialGradient(focusX, focusY, 0, focusX, focusY, Math.max(width, height) * 0.58);
-    glow.addColorStop(0, pointer.down ? 'rgba(151, 126, 255, 0.22)' : 'rgba(135, 109, 255, 0.15)');
-    glow.addColorStop(0.38, 'rgba(44, 132, 213, 0.065)');
+    glow.addColorStop(0, pointer.down ? 'rgba(151, 126, 255, 0.27)' : 'rgba(135, 109, 255, 0.15)');
+    glow.addColorStop(0.38, pointer.down ? 'rgba(55, 143, 226, 0.085)' : 'rgba(44, 132, 213, 0.065)');
     glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
     context.fillStyle = glow;
     context.fillRect(0, 0, width, height);
 
     drawPointerLines();
+    drawLightBursts(timestamp);
 
     for (const particle of particles) {
       const pulse = 1 + Math.sin(timestamp * 0.0013 + particle.phase) * (reduced.matches ? 0 : 0.07);
@@ -245,6 +329,8 @@
     pointer.y = event.clientY;
     pointer.active = true;
     pointer.down = true;
+    createLightBurst(pointer.x, pointer.y);
+    start();
   }, { passive: true });
 
   addEventListener('pointerup', () => { pointer.down = false; }, { passive: true });
