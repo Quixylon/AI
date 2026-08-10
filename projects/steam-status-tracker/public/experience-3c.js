@@ -10,7 +10,7 @@ function historyTitle(platform, entry) {
   return statusLabel('telegram',entry.status);
 }
 function historyDetails(platform, entry) {
-  if (platform==='steam') return entry.type==='game' ? `App ID: ${entry.gameId||'не указан'}` : `PersonaState: ${statusLabel('steam',entry.personaState)}`;
+  if (platform==='steam') return entry.type==='game' ? `App ID: ${entry.gameId||'не указан'}` : `Статус: ${statusLabel('steam',entry.personaState)}`;
   if (platform==='discord') return [entry.activityType!=='none' ? (DISCORD_ACTIVITY[entry.activityType]||'Активность') : null, entry.customStatus?`Статус: ${entry.customStatus}`:null].filter(Boolean).join(' · ') || 'Без активности';
   return approximateTelegramStatuses.has(entry.status) ? 'Точное время недоступно' : entry.status==='online' ? 'Точный онлайн-период' : 'Известный период статуса';
 }
