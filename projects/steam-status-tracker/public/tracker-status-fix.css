@@ -1,4 +1,4 @@
-/* Steam presence emphasis + statistics wrapping — 2026-08-10 */
+/* Steam presence emphasis + statistics wrapping — 2026-08-11 */
 
 /* Main Steam status: make online / in-game / offline visually distinct. */
 #steamView .detail-status-banner:has(#steamDetailStatusOrb[data-state="online"]) {
@@ -15,14 +15,34 @@
   color: #d9ffe8 !important;
 }
 
-#steamView .detail-status-banner:has(#steamDetailStatusOrb[data-state="warning"]) {
-  border-color: rgba(205, 166, 103, .24) !important;
+/* Steam Away / «Отошёл»: cool calm blue. */
+#steamView .detail-status-banner:has(#steamDetailStatusOrb[data-state="idle"]) {
+  border-color: rgba(104, 181, 237, .34) !important;
   background:
-    linear-gradient(135deg, rgba(151, 112, 52, .14), rgba(75, 61, 42, .06)),
-    rgba(255,255,255,.03) !important;
+    linear-gradient(135deg, rgba(58, 139, 204, .18), rgba(35, 82, 121, .08)),
+    rgba(255,255,255,.035) !important;
   box-shadow:
-    inset 3px 0 0 rgba(205, 166, 103, .72),
-    inset 0 1px 0 rgba(255,255,255,.06) !important;
+    inset 3px 0 0 rgba(107, 190, 246, .88),
+    inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+
+#steamView .detail-status-banner:has(#steamDetailStatusOrb[data-state="idle"]) #steamDetailMainStatus {
+  color: #d5efff !important;
+}
+
+/* Steam Snooze / «Спит»: soft moon-yellow. */
+#steamView .detail-status-banner:has(#steamDetailStatusOrb[data-state="warning"]) {
+  border-color: rgba(232, 201, 113, .34) !important;
+  background:
+    linear-gradient(135deg, rgba(182, 145, 55, .18), rgba(91, 73, 39, .08)),
+    rgba(255,255,255,.035) !important;
+  box-shadow:
+    inset 3px 0 0 rgba(242, 211, 122, .88),
+    inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+
+#steamView .detail-status-banner:has(#steamDetailStatusOrb[data-state="warning"]) #steamDetailMainStatus {
+  color: #fff0b7 !important;
 }
 
 #steamView .detail-status-banner:has(#steamDetailStatusOrb[data-state="error"]) {
@@ -35,15 +55,52 @@
     inset 0 1px 0 rgba(255,255,255,.06) !important;
 }
 
+/* Profile and overview status surfaces inherit the same Steam colors. */
+#profileStatusPill[data-state="idle"],
+#steamOverviewBadge[data-state="idle"] {
+  border-color: rgba(103, 184, 240, .34) !important;
+  background: rgba(55, 139, 202, .14) !important;
+  color: #d7efff !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 0 20px rgba(72, 158, 220, .08) !important;
+}
+
+#profileStatusPill[data-state="idle"] .status-pill__dot,
+#profileStatusPill[data-state="idle"] .state-pill__dot {
+  background: #6fc3f5 !important;
+  box-shadow: 0 0 10px rgba(111, 195, 245, .42) !important;
+}
+
+#profilePresenceDot[data-state="idle"] {
+  background: #6fc3f5 !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.04), 0 0 15px rgba(111, 195, 245, .36) !important;
+}
+
+#profileStatusPill[data-state="warning"],
+#steamOverviewBadge[data-state="warning"] {
+  border-color: rgba(236, 204, 111, .34) !important;
+  background: rgba(176, 139, 45, .14) !important;
+  color: #fff0b5 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 0 20px rgba(224, 184, 78, .08) !important;
+}
+
+#profileStatusPill[data-state="warning"] .status-pill__dot,
+#profileStatusPill[data-state="warning"] .state-pill__dot {
+  background: #f0cf72 !important;
+  box-shadow: 0 0 11px rgba(240, 207, 114, .42) !important;
+}
+
+#profilePresenceDot[data-state="warning"] {
+  background: #f0cf72 !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.04), 0 0 16px rgba(240, 207, 114, .35) !important;
+}
+
 /* Steam history: online and offline should be readable at a glance. */
 #steamGameTimeline .timeline-entry[data-kind="online"],
 #steamGameTimeline .timeline-entry[data-kind="in-game"],
 #steamGameTimeline .timeline-entry[data-kind="busy"],
-#steamGameTimeline .timeline-entry[data-kind="away"],
 #steamPresenceTimeline .timeline-entry[data-kind="online"],
 #steamPresenceTimeline .timeline-entry[data-kind="in-game"],
-#steamPresenceTimeline .timeline-entry[data-kind="busy"],
-#steamPresenceTimeline .timeline-entry[data-kind="away"] {
+#steamPresenceTimeline .timeline-entry[data-kind="busy"] {
   border-color: rgba(103, 207, 149, .28) !important;
   border-left: 3px solid rgba(110, 216, 158, .88) !important;
   background:
@@ -54,12 +111,40 @@
 #steamGameTimeline .timeline-entry[data-kind="online"] .timeline-entry__head strong,
 #steamGameTimeline .timeline-entry[data-kind="in-game"] .timeline-entry__head strong,
 #steamGameTimeline .timeline-entry[data-kind="busy"] .timeline-entry__head strong,
-#steamGameTimeline .timeline-entry[data-kind="away"] .timeline-entry__head strong,
 #steamPresenceTimeline .timeline-entry[data-kind="online"] .timeline-entry__head strong,
 #steamPresenceTimeline .timeline-entry[data-kind="in-game"] .timeline-entry__head strong,
-#steamPresenceTimeline .timeline-entry[data-kind="busy"] .timeline-entry__head strong,
-#steamPresenceTimeline .timeline-entry[data-kind="away"] .timeline-entry__head strong {
+#steamPresenceTimeline .timeline-entry[data-kind="busy"] .timeline-entry__head strong {
   color: #d8ffe7 !important;
+}
+
+/* Away entries are blue instead of looking like online. */
+#steamGameTimeline .timeline-entry[data-kind="away"],
+#steamPresenceTimeline .timeline-entry[data-kind="away"] {
+  border-color: rgba(100, 181, 238, .30) !important;
+  border-left: 3px solid rgba(109, 193, 247, .88) !important;
+  background:
+    linear-gradient(90deg, rgba(51, 132, 194, .16), rgba(255,255,255,.032) 38%),
+    rgba(255,255,255,.03) !important;
+}
+
+#steamGameTimeline .timeline-entry[data-kind="away"] .timeline-entry__head strong,
+#steamPresenceTimeline .timeline-entry[data-kind="away"] .timeline-entry__head strong {
+  color: #d4efff !important;
+}
+
+/* Snooze entries are moon-yellow. */
+#steamGameTimeline .timeline-entry[data-kind="snooze"],
+#steamPresenceTimeline .timeline-entry[data-kind="snooze"] {
+  border-color: rgba(235, 203, 110, .30) !important;
+  border-left: 3px solid rgba(242, 210, 119, .9) !important;
+  background:
+    linear-gradient(90deg, rgba(169, 132, 42, .17), rgba(255,255,255,.032) 38%),
+    rgba(255,255,255,.03) !important;
+}
+
+#steamGameTimeline .timeline-entry[data-kind="snooze"] .timeline-entry__head strong,
+#steamPresenceTimeline .timeline-entry[data-kind="snooze"] .timeline-entry__head strong {
+  color: #fff0b4 !important;
 }
 
 #steamGameTimeline .timeline-entry[data-kind="offline"],
