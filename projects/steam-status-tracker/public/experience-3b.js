@@ -5,7 +5,8 @@ function renderSteam(previous=null) {
   const data=state.steam.status; if (!data) { renderOverview(); return; }
   const p=data.player; const main=p.gameName?`В игре: ${p.gameName}`:statusLabel('steam',p.status);
   text('steamDetailName',p.name); text('steamDetailSteamId',p.steamId); text('steamIdValue',p.steamId); text('steamDetailMainStatus',main);
-  text('steamDetailSubStatus',`PersonaState: ${statusLabel('steam',p.personaState)}`); text('steamPersonaState',statusLabel('steam',p.personaState));
+  text('steamDetailSubStatus','',''); text('steamPersonaState',statusLabel('steam',p.personaState));
+  const personaItem=byId('steamPersonaState')?.closest('.data-item'); const personaLabel=personaItem?.querySelector('.data-item__label'); if (personaLabel) personaLabel.textContent='Состояние аккаунта';
   text('steamGameName',p.gameName||'Игра не запущена'); text('steamAppId',p.gameId||'—'); text('steamStatusSince',formatDateTime(p.statusStartedAt));
   text('steamLastLogoff',formatDateTime(p.lastLogoff)); text('steamDetailUpdated',formatDateTime(data.checkedAt));
   setLiveDuration(byId('steamSessionDuration'),p.gameStartedAt||p.statusStartedAt,null,'—');
