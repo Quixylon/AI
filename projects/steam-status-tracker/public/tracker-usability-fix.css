@@ -1,19 +1,5 @@
 /* Tracker readability and visual hierarchy — 2026-08-10 */
 
-/* The profile can stay decorative; the tracker should be quiet and readable. */
-html:has(#trackerScreen.is-active) .archive-fallback-stars,
-html:has(#trackerScreen.is-active) .archive-aurora,
-html:has(#trackerScreen.is-active) .ambient,
-html:has(#trackerScreen.is-active) #particleCanvas {
-  display: none !important;
-}
-
-html:has(#trackerScreen.is-active) body {
-  background:
-    radial-gradient(circle at 50% -12%, rgba(91, 77, 170, .20), transparent 38%),
-    linear-gradient(180deg, #080a12 0%, #05070d 100%) !important;
-}
-
 #trackerScreen {
   color: #f5f7fc !important;
 }
@@ -172,6 +158,10 @@ html:has(#trackerScreen.is-active) body {
   border: 1px solid rgba(255,255,255,.075) !important;
 }
 
+#steamDetailSubStatus:empty {
+  display: none !important;
+}
+
 .status-orb {
   width: 14px !important;
   height: 14px !important;
@@ -214,6 +204,17 @@ html:has(#trackerScreen.is-active) body {
 .stat-row {
   min-height: 48px !important;
   border-bottom-color: rgba(255,255,255,.085) !important;
+}
+
+/* The old vertical timeline rail and dots looked like a broken scrollbar. */
+.timeline {
+  padding-left: 0 !important;
+}
+
+.timeline::before,
+.timeline-entry::before {
+  content: none !important;
+  display: none !important;
 }
 
 .timeline-entry {
@@ -260,35 +261,6 @@ html:has(#trackerScreen.is-active) body {
   border-color: rgba(181,169,255,.24) !important;
 }
 
-/* One-line explanation makes each tab self-explanatory. */
-#trackerOverviewView::before,
-#steamView::before,
-#discordView::before,
-#telegramView::before {
-  display: block;
-  grid-column: 1 / -1;
-  margin: 0 0 12px !important;
-  color: rgba(211,219,234,.78);
-  font-size: .98rem;
-  line-height: 1.45;
-}
-
-#trackerOverviewView::before {
-  content: "Сводка по платформам — текущий статус и быстрый переход к подробностям.";
-}
-
-#steamView::before {
-  content: "Steam — текущий статус, игра, длительность сессии и история активности.";
-}
-
-#discordView::before {
-  content: "Discord — профиль и активность, которую Discord разрешает передавать.";
-}
-
-#telegramView::before {
-  content: "Telegram — доступные данные профиля и состояние интеграции.";
-}
-
 @media (max-width: 820px) {
   #trackerTitle {
     font-size: clamp(2.1rem,7vw,3rem) !important;
@@ -322,12 +294,5 @@ html:has(#trackerScreen.is-active) body {
   .stats-card,
   .history-panel {
     padding: 18px !important;
-  }
-
-  #trackerOverviewView::before,
-  #steamView::before,
-  #discordView::before,
-  #telegramView::before {
-    font-size: .91rem !important;
   }
 }
