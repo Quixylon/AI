@@ -554,6 +554,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-08-17T15:35:06.787Z",
+    "endedAt": "2026-08-17T15:58:46.489Z",
+    "durationSeconds": 1420
+  },
+  {
+    "status": "online",
+    "personaState": "online",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-08-17T15:58:46.489Z",
     "endedAt": null,
     "durationSeconds": null
   }
