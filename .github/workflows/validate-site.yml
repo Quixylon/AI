@@ -131,8 +131,27 @@ jobs:
     timeout-minutes: 10
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url || steps.deployment_retry_2.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+
+      - name: Retry Pages deployment
+        if: steps.deployment.outcome == 'failure'
+        id: deployment_retry
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Retry Pages deployment again
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure'
+        id: deployment_retry_2
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Fail if Pages is still unavailable
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure'
+        run: |
+          echo "GitHub Pages rejected all deployment attempts."
+          exit 1
