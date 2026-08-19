@@ -1,15 +1,15 @@
 {
   "configured": true,
-  "checkedAt": "2026-08-19T14:42:28.224Z",
+  "checkedAt": "2026-08-19T15:51:23.761Z",
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "in-game",
+    "status": "online",
     "personaState": "online",
-    "gameName": "Garry's Mod",
-    "gameId": "4000",
+    "gameName": null,
+    "gameId": null,
     "lastLogoff": "2026-08-18T19:24:00.000Z"
   }
 }
