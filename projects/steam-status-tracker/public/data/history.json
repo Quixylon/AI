@@ -635,6 +635,15 @@
     "gameName": "Garry's Mod",
     "gameId": "4000",
     "startedAt": "2026-08-19T16:27:56.065Z",
+    "endedAt": "2026-08-19T16:58:32.657Z",
+    "durationSeconds": 1837
+  },
+  {
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-08-19T16:58:32.657Z",
     "endedAt": null,
     "durationSeconds": null
   }
