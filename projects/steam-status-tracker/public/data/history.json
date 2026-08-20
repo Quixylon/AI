@@ -716,6 +716,15 @@
     "gameName": "PEAK",
     "gameId": "3527290",
     "startedAt": "2026-08-20T13:24:15.203Z",
+    "endedAt": "2026-08-20T14:09:27.044Z",
+    "durationSeconds": 2712
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Counter-Strike 2",
+    "gameId": "730",
+    "startedAt": "2026-08-20T14:09:27.044Z",
     "endedAt": null,
     "durationSeconds": null
   }
