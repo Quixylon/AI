@@ -680,6 +680,15 @@
     "gameName": "Garry's Mod",
     "gameId": "4000",
     "startedAt": "2026-08-20T10:04:41.010Z",
+    "endedAt": "2026-08-20T11:13:24.954Z",
+    "durationSeconds": 4124
+  },
+  {
+    "status": "online",
+    "personaState": "online",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-08-20T11:13:24.954Z",
     "endedAt": null,
     "durationSeconds": null
   }
