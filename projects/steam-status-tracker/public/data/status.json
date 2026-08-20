@@ -1,15 +1,15 @@
 {
   "configured": true,
-  "checkedAt": "2026-08-20T12:18:06.939Z",
+  "checkedAt": "2026-08-20T13:24:15.203Z",
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "away",
-    "personaState": "away",
-    "gameName": null,
-    "gameId": null,
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "PEAK",
+    "gameId": "3527290",
     "lastLogoff": "2026-08-20T11:29:05.000Z"
   }
 }
