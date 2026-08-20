@@ -698,6 +698,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-08-20T11:46:59.446Z",
+    "endedAt": "2026-08-20T12:18:06.939Z",
+    "durationSeconds": 1867
+  },
+  {
+    "status": "away",
+    "personaState": "away",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-08-20T12:18:06.939Z",
     "endedAt": null,
     "durationSeconds": null
   }
