@@ -761,6 +761,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-08-21T08:51:13.576Z",
+    "endedAt": "2026-08-21T10:04:36.341Z",
+    "durationSeconds": 4403
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "PUBG: BATTLEGROUNDS",
+    "gameId": "578080",
+    "startedAt": "2026-08-21T10:04:36.341Z",
     "endedAt": null,
     "durationSeconds": null
   }

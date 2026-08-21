@@ -1,15 +1,15 @@
 {
   "configured": true,
-  "checkedAt": "2026-08-21T08:51:13.576Z",
+  "checkedAt": "2026-08-21T10:04:36.341Z",
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "online",
+    "status": "in-game",
     "personaState": "online",
-    "gameName": null,
-    "gameId": null,
+    "gameName": "PUBG: BATTLEGROUNDS",
+    "gameId": "578080",
     "lastLogoff": "2026-08-20T17:11:49.000Z"
   }
 }
