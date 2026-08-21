@@ -770,6 +770,15 @@
     "gameName": "PUBG: BATTLEGROUNDS",
     "gameId": "578080",
     "startedAt": "2026-08-21T10:04:36.341Z",
+    "endedAt": "2026-08-21T11:12:38.669Z",
+    "durationSeconds": 4082
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Counter-Strike 2",
+    "gameId": "730",
+    "startedAt": "2026-08-21T11:12:38.669Z",
     "endedAt": null,
     "durationSeconds": null
   }
