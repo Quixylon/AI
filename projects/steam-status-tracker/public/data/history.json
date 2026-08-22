@@ -824,6 +824,15 @@
     "gameName": "Sexy Tails",
     "gameId": "1567080",
     "startedAt": "2026-08-22T14:17:59.002Z",
+    "endedAt": "2026-08-22T14:43:44.547Z",
+    "durationSeconds": 1546
+  },
+  {
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-08-22T14:43:44.547Z",
     "endedAt": null,
     "durationSeconds": null
   }
