@@ -815,6 +815,15 @@
     "gameName": "Counter-Strike 2",
     "gameId": "730",
     "startedAt": "2026-08-22T11:30:39.185Z",
+    "endedAt": "2026-08-22T14:17:59.002Z",
+    "durationSeconds": 10040
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Sexy Tails",
+    "gameId": "1567080",
+    "startedAt": "2026-08-22T14:17:59.002Z",
     "endedAt": null,
     "durationSeconds": null
   }
