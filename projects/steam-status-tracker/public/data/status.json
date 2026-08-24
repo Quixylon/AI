@@ -1,15 +1,15 @@
 {
   "configured": true,
-  "checkedAt": "2026-08-24T09:05:28.135Z",
+  "checkedAt": "2026-08-24T10:02:23.632Z",
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "online",
+    "status": "in-game",
     "personaState": "online",
-    "gameName": null,
-    "gameId": null,
+    "gameName": "Sex and the Furry Titty 2: Sins of the City",
+    "gameId": "1750200",
     "lastLogoff": "2026-08-23T15:42:29.000Z"
   }
 }

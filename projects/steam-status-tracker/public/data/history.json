@@ -869,6 +869,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-08-24T09:05:28.135Z",
+    "endedAt": "2026-08-24T10:02:23.632Z",
+    "durationSeconds": 3415
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Sex and the Furry Titty 2: Sins of the City",
+    "gameId": "1750200",
+    "startedAt": "2026-08-24T10:02:23.632Z",
     "endedAt": null,
     "durationSeconds": null
   }
