@@ -878,6 +878,15 @@
     "gameName": "Sex and the Furry Titty 2: Sins of the City",
     "gameId": "1750200",
     "startedAt": "2026-08-24T10:02:23.632Z",
+    "endedAt": "2026-08-24T12:55:17.853Z",
+    "durationSeconds": 10374
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Counter-Strike 2",
+    "gameId": "730",
+    "startedAt": "2026-08-24T12:55:17.853Z",
     "endedAt": null,
     "durationSeconds": null
   }
