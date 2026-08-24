@@ -896,6 +896,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-08-24T13:56:11.222Z",
+    "endedAt": "2026-08-24T14:51:41.655Z",
+    "durationSeconds": 3330
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "PEAK",
+    "gameId": "3527290",
+    "startedAt": "2026-08-24T14:51:41.655Z",
     "endedAt": null,
     "durationSeconds": null
   }
