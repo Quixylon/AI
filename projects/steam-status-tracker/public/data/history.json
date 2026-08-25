@@ -932,6 +932,15 @@
     "gameName": "Counter-Strike 2",
     "gameId": "730",
     "startedAt": "2026-08-25T11:36:29.502Z",
+    "endedAt": "2026-08-25T14:05:08.658Z",
+    "durationSeconds": 8919
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Casualties: Unknown Demo",
+    "gameId": "4576510",
+    "startedAt": "2026-08-25T14:05:08.658Z",
     "endedAt": null,
     "durationSeconds": null
   }

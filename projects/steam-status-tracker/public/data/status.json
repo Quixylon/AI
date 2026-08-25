@@ -1,6 +1,6 @@
 {
   "configured": true,
-  "checkedAt": "2026-08-25T13:08:22.023Z",
+  "checkedAt": "2026-08-25T14:05:08.658Z",
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
@@ -8,8 +8,8 @@
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
     "status": "in-game",
     "personaState": "online",
-    "gameName": "Counter-Strike 2",
-    "gameId": "730",
-    "lastLogoff": "2026-08-25T12:36:33.000Z"
+    "gameName": "Casualties: Unknown Demo",
+    "gameId": "4576510",
+    "lastLogoff": "2026-08-25T13:10:50.000Z"
   }
 }
