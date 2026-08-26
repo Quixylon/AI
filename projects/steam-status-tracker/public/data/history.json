@@ -968,6 +968,15 @@
     "gameName": "Delivery & Beyond",
     "gameId": "3376480",
     "startedAt": "2026-08-26T14:28:33.309Z",
+    "endedAt": "2026-08-26T16:03:17.377Z",
+    "durationSeconds": 5684
+  },
+  {
+    "status": "online",
+    "personaState": "online",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-08-26T16:03:17.377Z",
     "endedAt": null,
     "durationSeconds": null
   }
