@@ -950,6 +950,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-08-25T15:03:23.898Z",
+    "endedAt": "2026-08-26T12:38:32.171Z",
+    "durationSeconds": 77708
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Counter-Strike 2",
+    "gameId": "730",
+    "startedAt": "2026-08-26T12:38:32.171Z",
     "endedAt": null,
     "durationSeconds": null
   }
