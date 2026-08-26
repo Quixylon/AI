@@ -959,6 +959,15 @@
     "gameName": "Counter-Strike 2",
     "gameId": "730",
     "startedAt": "2026-08-26T12:38:32.171Z",
+    "endedAt": "2026-08-26T14:28:33.309Z",
+    "durationSeconds": 6601
+  },
+  {
+    "status": "in-game",
+    "personaState": "away",
+    "gameName": "Delivery & Beyond",
+    "gameId": "3376480",
+    "startedAt": "2026-08-26T14:28:33.309Z",
     "endedAt": null,
     "durationSeconds": null
   }
