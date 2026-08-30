@@ -995,6 +995,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-08-30T13:03:44.410Z",
+    "endedAt": "2026-08-30T17:25:53.740Z",
+    "durationSeconds": 15729
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Casualties: Unknown Demo",
+    "gameId": "4576510",
+    "startedAt": "2026-08-30T17:25:53.740Z",
     "endedAt": null,
     "durationSeconds": null
   }
