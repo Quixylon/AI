@@ -114,7 +114,7 @@ class CanvasController {
     this.particles = Array.from({ length: count }, (_, i) => ({
       u: ((i * 137.508 + 23) % 997) / 997,
       v: ((i * 213.733 + 89) % 991) / 991,
-      radius: .55 + (i % 5) * .19,
+      radius: .8 + (i % 5) * .23,
       depth: .3 + (i % 7) * .1,
       phase: i * 2.39996
     }));
@@ -150,10 +150,12 @@ class CanvasController {
     if (!this.ctx) return;
     const ctx = this.ctx, t = this.elapsed;
     ctx.clearRect(0, 0, this.width, this.height);
+    const points = [];
     for (const p of this.particles) {
-      const x = p.u * this.width + Math.sin(t * .065 + p.phase) * 18 + this.pointer.rx * p.depth * 22;
-      const y = p.v * this.height + Math.cos(t * .045 + p.phase) * 14 + this.pointer.ry * p.depth * 18;
-      const alpha = .2 + (.5 + Math.sin(t * .4 + p.phase) * .5) * .32;
+      const x = p.u * this.width + Math.sin(t * .16 + p.phase) * 26 + this.pointer.rx * p.depth * 22;
+      const y = p.v * this.height + Math.cos(t * .12 + p.phase) * 23 + this.pointer.ry * p.depth * 18;
+      points.push({ x, y });
+      const alpha = .4 + (.5 + Math.sin(t * .6 + p.phase) * .5) * .4;
       ctx.fillStyle = `rgba(180,204,238,${alpha})`;
       ctx.beginPath(); ctx.arc(x, y, p.radius, 0, Math.PI * 2); ctx.fill();
       if (!this.mobile && this.pointer.active) {
@@ -163,6 +165,20 @@ class CanvasController {
           ctx.lineWidth = .65;
           ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(this.pointer.x, this.pointer.y); ctx.stroke();
         }
+      }
+    }
+    // A sparse moving constellation remains visible without a mouse pointer.
+    const reach = this.mobile ? 145 : 185;
+    for (let i = 0; i < points.length; i++) {
+      let connections = 0;
+      for (let j = i + 1; j < points.length && connections < 2; j++) {
+        const a = points[i], b = points[j];
+        const distance = Math.hypot(a.x - b.x, a.y - b.y);
+        if (distance >= reach) continue;
+        ctx.strokeStyle = `rgba(158,190,230,${(1 - distance / reach) * .28})`;
+        ctx.lineWidth = .7;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        connections++;
       }
     }
   }
