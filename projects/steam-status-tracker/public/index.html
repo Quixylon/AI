@@ -1,59 +1,386 @@
 <!doctype html>
-<html lang="ru" class="app-booting">
+<html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="theme-color" content="#05060a" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="description" content="Профиль Qu’lon и трекер." />
-  <meta name="quixylon-build" content="visual-refresh-20260906" />
-  <title>Qu’lon</title>
-  <link rel="stylesheet" href="./experience-1.css?v=20260906" />
-  <link rel="stylesheet" href="./experience-2.css?v=20260906" />
-  <link rel="stylesheet" href="./experience-3.css?v=20260906" />
-  <link rel="stylesheet" href="./experience-4.css?v=20260906" />
-  <link rel="stylesheet" href="./visual-refresh.css?v=20260906" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090d13">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Qu’lon — мои цифровые следы. Профили, ссылки и трекер активности.">
+  <meta name="quixylon-build" content="digital-traces-20260906">
+  <title>Qu’lon — цифровые следы</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./assets/site.css?v=20260906-2">
 </head>
-<body>
-  <script>
-    (async () => {
-      const parts = ["./experience-shell-1.html?v=20260906", "./experience-shell-2.html?v=2000", "./experience-shell-3.html?v=2000"];
-      try {
-        const responses = await Promise.all(parts.map(path => fetch(path, { cache: 'no-store' })));
-        if (responses.some(response => !response.ok)) throw new Error('Не удалось загрузить интерфейс');
-        document.body.innerHTML = (await Promise.all(responses.map(response => response.text()))).join('');
-        const scripts = [
-          "./experience-1.js?v=20260906",
-          "./experience-2.js?v=20260906",
-          "./experience-3a.js?v=20260906",
-          "./experience-3b.js?v=20260906",
-          "./experience-3c.js?v=20260906",
-          "./experience-4.js?v=20260906",
-          "./visual-motion.js?v=20260906",
-          "./visual-bootstrap.js?v=20260906",
-          "./experience-fixes.js?v=20260906",
-          "./polish-icons.js?v=20260906",
-          "./visual-refresh.js?v=20260906"
-        ];
-        for (const source of scripts) {
-          await new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = source;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.body.append(script);
-          });
-        }
-      } catch (error) {
-        document.documentElement.classList.remove('app-booting');
-        document.documentElement.classList.add('app-ready');
-        document.body.innerHTML = '<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;color:#f5f7fb;font-family:system-ui;background:#05060a;text-align:center"><div><h1>Не удалось загрузить сайт</h1><p style="color:#9ca9bd">Обнови страницу ещё раз.</p></div></main>';
-        console.error(error);
-      }
-    })();
-  </script>
+<body data-route="profile">
+  <div class="atmosphere" aria-hidden="true"><div class="aurora aurora--one"></div><div class="aurora aurora--two"></div><div class="orbit orbit--one"></div><div class="orbit orbit--two"></div></div>
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+  <div class="sr-only" id="appStatusLive" aria-live="polite"></div>
+  <main class="app-shell">
+    <section id="profileScreen" class="screen is-active" aria-hidden="false" aria-labelledby="profileName">
+      <div class="profile-masthead"><span class="wordmark">Q<span class="wordmark__dot">.</span></span><span>ЦИФРОВЫЕ СЛЕДЫ</span><span class="masthead-handle">@quixylon</span></div>
+      <div class="profile-composition">
+        <article id="profileCard" class="identity-panel panel">
+          <div class="identity-topline"><span class="eyebrow">ЛИЧНОЕ ПРОСТРАНСТВО</span><span class="panel-index" aria-hidden="true">01</span></div>
+          <div class="identity-body">
+            <div class="identity-type"><h1 id="profileName" tabindex="-1">Qu’lon</h1><p id="profileHandle">@quixylon</p></div>
+            <div class="avatar-shell"><div class="avatar-frame"><div id="profileAvatarPlaceholder" class="avatar-placeholder" aria-hidden="true">Q</div><img id="profileAvatar" alt="Аватар Qu’lon" hidden width="112" height="112"></div><span id="profilePresenceDot" class="presence-dot" data-state="offline" aria-hidden="true"></span></div>
+          </div>
+          <div class="identity-bottomline"><div id="profileStatusPill" class="status-pill" data-state="offline" aria-live="polite"><span class="status-pill__dot" aria-hidden="true"></span><span id="profileStatusText">Проверяю статус…</span></div><span class="identity-signature" aria-hidden="true">Quixylon / online space</span></div>
+        </article>
+        <section class="intro-panel panel" aria-labelledby="helloTitle">
+          <div class="intro-topline"><h2 id="helloTitle">Привет<span class="accent-period">.</span></h2><button id="catButton" class="cat-button" type="button" aria-label="Мяукнуть" title="Мяу"><svg class="cat-svg" viewBox="0 0 96 72" aria-hidden="true"><path class="cat-ear" d="M20 27 25 8l17 13M76 27 71 8 54 21"/><path class="cat-head" d="M18 31c0-16 13-25 30-25s30 9 30 25v12c0 15-13 25-30 25S18 58 18 43Z"/><path class="cat-eye" d="M34 38h1M61 38h1"/><path class="cat-mouth" d="M43 48c2 3 4 4 5 4s3-1 5-4M48 44v8"/><path class="cat-whisker" d="M8 43h22M10 51l20-3M88 43H66M86 51l-20-3"/></svg></button></div>
+          <p id="profileDescription">Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.</p>
+        </section>
+        <section class="destinations-panel panel" aria-labelledby="linksTitle">
+          <header class="destinations-header"><div><span class="eyebrow">НА СВЯЗИ</span><h2 id="linksTitle">Где меня найти</h2></div><span class="panel-index" aria-hidden="true">02</span></header>
+          <nav id="profileLinks" class="links-grid" aria-label="Ссылки профиля"><a class="social-link" data-key="telegram" href="https://t.me/quixylon" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="telegram" aria-hidden="true"></span><span class="social-link__label">Telegram</span><span class="social-link__arrow" aria-hidden="true">↗</span></a>
+<a class="social-link" data-key="discord" href="https://discordapp.com/users/358528415558795265" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="discord" aria-hidden="true"></span><span class="social-link__label">Discord</span><span class="social-link__arrow" aria-hidden="true">↗</span></a>
+<a class="social-link" data-key="roblox" href="https://roblox.com/users/1295717297/profile" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="roblox" aria-hidden="true"></span><span class="social-link__label">Roblox</span><span class="social-link__arrow" aria-hidden="true">↗</span></a>
+<a class="social-link" data-key="tiktok" href="https://tiktok.com/@quixylon" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="tiktok" aria-hidden="true"></span><span class="social-link__label">TikTok</span><span class="social-link__arrow" aria-hidden="true">↗</span></a>
+<a class="social-link" data-key="steam" href="https://steamcommunity.com/id/quixylon/" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="steam" aria-hidden="true"></span><span class="social-link__label">Steam</span><span class="social-link__arrow" aria-hidden="true">↗</span></a>
+<a class="social-link" data-key="csrep" href="https://csrep.gg/player/76561199524001992" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="csrep" aria-hidden="true"></span><span class="social-link__label">CSRep</span><span class="social-link__arrow" aria-hidden="true">↗</span></a>
+<a class="social-link" data-key="github" href="https://github.com/Quixylon/AI" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="github" aria-hidden="true"></span><span class="social-link__label">GitHub</span><span class="social-link__arrow" aria-hidden="true">↗</span></a></nav>
+          <a id="gunsProfileButton" class="guns-link" href="https://guns.lol/quixylon" target="_blank" rel="noopener noreferrer"><span>guns.lol</span><span aria-hidden="true">↗</span></a>
+        </section>
+        <a class="tracker-door panel" href="#tracker/overview" aria-label="Открыть трекер активности"><span class="tracker-door__icon" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span class="tracker-door__copy"><span>За цифровыми следами</span><strong>Открыть трекер</strong></span><span class="tracker-door__arrow" aria-hidden="true">↗</span></a>
+      </div>
+      <footer class="profile-footer"><div class="profile-meta"><span class="profile-meta__label">Статус</span><span id="profileFooterStatus" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Обновлено</span><span id="profileUpdatedAt" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Посетители</span><span id="visitorCount" class="profile-meta__value">—</span></div></footer>
+    </section>
+<section aria-hidden="true" aria-labelledby="trackerTitle" class="screen" id="trackerScreen">
+<div class="tracker-layout">
+<header class="tracker-topbar glass">
+<a aria-label="Назад к профилю" class="back-link" href="#profile">
+<span aria-hidden="true">←</span><span>Назад к профилю</span>
+</a>
+<div class="tracker-heading"><p class="tracker-eyebrow" id="trackerEyebrow">АКТИВНОСТЬ</p>
+<h1 id="trackerTitle">Трекер</h1>
+<p id="trackerLastUpdate">Последнее общее обновление: —</p>
+</div>
+<button aria-busy="false" aria-label="Обновить все данные" class="refresh-button" id="refreshAllButton" title="Обновить данные" type="button"><span aria-hidden="true" class="refresh-spinner"></span>
+<svg aria-hidden="true" class="refresh-icon" fill="none" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+<span>Обновить</span>
+</button>
+</header>
+<div aria-live="polite" class="tracker-statusbar">
+<div class="state-pill" data-state="warning" id="overallFetchState">
+<span aria-hidden="true" class="state-pill__dot"></span>
+<span id="overallFetchStateText">Подготовка данных</span>
+</div>
+<span class="sync-text" id="syncText">Синхронизация ещё не выполнялась</span>
+</div>
+<nav aria-label="Разделы трекера" class="tracker-tabs-wrap">
+<div aria-label="Платформы трекера" class="tracker-tabs" role="tablist">
+<a aria-controls="trackerOverviewView" aria-selected="true" class="tab-link" data-route="tracker" data-tab="overview" href="#tracker/overview" id="tab-overview" role="tab" tabindex="0">Обзор</a>
+<a aria-controls="steamView" aria-selected="false" class="tab-link" data-route="tracker-steam" data-tab="steam" href="#tracker/steam" id="tab-steam" role="tab" tabindex="-1">Steam</a>
+<a aria-controls="discordView" aria-selected="false" class="tab-link" data-route="tracker-discord" data-tab="discord" href="#tracker/discord" id="tab-discord" role="tab" tabindex="-1">Discord</a>
+<a aria-controls="telegramView" aria-selected="false" class="tab-link" data-route="tracker-telegram" data-tab="telegram" href="#tracker/telegram" id="tab-telegram" role="tab" tabindex="-1">Telegram</a>
+</div>
+</nav>
+<section aria-label="Обзор платформ" aria-labelledby="tab-overview" class="tracker-view is-active" id="trackerOverviewView" role="tabpanel" tabindex="0">
+<div class="overview-grid">
+<article aria-busy="true" class="platform-card" data-motion-max="0.7" data-motion-panel="1" data-platform="steam">
+<div class="platform-card__top">
+<span aria-hidden="true" class="platform-logo" data-icon="steam"></span>
+<span class="platform-name">Steam</span>
+<span class="mini-badge" data-state="warning" id="steamOverviewBadge">Загрузка</span>
+</div>
+<div class="platform-identity">
+<div class="small-avatar-frame round">
+<div aria-hidden="true" class="avatar-placeholder" id="steamOverviewAvatarPlaceholder">Q</div>
+<img alt="Steam-аватар" hidden="" id="steamOverviewAvatar"/>
+</div>
+<div class="identity-copy">
+<h2 id="steamOverviewName">—</h2>
+<p id="steamOverviewId">—</p>
+</div>
+</div>
+<div class="platform-status">
+<strong id="steamOverviewStatus">Получение данных…</strong>
+<p id="steamOverviewActivity">Steam ещё не ответил.</p>
+</div>
+<div class="platform-updated" id="steamOverviewUpdated">Обновлено: —</div>
+<div aria-live="polite" class="platform-inline-state" id="steamOverviewState"></div><div class="platform-actions">
+<a class="action-button" href="#tracker/steam">Подробнее</a>
+<a class="ghost-button" href="#" id="steamOverviewProfileLink" rel="noopener noreferrer" target="_blank">Профиль</a>
+</div>
+</article>
+<article aria-busy="true" class="platform-card" data-motion-max="0.7" data-motion-panel="1" data-platform="discord">
+<div class="platform-card__top">
+<span aria-hidden="true" class="platform-logo" data-icon="discord"></span>
+<span class="platform-name">Discord</span>
+<span class="mini-badge" data-state="warning" id="discordOverviewBadge">Загрузка</span>
+</div>
+<div class="platform-identity">
+<div class="small-avatar-frame round">
+<div aria-hidden="true" class="avatar-placeholder" id="discordOverviewAvatarPlaceholder">Q</div>
+<img alt="Discord-аватар" hidden="" id="discordOverviewAvatar"/>
+</div>
+<div class="identity-copy">
+<h2 id="discordOverviewName">—</h2>
+<p id="discordOverviewId">—</p>
+</div>
+</div>
+<div class="platform-status">
+<strong id="discordOverviewStatus">Получение данных…</strong>
+<p id="discordOverviewActivity">Discord ещё не ответил.</p>
+</div>
+<div class="platform-updated" id="discordOverviewUpdated">Обновлено: —</div>
+<div aria-live="polite" class="platform-inline-state" id="discordOverviewState"></div><div class="platform-actions">
+<a class="action-button" href="#tracker/discord">Подробнее</a>
+<a class="ghost-button" href="#" id="discordOverviewProfileLink" rel="noopener noreferrer" target="_blank">Профиль</a>
+</div>
+</article>
+<article aria-busy="true" class="platform-card" data-motion-max="0.7" data-motion-panel="1" data-platform="telegram">
+<div class="platform-card__top">
+<span aria-hidden="true" class="platform-logo" data-icon="telegram"></span>
+<span class="platform-name">Telegram</span>
+<span class="mini-badge" data-state="warning" id="telegramOverviewBadge">Загрузка</span>
+</div>
+<div class="platform-identity">
+<div class="small-avatar-frame round">
+<div aria-hidden="true" class="avatar-placeholder" id="telegramOverviewAvatarPlaceholder">Q</div>
+<img alt="Telegram-аватар" hidden="" id="telegramOverviewAvatar"/>
+</div>
+<div class="identity-copy">
+<h2 id="telegramOverviewName">—</h2>
+<p id="telegramOverviewId">—</p>
+</div>
+</div>
+<div class="platform-status">
+<strong id="telegramOverviewStatus">Получение данных…</strong>
+<p id="telegramOverviewActivity">Telegram ещё не ответил.</p>
+</div>
+<div class="platform-updated" id="telegramOverviewUpdated">Обновлено: —</div>
+<div aria-live="polite" class="platform-inline-state" id="telegramOverviewState"></div><div class="platform-actions">
+<a class="action-button" href="#tracker/telegram">Подробнее</a>
+<a class="ghost-button" href="#" id="telegramOverviewProfileLink" rel="noopener noreferrer" target="_blank">Профиль</a>
+</div>
+</article>
+</div>
+</section>
+<section aria-label="Подробный Steam-трекер" aria-labelledby="tab-steam" class="tracker-view" id="steamView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="steamDetailAvatarPlaceholder">Q</div>
+<img alt="Steam-аватар" hidden="" id="steamDetailAvatar"/>
+</div>
+<div class="detail-title">
+
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="steam" style="width:18px;height:18px;color:var(--steam)"></span> Steam</div>
+<h2 id="steamDetailName">—</h2>
+<p id="steamDetailSteamId">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="steamDetailMainStatus">Получение статуса…</strong>
+<p id="steamDetailSubStatus">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="steamDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="steamErrorBanner"></div>
+<div class="stale-banner" id="steamStaleBanner">Данные могут быть устаревшими.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">Steam ID</span><div class="data-item__value-row"><span class="data-item__value" id="steamIdValue">—</span><button class="copy-button" data-copy-target="steamIdValue" type="button">Копировать</button></div></div>
+
+<div class="data-item"><span class="data-item__label">Текущая игра</span><div class="data-item__value-row"><span class="data-item__value" id="steamGameName">—</span></div></div>
+
+<div class="data-item"><span class="data-item__label">Статус с</span><div class="data-item__value-row"><span class="data-item__value" id="steamStatusSince">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последний выход</span><div class="data-item__value-row"><span class="data-item__value" id="steamLastLogoff">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Длительность сессии</span><div class="data-item__value-row"><span class="data-item__value" data-start-time="" id="steamSessionDuration">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="steamDetailUpdated">—</span></div></div>
+</div>
+<div class="detail-actions">
+<a class="action-button" href="#" id="steamProfileButton" rel="noopener noreferrer" target="_blank">Открыть Steam-профиль</a>
+<a class="ghost-button" href="#" id="steamCsrepButton" rel="noopener noreferrer" target="_blank">CSRep</a>
+<button class="retry-button" id="retrySteamButton" type="button">Повторить запрос</button>
+</div>
+
+</article>
+<aside class="stats-card">
+<div class="panel-title"><div><h3>Сегодня</h3><p>Рассчитано по сохранённой истории Steam</p></div></div>
+<div class="stats-list">
+<div class="stat-row"><span>Онлайн</span><strong id="steamStatOnline">—</strong></div>
+<div class="stat-row"><span>В играх</span><strong id="steamStatGames">—</strong></div>
+<div class="stat-row"><span>Запусков игр</span><strong id="steamStatLaunches">—</strong></div>
+<div class="stat-row"><span>Последняя игра</span><strong id="steamStatLastGame">—</strong></div>
+<div class="stat-row"><span>В играх за 7 дней</span><strong id="steamStatGames7d">—</strong></div><div class="stat-row"><span>Уникальных игр</span><strong id="steamStatUniqueGames">—</strong></div><div class="stat-row"><span>Чаще запускается</span><strong id="steamStatMostLaunched">—</strong></div><div class="stat-row"><span>Больше всего времени</span><strong id="steamStatLongestGame">—</strong></div></div>
+</aside>
+</div>
+<section aria-labelledby="steamGamesHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title history-panel-title">
+<div><h3 id="steamGamesHistoryTitle">История игр</h3><p>Запуски и игровые сессии Steam</p></div>
+<div aria-label="Фильтр истории Steam" class="history-filters" role="group">
+<button aria-pressed="true" class="filter-button is-active" data-history-filter="all" data-history-platform="steam" type="button">Всё</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="games" data-history-platform="steam" type="button">Игры</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="online" data-history-platform="steam" type="button">Онлайн</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="offline" data-history-platform="steam" type="button">Офлайн</button>
+</div>
+</div>
+<div aria-live="polite" class="timeline" tabindex="0" role="region" id="steamGameTimeline"></div>
+
+</section>
+<section aria-labelledby="steamPresenceHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title"><div><h3 id="steamPresenceHistoryTitle">История сети</h3><p>Периоды онлайна и офлайна</p></div></div>
+<div aria-live="polite" class="timeline" tabindex="0" role="region" id="steamPresenceTimeline"></div>
+
+</section>
+</section>
+<section aria-label="Подробный Discord-трекер" aria-labelledby="tab-discord" class="tracker-view" id="discordView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="discordDetailAvatarPlaceholder">Q</div>
+<img alt="Discord-аватар" hidden="" id="discordDetailAvatar"/>
+</div>
+<div class="detail-title">
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="discord" style="width:18px;height:18px;color:var(--discord)"></span> Discord</div>
+<h2 id="discordDetailName">—</h2>
+<p id="discordDetailUsername">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="discordDetailMainStatus">Получение статуса…</strong>
+<p id="discordCustomStatus">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="discordDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="discordErrorBanner"></div>
+<div class="stale-banner" id="discordStaleBanner">Данные могут быть устаревшими.</div>
+<div class="activity-card" id="discordActivityCard">
+<div class="activity-copy">
+<small id="discordActivityType">Активность</small>
+<h3 id="discordActivityName">—</h3>
+<p id="discordActivityDetails">Нет текущей активности.</p>
+<p data-start-time="" id="discordActivityElapsed"></p>
+</div>
+<img alt="Изображение активности Discord" class="activity-image" hidden="" id="discordActivityImage"/>
+</div>
+<div class="empty-state" id="discordEmptyState">Сейчас активность не передаётся. Это нормальное состояние, а не ошибка.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">Discord ID</span><div class="data-item__value-row"><span class="data-item__value" id="discordIdValue">—</span><button class="copy-button" data-copy-target="discordIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">Имя пользователя</span><div class="data-item__value-row"><span class="data-item__value" id="discordUsernameValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Статус</span><div class="data-item__value-row"><span class="data-item__value" id="discordStatusValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Начало активности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityStartedAt">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="discordDetailUpdated">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Тип активности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityTypeValue">—</span></div></div><div class="data-item"><span class="data-item__label">Название активности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityNameValue">—</span></div></div><div class="data-item"><span class="data-item__label">Подробности</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityDetailsValue">—</span></div></div><div class="data-item"><span class="data-item__label">Состояние</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityStateValue">—</span></div></div><div class="data-item"><span class="data-item__label">Текущая длительность</span><div class="data-item__value-row"><span class="data-item__value" id="discordActivityDurationValue">—</span></div></div></div>
+<div class="detail-actions">
+<a class="action-button" href="#" id="discordProfileButton" rel="noopener noreferrer" target="_blank">Открыть Discord-профиль</a>
+<button class="retry-button" id="retryDiscordButton" type="button">Обновить профиль</button>
+</div>
+
+</article>
+<aside class="stats-card">
+<div class="panel-title"><div><h3>Профиль Discord</h3><p>Онлайн-статус не отслеживается</p></div></div>
+<div class="stats-list">
+<div class="stat-row"><span>Состояние</span><strong id="discordSideStatus">—</strong></div><div class="stat-row"><span>Активность</span><strong id="discordSideActivity">—</strong></div>
+<div class="stat-row"><span>Прошло</span><strong data-start-time="" id="discordSideElapsed">—</strong></div>
+<div class="stat-row"><span>Источник</span><strong>Прямая ссылка</strong></div>
+<div class="stat-row"><span>Online сегодня</span><strong id="discordStatOnlineToday">—</strong></div><div class="stat-row"><span>Idle сегодня</span><strong id="discordStatIdleToday">—</strong></div><div class="stat-row"><span>DND сегодня</span><strong id="discordStatDndToday">—</strong></div><div class="stat-row"><span>Смен активности</span><strong id="discordStatActivityChanges">—</strong></div><div class="stat-row"><span>Последняя активность</span><strong id="discordStatLastActivity">—</strong></div><div class="stat-row"><span>Самый долгий онлайн</span><strong id="discordStatLongestOnline">—</strong></div></div>
+</aside>
+</div>
+<section aria-labelledby="discordHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title history-panel-title">
+<div><h3 id="discordHistoryTitle">История Discord</h3><p>Не собирается без отдельной интеграции</p></div>
+<div aria-label="Фильтр истории Discord" class="history-filters" role="group">
+<button aria-pressed="true" class="filter-button is-active" data-history-filter="all" data-history-platform="discord" type="button">Всё</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="online" data-history-platform="discord" type="button">В сети</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="idle" data-history-platform="discord" type="button">Неактивен</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="dnd" data-history-platform="discord" type="button">Не беспокоить</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="offline" data-history-platform="discord" type="button">Не в сети</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="activities" data-history-platform="discord" type="button">Активности</button>
+</div>
+</div>
+<div aria-live="polite" class="timeline" tabindex="0" role="region" id="discordTimeline"></div>
+
+</section>
+</section>
+<section aria-label="Подробный Telegram-трекер" aria-labelledby="tab-telegram" class="tracker-view" id="telegramView" role="tabpanel" tabindex="0">
+<div class="detail-grid">
+<article class="detail-card motion-panel" data-motion-max="1.3" data-motion-panel="1">
+<div class="detail-hero">
+<div class="small-avatar-frame detail-avatar round">
+<div aria-hidden="true" class="avatar-placeholder" id="telegramDetailAvatarPlaceholder">Q</div>
+<img alt="Telegram-аватар" hidden="" id="telegramDetailAvatar"/>
+</div>
+<div class="detail-title">
+<div class="detail-title__platform"><span aria-hidden="true" class="platform-logo" data-icon="telegram" style="width:18px;height:18px;color:var(--telegram)"></span> Telegram</div>
+<h2 id="telegramDetailName">—</h2>
+<p id="telegramDetailUsername">—</p>
+</div>
+</div>
+<div class="detail-status-banner">
+<div class="detail-status-banner__copy">
+<strong id="telegramDetailMainStatus">Получение статуса…</strong>
+<p id="telegramLastSeenText">—</p>
+</div>
+<span aria-hidden="true" class="status-orb" data-state="warning" id="telegramDetailStatusOrb"></span>
+</div>
+<div class="error-banner" id="telegramErrorBanner"></div>
+<div class="stale-banner" id="telegramStaleBanner">Данные могут быть устаревшими.</div>
+<div class="data-grid">
+<div class="data-item"><span class="data-item__label">Имя пользователя</span><div class="data-item__value-row"><span class="data-item__value" id="telegramIdValue">—</span><button class="copy-button" data-copy-target="telegramIdValue" type="button">Копировать</button></div></div>
+<div class="data-item"><span class="data-item__label">Имя пользователя</span><div class="data-item__value-row"><span class="data-item__value" id="telegramUsernameValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Статус</span><div class="data-item__value-row"><span class="data-item__value" id="telegramStatusValue">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последняя активность</span><div class="data-item__value-row"><span class="data-item__value" id="telegramLastActivity">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Описание</span><div class="data-item__value-row"><span class="data-item__value" id="telegramBio">—</span></div></div>
+<div class="data-item"><span class="data-item__label">Последнее обновление</span><div class="data-item__value-row"><span class="data-item__value" id="telegramDetailUpdated">—</span></div></div>
+</div>
+<div class="detail-actions">
+<a class="action-button" href="#" id="telegramProfileButton" rel="noopener noreferrer" target="_blank">Открыть Telegram-профиль</a>
+<button class="retry-button" id="retryTelegramButton" type="button">Обновить профиль</button>
+</div>
+
+</article>
+<aside class="stats-card">
+<div class="panel-title"><div><h3>О статусе Telegram</h3><p class="telegram-note">Ограничения публичных данных</p></div></div>
+<p style="margin:0;color:var(--muted);line-height:1.65;font-size:.84rem">Браузер сам по себе не может получить произвольный онлайн-статус любого пользователя. В рабочей версии данные должны приходить с собственного сервера через разрешённую интеграцию.</p>
+<div class="stats-list">
+<div class="stat-row"><span>Online сегодня</span><strong id="telegramStatOnlineToday">—</strong></div>
+<div class="stat-row"><span>Известных входов</span><strong id="telegramStatEntriesToday">—</strong></div>
+<div class="stat-row"><span>Последний вход</span><strong id="telegramStatLastEntry">—</strong></div>
+<div class="stat-row"><span>Последний точный выход</span><strong id="telegramStatLastExit">—</strong></div>
+<div class="stat-row"><span>Текущая категория</span><strong id="telegramStatCategory">—</strong></div>
+</div>
+</aside>
+</div>
+<section aria-labelledby="telegramHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
+<div class="panel-title history-panel-title">
+<div><h3 id="telegramHistoryTitle">История Telegram</h3><p>Не собирается без отдельной интеграции</p></div>
+<div aria-label="Фильтр истории Telegram" class="history-filters" role="group">
+<button aria-pressed="true" class="filter-button is-active" data-history-filter="all" data-history-platform="telegram" type="button">Всё</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="online" data-history-platform="telegram" type="button">В сети</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="offline" data-history-platform="telegram" type="button">Не в сети</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="recently" data-history-platform="telegram" type="button">Недавно</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="approximate" data-history-platform="telegram" type="button">Приблизительные</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="hidden" data-history-platform="telegram" type="button">Скрыто</button>
+</div>
+</div>
+<div aria-live="polite" class="timeline" tabindex="0" role="region" id="telegramTimeline"></div>
+
+</section>
+</section>
+
+</div>
+</section>
+</main>
+<div aria-atomic="true" aria-live="polite" class="toast-region" id="toastRegion"></div>
+
+<script src="./assets/config.js?v=20260906-2" defer></script>
+<script src="./assets/data.js?v=20260906-2" defer></script>
+<script src="./assets/profile.js?v=20260906-2" defer></script>
+<script src="./assets/platforms.js?v=20260906-2" defer></script>
+<script src="./assets/history.js?v=20260906-2" defer></script>
+<script src="./assets/navigation.js?v=20260906-2" defer></script>
+<script src="./assets/motion.js?v=20260906-2" defer></script>
+<script src="./assets/icons.js?v=20260906-2" defer></script>
+<script src="./assets/ui.js?v=20260906-2" defer></script>
+<script src="./assets/cat-audio.js?v=20260906-2" defer></script>
+<script src="./assets/app.js?v=20260906-2" defer></script>
+<noscript><p class="no-script">Для статусов и трекера нужен JavaScript. Ссылки профиля доступны выше.</p></noscript>
 </body>
 </html>

@@ -1,0 +1,81 @@
+import vm from 'node:vm';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import test from 'node:test';
+const source = fs.readFileSync(new URL('../public/assets/motion.js', import.meta.url), 'utf8');
+function fixture() {
+  let time = 0, sequence = 0;
+  const queue = new Map();
+  const styles = new Map();
+  const element = {
+    id: 'profileCard',
+    classList: { contains: name => name === 'panel', add() {}, toggle() {}, remove() {} },
+    style: { setProperty: (name, value) => styles.set(name, value) },
+    closest: () => null,
+    getBoundingClientRect: () => ({ left: 100, top: 100, right: 500, bottom: 400, width: 400, height: 300 }),
+    matches: () => false
+  };
+  const draw = { setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
+  const canvas = { getContext: () => draw };
+  const reduced = { matches: false }, coarse = { matches: false, addEventListener() {}, removeEventListener() {} };
+  const document = { hidden: false, querySelectorAll: () => [element] };
+  const context = vm.createContext({
+    document, REDUCED_MOTION: reduced, COARSE_POINTER: coarse,
+    innerWidth: 1440, innerHeight: 900, devicePixelRatio: 3,
+    performance: { now: () => time },
+    requestAnimationFrame: fn => { const id = ++sequence; queue.set(id, fn); return id; },
+    cancelAnimationFrame: id => queue.delete(id),
+    byId: () => canvas,
+    addEventListener() {}, removeEventListener() {}, setTimeout, clearTimeout, console
+  });
+  vm.runInContext(source + '\nthis.motion = motionController; this.background = canvasController;', context);
+  return {
+    context, reduced, coarse, document, styles, queue, canvas,
+    step(ms) { time += ms; const callbacks = [...queue.values()]; queue.clear(); callbacks.forEach(fn => fn(time)); },
+    read() { return parseFloat(styles.get('--tilt-y') || '0'); }
+  };
+}
+function sample(fps, seconds) {
+  const test = fixture();
+  test.context.motion.registerAll();
+  test.context.motion.updatePointer(490, 390);
+  for (let i = 0; i < Math.round(fps * seconds); ++i) test.step(1000 / fps);
+  return test;
+}
+test('motion is time based, bounded, idle aware, and respects device preferences', () => {
+const at60 = sample(60, .2), at144 = sample(144, 29 / 144);
+assert.ok(Math.abs(at60.read() - at144.read()) < .012, 'time-based tilt must agree at 60 and 144 Hz');
+const test = sample(60, 2);
+assert.ok(test.read() > 1 && test.read() <= 1.5, 'outer card tilt stays subtle');
+assert.equal(test.queue.size, 0, 'settled panels must stop requesting frames');
+test.context.motion.reset();
+for (let i = 0; i < 120; i++) test.step(1000 / 60);
+assert.equal(test.read(), 0, 'pointer leave returns the card to neutral');
+assert.equal(test.queue.size, 0);
+test.coarse.matches = true;
+test.context.motion.updatePointer(500, 300);
+assert.equal(test.queue.size, 0, 'touch-only devices must not animate tilt');
+test.coarse.matches = false;
+test.reduced.matches = true;
+test.context.motion.updatePointer(500, 300);
+assert.equal(test.queue.size, 0, 'reduced motion must suppress tilt');
+test.context.background.init();
+assert.equal(test.queue.size, 0, 'reduced motion paints a static background');
+assert.equal(test.canvas.width, 2880, 'desktop DPR is capped at 2');
+test.reduced.matches = false;
+test.context.background.resume();
+assert.equal(test.queue.size, 1, 'background resumes with exactly one loop');
+test.context.background.resume();
+assert.equal(test.queue.size, 1, 'repeated resume must not duplicate loops');
+test.context.background.stop();
+assert.equal(test.queue.size, 0);
+test.document.hidden = true;
+test.context.background.resume();
+test.context.motion.updatePointer(300, 300);
+assert.equal(test.queue.size, 0, 'hidden tabs cannot schedule either loop');
+test.document.hidden = false;
+test.coarse.matches = true;
+test.context.background.resize();
+assert.equal(test.canvas.width, 2160, 'touch DPR is capped at 1.5');
+assert.ok(test.context.background.particles.length <= 24, 'touch particle count is bounded');
+});
