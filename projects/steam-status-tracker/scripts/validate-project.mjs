@@ -88,6 +88,11 @@ async function validateLocalReference(sourceFile, rawReference) {
 
 async function validateHtml(filePath) {
   const html = await readFile(filePath, 'utf8');
+  const ids = new Set();
+  for (const [, id] of html.matchAll(/\bid=["']([^"']+)["']/g)) {
+    if (ids.has(id)) errors.push(`${relativeToProject(filePath)}: duplicate id ${id}`);
+    ids.add(id);
+  }
   const attributePattern = /\b(?:src|href)\s*=\s*["']([^"']+)["']/gi;
 
   for (const match of html.matchAll(attributePattern)) {
@@ -170,6 +175,8 @@ function validateStatus(status) {
     return;
   }
 
+  if (!status.checkedAt || !Number.isFinite(Date.parse(status.checkedAt))) errors.push('status.json: invalid checkedAt');
+  if (!/^\d{17}$/.test(status.player.steamId || '')) errors.push('status.json: invalid Steam ID');
   validateHttpsUrl(status.player.profileUrl, 'public/data/status.json profileUrl');
   validateHttpsUrl(status.player.avatar, 'public/data/status.json avatar');
 }
@@ -209,27 +216,16 @@ function validateHistory(history) {
 }
 
 const requiredFiles = [
-  'public/.nojekyll',
-  'public/index.html',
-  'public/app.js',
-  'public/styles.css',
-  'public/brand-icons.js',
-  'public/brand-icons.css',
-  'public/data/bio.json',
-  'public/data/status.json',
-  'public/data/history.json',
-  'public/tracker/index.html',
-  'public/tracker/tracker.js',
-  'public/tracker/tracker-scroll-reset.js'
+  'public/.nojekyll', 'public/index.html', 'public/assets/site.css',
+  ...['config', 'data', 'profile', 'platforms', 'history', 'navigation', 'motion', 'icons', 'ui', 'app', 'cat-audio'].map(name => `public/assets/${name}.js`),
+  'public/assets/favicon.svg', 'public/data/bio.json', 'public/data/status.json',
+  'public/data/history.json', 'public/tracker/index.html', 'public/profile-v2/index.html'
 ];
 
 const forbiddenPaths = [
-  'paused-site',
-  'public/data/deployment.json',
-  'public/profile-v2',
-  'public/profile-refresh.js',
-  'public/tracker/tracker-status-labels.js',
-  'scripts/build-profile-v2.mjs'
+  'paused-site', 'public/experience-1.js', 'public/app.js', 'public/styles.css',
+  'public/backup-exact-card.js', 'public/liquid-glass-integration.js',
+  'public/visual-refresh.js', 'public/experience-shell-1.html'
 ];
 
 for (const relativePath of requiredFiles) {
@@ -241,6 +237,18 @@ for (const relativePath of requiredFiles) {
 for (const relativePath of forbiddenPaths) {
   if (await exists(path.join(projectDirectory, relativePath))) {
     errors.push(`${relativePath}: obsolete or temporary artifact must be removed`);
+  }
+}
+
+// Older shared profile URLs still use this compatibility redirect. Keep the
+// route, but reject accidentally reviving a second independent profile app.
+const legacyProfileRedirect = path.join(publicDirectory, 'profile-v2/index.html');
+if (await exists(legacyProfileRedirect)) {
+  const redirect = await readFile(legacyProfileRedirect, 'utf8');
+  if (!redirect.includes("new URL('../', window.location.href)")
+      || !redirect.includes('window.location.replace(target.href)')
+      || /<script\b[^>]*\bsrc\s*=/i.test(redirect)) {
+    errors.push('public/profile-v2/index.html: legacy route must remain a redirect to the main profile');
   }
 }
 
@@ -261,10 +269,11 @@ const history = await readJson(path.join(publicDirectory, 'data', 'history.json'
 validateBio(bio);
 validateStatus(status);
 validateHistory(history);
-
-const duplicateIconLayers = await readFile(path.join(publicDirectory, 'app.js'), 'utf8');
-if (/const\s+iconMarkup\s*=/.test(duplicateIconLayers)) {
-  warnings.push('public/app.js still contains fallback icon markup; brand-icons.js is the canonical presentation layer.');
+if (status?.configured && Array.isArray(history)) {
+  const active = history.at(-1);
+  if (!active || active.endedAt || active.status !== status.player?.status || active.gameId !== status.player?.gameId) {
+    errors.push('history.json: active entry does not match the current Steam status');
+  }
 }
 
 if (warnings.length) {

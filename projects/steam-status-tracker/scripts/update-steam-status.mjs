@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,13 +22,15 @@ async function readJson(filePath, fallback) {
   try {
     return JSON.parse(await readFile(filePath, 'utf8'));
   } catch (error) {
-    if (error instanceof SyntaxError || error?.code === 'ENOENT') return fallback;
+    if (error?.code === 'ENOENT') return fallback;
     throw error;
   }
 }
 
 async function writeJson(filePath, value) {
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
+  const temporaryPath = `${filePath}.tmp`;
+  await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`);
+  await rename(temporaryPath, filePath);
 }
 
 async function setOutput(name, value) {
@@ -70,7 +72,7 @@ async function fetchSteamJson(endpoint, description) {
   const response = await fetch(endpoint, {
     signal: AbortSignal.timeout(15_000),
     headers: {
-      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/1.6'
+      'User-Agent': 'Quixylon-GitHub-Steam-Status-Tracker/2.0'
     }
   });
 
@@ -124,6 +126,7 @@ await mkdir(dataDirectory, { recursive: true });
 const apiKey = process.env.STEAM_API_KEY?.trim();
 const previousStatus = await readJson(statusPath, null);
 const history = await readJson(historyPath, []);
+if (!Array.isArray(history)) throw new Error('Steam history must be an array; existing files were preserved.');
 
 if (!apiKey) {
   await keepLastSuccessfulData('STEAM_API_KEY is not configured.', previousStatus, history);

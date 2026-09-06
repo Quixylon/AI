@@ -9,6 +9,7 @@ on:
       - .github/workflows/validate-site.yml
       - projects/steam-status-tracker/public/**
       - projects/steam-status-tracker/scripts/**
+      - projects/steam-status-tracker/tests/**
       - projects/steam-status-tracker/package.json
   pull_request:
     branches:
@@ -21,15 +22,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 concurrency:
-  # Reuse the legacy group so a fresh run cancels the stale queued
-  # Steam Status Tracker deployment left by the deleted workflow.
-  group: steam-status-pages
-  cancel-in-progress: true
+  # Pull requests cannot cancel a live deployment or scheduled refresh.
+  group: profile-site-${{ github.event.pull_request.number || 'production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate:
@@ -38,36 +36,37 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Validate project
         working-directory: projects/steam-status-tracker
         run: npm run check
 
   publish:
+    permissions:
+      contents: write
+      pages: write
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Refresh Steam data
         id: steam
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         continue-on-error: true
         env:
           STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
@@ -75,9 +74,12 @@ jobs:
           STEAM_VANITY: ${{ vars.STEAM_VANITY }}
         run: node projects/steam-status-tracker/scripts/update-steam-status.mjs
 
+      - name: Validate refreshed project
+        working-directory: projects/steam-status-tracker
+        run: npm run check
+
       - name: Save meaningful Steam changes
         if: steps.steam.outputs.persist == 'true'
-        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -85,36 +87,22 @@ jobs:
           git add projects/steam-status-tracker/public/data/history.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: update Steam activity [skip ci]"
-            git pull --rebase origin main
             git push origin HEAD:main
           fi
 
       - name: Write deployment marker
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
-          BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          cat > projects/steam-status-tracker/public/data/build-info.json <<EOF
-          {
-            "sourceCommit": "${GITHUB_SHA}",
-            "runId": "${GITHUB_RUN_ID}",
-            "event": "${GITHUB_EVENT_NAME}",
-            "builtAt": "${BUILT_AT}",
-            "design": "unified-glass-v3"
-          }
-          EOF
-
-      - name: Save deployment marker
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        continue-on-error: true
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add projects/steam-status-tracker/public/data/build-info.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: record Pages build [skip ci]"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          node --input-type=module <<'JS'
+          import { writeFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          writeFileSync('projects/steam-status-tracker/public/data/build-info.json', JSON.stringify({
+            sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+            runId: process.env.GITHUB_RUN_ID,
+            event: process.env.GITHUB_EVENT_NAME,
+            builtAt: new Date().toISOString(),
+            design: 'digital-traces-v2'
+          }, null, 2) + '\n');
+          JS
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -125,6 +113,9 @@ jobs:
           path: projects/steam-status-tracker/public
 
   deploy:
+    permissions:
+      pages: write
+      id-token: write
     if: github.event_name != 'pull_request'
     needs: publish
     runs-on: ubuntu-latest
