@@ -226,7 +226,6 @@ const requiredFiles = [
 const forbiddenPaths = [
   'paused-site',
   'public/data/deployment.json',
-  'public/profile-v2',
   'public/profile-refresh.js',
   'public/tracker/tracker-status-labels.js',
   'scripts/build-profile-v2.mjs'
@@ -241,6 +240,18 @@ for (const relativePath of requiredFiles) {
 for (const relativePath of forbiddenPaths) {
   if (await exists(path.join(projectDirectory, relativePath))) {
     errors.push(`${relativePath}: obsolete or temporary artifact must be removed`);
+  }
+}
+
+// Older shared profile URLs still use this compatibility redirect. Keep the
+// route, but reject accidentally reviving a second independent profile app.
+const legacyProfileRedirect = path.join(publicDirectory, 'profile-v2/index.html');
+if (await exists(legacyProfileRedirect)) {
+  const redirect = await readFile(legacyProfileRedirect, 'utf8');
+  if (!redirect.includes("new URL('../', window.location.href)")
+      || !redirect.includes('window.location.replace(target.href)')
+      || /<script\b[^>]*\bsrc\s*=/i.test(redirect)) {
+    errors.push('public/profile-v2/index.html: legacy route must remain a redirect to the main profile');
   }
 }
 
