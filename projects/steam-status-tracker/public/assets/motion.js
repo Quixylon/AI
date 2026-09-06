@@ -90,7 +90,7 @@ const motionController = new MotionController();
 class CanvasController {
   constructor(canvas) {
     this.canvas = canvas;
-    this.ctx = canvas?.getContext('2d');
+    this.ctx = canvas?.getContext('2d', { alpha: false });
     this.raf = 0;
     this.running = false;
     this.lastFrame = 0;
@@ -99,19 +99,24 @@ class CanvasController {
     this.ripples = [];
     this.spot = { x: 0, y: 0, strength: 0 };
     this.pointer = { x: 0, y: 0, active: false };
+    this.clock = 0;
+    this.lens = typeof GlassRenderer === 'function' ? new GlassRenderer(byId('glassCanvas')) : null;
+    if (this.lens) this.lens.onRestore = () => this.draw();
   }
-  init() { this.resize(); this.pulse(this.width * .5, this.height * .45, .65); this.resume(); }
+  init() { this.lens?.init(); this.resize(); this.pulse(this.width * .5, this.height * .45, .65); this.resume(); }
   resize() {
     if (!this.ctx) return;
     this.width = Math.max(1, innerWidth);
     this.height = Math.max(1, innerHeight);
     this.mobile = COARSE_POINTER.matches || this.width <= 760;
-    const dpr = Math.min(devicePixelRatio || 1, this.mobile ? 1.5 : 2);
+    // Same quality on phones and desktop; only exceptionally large viewports
+    // share a pixel budget, rather than downgrading every touch screen.
+    const dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(6000000 / (this.width * this.height)));
     this.canvas.width = Math.round(this.width * dpr);
     this.canvas.height = Math.round(this.height * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // Every dot has a fixed home in a regular lattice, including after resize.
-    const budget = this.mobile ? 900 : 2400;
+    const budget = 2400;
     let gap = this.mobile ? 30 : 32;
     while (Math.ceil(this.width / gap) * Math.ceil(this.height / gap) > budget) gap++;
     this.spacing = gap;
@@ -136,7 +141,7 @@ class CanvasController {
     this.ripples = this.ripples.slice(-3);
     this.start();
   }
-  leave() { this.pointer.active = false; this.start(); }
+  leave() { this.pointer.active = false; if (REDUCED_MOTION.matches) this.draw(); else this.start(); }
   start() {
     if (!this.ctx || this.running || document.hidden || REDUCED_MOTION.matches) return;
     this.running = true;
@@ -146,15 +151,16 @@ class CanvasController {
   }
   frame(time) {
     if (!this.running) return;
-    const interval = 1000 / (this.mobile ? 30 : 60);
+    const interval = 1000 / 60;
     if (time - this.lastDraw < interval - .75) {
       this.raf = requestAnimationFrame(next => this.frame(next));
       return;
     }
     const dt = Math.min(.1, Math.max(0, (time - this.lastFrame) / 1000));
     this.lastFrame = this.lastDraw = time;
+    this.clock += dt;
     const blend = 1 - Math.exp(-10 * dt);
-    const reach = this.mobile ? 155 : 220;
+    const reach = 220;
     const glowTarget = this.pointer.active ? 1 : 0;
     this.spot.x += (this.pointer.x - this.spot.x) * blend;
     this.spot.y += (this.pointer.y - this.spot.y) * blend;
@@ -162,14 +168,12 @@ class CanvasController {
     if (Math.abs(glowTarget - this.spot.strength) < .002) this.spot.strength = glowTarget;
     for (const ripple of this.ripples) ripple.age += dt;
     this.ripples = this.ripples.filter(ripple => ripple.age < 2.4);
-    let unsettled = this.ripples.length > 0 || Math.abs(glowTarget - this.spot.strength) > .002;
-    if (this.pointer.active && Math.hypot(this.spot.x - this.pointer.x, this.spot.y - this.pointer.y) > .1) unsettled = true;
     for (const p of this.particles) {
       const dx = p.homeX - this.pointer.x, dy = p.homeY - this.pointer.y;
       const distance = Math.hypot(dx, dy);
       const proximity = this.pointer.active ? Math.max(0, 1 - distance / reach) : 0;
       const influence = proximity * proximity * (3 - 2 * proximity);
-      const offset = (this.mobile ? 16 : 24) * influence;
+      const offset = 24 * influence;
       let x = p.homeX + dx / Math.max(1, distance) * offset;
       let y = p.homeY + dy / Math.max(1, distance) * offset;
       let light = influence;
@@ -177,7 +181,7 @@ class CanvasController {
         const rx = p.homeX - ripple.x, ry = p.homeY - ripple.y;
         const radius = Math.hypot(rx, ry);
         const crest = Math.exp(-(((radius - ripple.age * 360) / 40) ** 2)) * (1 - ripple.age / 2.4) * ripple.strength;
-        const shift = crest * (this.mobile ? 10 : 16);
+        const shift = crest * 16;
         x += rx / Math.max(1, radius) * shift;
         y += ry / Math.max(1, radius) * shift;
         light = Math.min(1.3, light + crest);
@@ -187,19 +191,34 @@ class CanvasController {
       p.light += (light - p.light) * blend;
       const moving = Math.abs(x - p.x) + Math.abs(y - p.y) + Math.abs(light - p.light) > .008;
       if (!moving) { p.x = x; p.y = y; p.light = light; }
-      unsettled ||= moving;
     }
     this.draw();
-    // No work when the grid has settled; pointer events wake it again.
-    if (unsettled) this.raf = requestAnimationFrame(next => this.frame(next));
-    else { this.running = false; this.raf = 0; }
+    // Ambient light and refraction follow the floating surfaces even at rest.
+    // Visibility and reduced-motion handlers stop this single scene loop.
+    this.raf = requestAnimationFrame(next => this.frame(next));
   }
   draw() {
     if (!this.ctx) return;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
+    ctx.fillStyle = '#080e19';
+    ctx.fillRect(0, 0, this.width, this.height);
+    const t = this.clock;
+    const extent = Math.max(this.width, this.height);
+    const pools = [
+      [.18 + Math.sin(t * .09) * .10, .23 + Math.cos(t * .08) * .13, .64, '44,104,150', .30],
+      [.80 + Math.cos(t * .07) * .12, .68 + Math.sin(t * .10) * .14, .57, '101,79,157', .26],
+      [.48 + Math.sin(t * .06) * .17, .87 + Math.cos(t * .09) * .09, .44, '37,128,133', .18]
+    ];
+    for (const [x, y, size, color, alpha] of pools) {
+      const glow = ctx.createRadialGradient(x * this.width, y * this.height, 0, x * this.width, y * this.height, extent * size);
+      glow.addColorStop(0, `rgba(${color},${alpha})`);
+      glow.addColorStop(.5, `rgba(${color},${alpha * .42})`);
+      glow.addColorStop(1, `rgba(${color},0)`);
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, this.width, this.height);
+    }
     if (this.spot.strength > .005) {
-      const radius = this.mobile ? 200 : 330;
+      const radius = 330;
       const glow = ctx.createRadialGradient(this.spot.x, this.spot.y, 0, this.spot.x, this.spot.y, radius);
       glow.addColorStop(0, `rgba(83,168,229,${this.spot.strength * .16})`);
       glow.addColorStop(.45, `rgba(86,118,216,${this.spot.strength * .07})`);
@@ -208,13 +227,18 @@ class CanvasController {
       ctx.fillRect(0, 0, this.width, this.height);
     }
     for (const p of this.particles) {
+      // Brightness rolls through a fixed lattice; it never becomes scattered lines.
+      const tide = .5 + .5 * Math.sin(p.homeX * .006 + p.homeY * .004 - t * .55);
+      const light = p.light + tide * .16;
+      const depth = .78 + .22 * Math.cos(p.homeY / this.height * Math.PI);
       if (p.light > .015) {
         ctx.fillStyle = `rgba(139,193,245,${p.light * .09})`;
         ctx.beginPath(); ctx.arc(p.x, p.y, 4 + p.light * 3, 0, Math.PI * 2); ctx.fill();
       }
-      ctx.fillStyle = `rgba(162,192,224,${Math.min(.95, .39 + p.light * .55)})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 1.1 + p.light * .95, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(${Math.round(151 + tide * 26)},${Math.round(186 + tide * 22)},228,${Math.min(.95, .38 + light * .55) * depth})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 1.15 + light * .85, 0, Math.PI * 2); ctx.fill();
     }
+    this.lens?.draw(this.canvas, this.width, this.height);
   }
   drawStatic() {
     this.stop(); this.pointer.active = false; this.ripples = []; this.spot.strength = 0;
@@ -245,7 +269,7 @@ class InteractionHub {
     clearTimeout(this.resizeTimer);
     this.resizeTimer = setTimeout(() => { canvasController.resize(); motionController.measureSoon(); }, 100);
   };
-  onScroll = () => motionController.measureSoon();
+  onScroll = () => { motionController.measureSoon(); if (REDUCED_MOTION.matches) canvasController.draw(); };
   onCapabilities = () => { motionController.reset(true); canvasController.resize(); motionController.measureSoon(); };
   init() {
     if (this.bound) return;
