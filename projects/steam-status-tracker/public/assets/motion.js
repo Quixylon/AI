@@ -93,11 +93,10 @@ class CanvasController {
     this.ctx = canvas?.getContext('2d');
     this.raf = 0;
     this.running = false;
-    this.elapsed = 0;
     this.lastFrame = 0;
     this.lastDraw = 0;
     this.particles = [];
-    this.pointer = { x: 0, y: 0, rx: 0, ry: 0, active: false };
+    this.pointer = { x: 0, y: 0, active: false };
   }
   init() { this.resize(); this.resume(); }
   resize() {
@@ -109,80 +108,84 @@ class CanvasController {
     this.canvas.width = Math.round(this.width * dpr);
     this.canvas.height = Math.round(this.height * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.min(this.mobile ? 24 : 65, Math.round(this.width * this.height / 19000));
-    // Stable seeds avoid particles jumping randomly after mobile toolbar resize.
-    this.particles = Array.from({ length: count }, (_, i) => ({
-      u: ((i * 137.508 + 23) % 997) / 997,
-      v: ((i * 213.733 + 89) % 991) / 991,
-      radius: .8 + (i % 5) * .23,
-      depth: .3 + (i % 7) * .1,
-      phase: i * 2.39996
-    }));
+    // Every dot has a fixed home in a regular lattice, including after resize.
+    const budget = this.mobile ? 900 : 2400;
+    let gap = this.mobile ? 30 : 32;
+    while (Math.ceil(this.width / gap) * Math.ceil(this.height / gap) > budget) gap++;
+    this.spacing = gap;
+    this.particles = [];
+    for (let y = gap / 2; y < this.height; y += gap) {
+      for (let x = gap / 2; x < this.width; x += gap) {
+        this.particles.push({ homeX: x, homeY: y, x, y, light: 0 });
+      }
+    }
     this.draw();
+    this.resume();
   }
-  setPointer(x, y, { type = 'mouse' } = {}) {
-    if (type === 'touch' || this.mobile || REDUCED_MOTION.matches) return;
-    this.pointer.x = x; this.pointer.y = y; this.pointer.active = true;
+  setPointer(x, y) {
+    if (REDUCED_MOTION.matches) return;
+    this.pointer = { x, y, active: true };
+    this.start();
   }
-  setDown() {} // Kept for the existing lifecycle interface; no click storm.
-  leave() { this.pointer.active = false; }
+  setDown() {}
+  leave() { this.pointer.active = false; this.start(); }
   start() {
     if (!this.ctx || this.running || document.hidden || REDUCED_MOTION.matches) return;
-    this.running = true; this.lastFrame = performance.now(); this.lastDraw = 0;
+    this.running = true;
+    this.lastFrame = performance.now();
+    this.lastDraw = 0;
     this.raf = requestAnimationFrame(time => this.frame(time));
   }
   frame(time) {
     if (!this.running) return;
-    const frameInterval = this.mobile ? 1000 / 30 : 1000 / 60;
-    if (time - this.lastDraw >= frameInterval - .75) {
-      const dt = Math.min(.1, Math.max(0, (time - this.lastFrame) / 1000));
-      this.elapsed += dt; this.lastFrame = time; this.lastDraw = time;
-      const blend = 1 - Math.exp(-3 * dt);
-      const targetX = this.pointer.active ? this.pointer.x / this.width - .5 : 0;
-      const targetY = this.pointer.active ? this.pointer.y / this.height - .5 : 0;
-      this.pointer.rx += (targetX - this.pointer.rx) * blend;
-      this.pointer.ry += (targetY - this.pointer.ry) * blend;
-      this.draw();
+    const interval = 1000 / (this.mobile ? 30 : 60);
+    if (time - this.lastDraw < interval - .75) {
+      this.raf = requestAnimationFrame(next => this.frame(next));
+      return;
     }
-    this.raf = requestAnimationFrame(next => this.frame(next));
+    const dt = Math.min(.1, Math.max(0, (time - this.lastFrame) / 1000));
+    this.lastFrame = this.lastDraw = time;
+    const blend = 1 - Math.exp(-10 * dt);
+    const reach = this.mobile ? 130 : 190;
+    let unsettled = false;
+    for (const p of this.particles) {
+      const dx = p.homeX - this.pointer.x, dy = p.homeY - this.pointer.y;
+      const distance = Math.hypot(dx, dy);
+      const proximity = this.pointer.active ? Math.max(0, 1 - distance / reach) : 0;
+      const influence = proximity * proximity * (3 - 2 * proximity);
+      const offset = (this.mobile ? 16 : 24) * influence;
+      const x = p.homeX + dx / Math.max(1, distance) * offset;
+      const y = p.homeY + dy / Math.max(1, distance) * offset;
+      p.x += (x - p.x) * blend;
+      p.y += (y - p.y) * blend;
+      p.light += (influence - p.light) * blend;
+      const moving = Math.abs(x - p.x) + Math.abs(y - p.y) + Math.abs(influence - p.light) > .008;
+      if (!moving) { p.x = x; p.y = y; p.light = influence; }
+      unsettled ||= moving;
+    }
+    this.draw();
+    // No work when the grid has settled; pointer events wake it again.
+    if (unsettled) this.raf = requestAnimationFrame(next => this.frame(next));
+    else { this.running = false; this.raf = 0; }
   }
   draw() {
     if (!this.ctx) return;
-    const ctx = this.ctx, t = this.elapsed;
+    const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
-    const points = [];
     for (const p of this.particles) {
-      const x = p.u * this.width + Math.sin(t * .16 + p.phase) * 26 + this.pointer.rx * p.depth * 22;
-      const y = p.v * this.height + Math.cos(t * .12 + p.phase) * 23 + this.pointer.ry * p.depth * 18;
-      points.push({ x, y });
-      const alpha = .4 + (.5 + Math.sin(t * .6 + p.phase) * .5) * .4;
-      ctx.fillStyle = `rgba(180,204,238,${alpha})`;
-      ctx.beginPath(); ctx.arc(x, y, p.radius, 0, Math.PI * 2); ctx.fill();
-      if (!this.mobile && this.pointer.active) {
-        const distance = Math.hypot(x - this.pointer.x, y - this.pointer.y);
-        if (distance < 160) {
-          ctx.strokeStyle = `rgba(151,190,235,${(1 - distance / 160) * .14})`;
-          ctx.lineWidth = .65;
-          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(this.pointer.x, this.pointer.y); ctx.stroke();
-        }
+      if (p.light > .015) {
+        ctx.fillStyle = `rgba(139,193,245,${p.light * .09})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4 + p.light * 3, 0, Math.PI * 2); ctx.fill();
       }
-    }
-    // A sparse moving constellation remains visible without a mouse pointer.
-    const reach = this.mobile ? 145 : 185;
-    for (let i = 0; i < points.length; i++) {
-      let connections = 0;
-      for (let j = i + 1; j < points.length && connections < 2; j++) {
-        const a = points[i], b = points[j];
-        const distance = Math.hypot(a.x - b.x, a.y - b.y);
-        if (distance >= reach) continue;
-        ctx.strokeStyle = `rgba(158,190,230,${(1 - distance / reach) * .28})`;
-        ctx.lineWidth = .7;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        connections++;
-      }
+      ctx.fillStyle = `rgba(162,192,224,${.34 + p.light * .6})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 1.05 + p.light * .8, 0, Math.PI * 2); ctx.fill();
     }
   }
-  drawStatic() { this.stop(); this.pointer.rx = this.pointer.ry = 0; this.pointer.active = false; this.elapsed = 0; this.draw(); }
+  drawStatic() {
+    this.stop(); this.pointer.active = false;
+    for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.light = 0; }
+    this.draw();
+  }
   stop() { this.running = false; cancelAnimationFrame(this.raf); this.raf = 0; }
   resume() { if (REDUCED_MOTION.matches) this.drawStatic(); else this.start(); }
   destroy() { this.stop(); }
@@ -192,10 +195,11 @@ const canvasController = new CanvasController(byId('particleCanvas'));
 class InteractionHub {
   constructor() { this.bound = false; this.resizeTimer = 0; }
   onMove = event => {
-    if (event.pointerType === 'touch') return;
     canvasController.setPointer(event.clientX, event.clientY, { type: event.pointerType });
-    motionController.updatePointer(event.clientX, event.clientY);
+    if (event.pointerType !== 'touch') motionController.updatePointer(event.clientX, event.clientY);
   };
+  onDown = event => { if (event.pointerType === 'touch') canvasController.setPointer(event.clientX, event.clientY); };
+  onUp = event => { if (event.pointerType === 'touch') canvasController.leave(); };
   onLeave = () => { canvasController.leave(); motionController.reset(); };
   onOut = event => { if (!event.relatedTarget) this.onLeave(); };
   onResize = () => {
@@ -208,6 +212,9 @@ class InteractionHub {
     if (this.bound) return;
     this.bound = true;
     addEventListener('pointermove', this.onMove, { passive: true });
+    addEventListener('pointerdown', this.onDown, { passive: true });
+    addEventListener('pointerup', this.onUp, { passive: true });
+    addEventListener('pointercancel', this.onUp, { passive: true });
     addEventListener('pointerout', this.onOut, { passive: true });
     addEventListener('blur', this.onLeave);
     addEventListener('resize', this.onResize, { passive: true });
@@ -219,6 +226,9 @@ class InteractionHub {
     this.bound = false;
     clearTimeout(this.resizeTimer);
     removeEventListener('pointermove', this.onMove);
+    removeEventListener('pointerdown', this.onDown);
+    removeEventListener('pointerup', this.onUp);
+    removeEventListener('pointercancel', this.onUp);
     removeEventListener('pointerout', this.onOut);
     removeEventListener('blur', this.onLeave);
     removeEventListener('resize', this.onResize);
