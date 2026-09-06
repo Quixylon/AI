@@ -15,7 +15,7 @@ function fixture() {
     getBoundingClientRect: () => ({ left: 100, top: 100, right: 500, bottom: 400, width: 400, height: 300 }),
     matches: () => false
   };
-  const draw = { setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
+  const draw = { createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
   const canvas = { getContext: () => draw };
   const reduced = { matches: false }, coarse = { matches: false, addEventListener() {}, removeEventListener() {} };
   const document = { hidden: false, querySelectorAll: () => [element] };
@@ -83,6 +83,7 @@ assert.ok(test.context.background.particles.length <= 900, 'touch dot count is b
 test('dot grid is regular, reacts locally to mouse and touch, then returns home and sleeps', () => {
   const t = fixture(), grid = t.context.background;
   grid.init();
+  for (let i = 0; i < 240; i++) t.step(1000 / 60);
   const dots = grid.particles;
   assert.ok(dots.length > 100);
   assert.equal(dots[1].homeX - dots[0].homeX, grid.spacing);
@@ -106,5 +107,26 @@ test('dot grid is regular, reacts locally to mouse and touch, then returns home 
   t.reduced.matches = true;
   grid.resume();
   assert.ok(grid.particles.every(p => p.x === p.homeX && p.y === p.homeY && p.light === 0));
+  assert.equal(t.queue.size, 0);
+});
+
+test('click waves are bounded, displace grid dots, and fully settle; reduced motion clears them', () => {
+  const t = fixture(), grid = t.context.background;
+  grid.init();
+  assert.equal(grid.ripples.length, 1, 'opening sends one wave through the grid');
+  for (let i = 0; i < 240; i++) t.step(1000 / 60);
+  for (let i = 0; i < 10; i++) grid.pulse(320 + i, 260);
+  assert.equal(grid.ripples.length, 3, 'rapid clicks cannot create unlimited work');
+  for (let i = 0; i < 30; i++) t.step(1000 / 60);
+  assert.ok(grid.particles.some(p => Math.hypot(p.x - p.homeX, p.y - p.homeY) > 3));
+  assert.ok(grid.particles.every(p => Math.hypot(p.x - p.homeX, p.y - p.homeY) <= 48));
+  for (let i = 0; i < 240; i++) t.step(1000 / 60);
+  assert.equal(grid.ripples.length, 0);
+  assert.equal(t.queue.size, 0);
+  assert.ok(grid.particles.every(p => p.x === p.homeX && p.y === p.homeY));
+  grid.pulse(300, 200);
+  t.reduced.matches = true;
+  grid.resume();
+  assert.equal(grid.ripples.length, 0);
   assert.equal(t.queue.size, 0);
 });

@@ -96,9 +96,11 @@ class CanvasController {
     this.lastFrame = 0;
     this.lastDraw = 0;
     this.particles = [];
+    this.ripples = [];
+    this.spot = { x: 0, y: 0, strength: 0 };
     this.pointer = { x: 0, y: 0, active: false };
   }
-  init() { this.resize(); this.resume(); }
+  init() { this.resize(); this.pulse(this.width * .5, this.height * .45, .65); this.resume(); }
   resize() {
     if (!this.ctx) return;
     this.width = Math.max(1, innerWidth);
@@ -124,10 +126,16 @@ class CanvasController {
   }
   setPointer(x, y) {
     if (REDUCED_MOTION.matches) return;
+    if (!this.pointer.active && this.spot.strength < .01) { this.spot.x = x; this.spot.y = y; }
     this.pointer = { x, y, active: true };
     this.start();
   }
-  setDown() {}
+  pulse(x, y, strength = 1) {
+    if (REDUCED_MOTION.matches || document.hidden) return;
+    this.ripples.push({ x, y, age: 0, strength });
+    this.ripples = this.ripples.slice(-3);
+    this.start();
+  }
   leave() { this.pointer.active = false; this.start(); }
   start() {
     if (!this.ctx || this.running || document.hidden || REDUCED_MOTION.matches) return;
@@ -146,21 +154,39 @@ class CanvasController {
     const dt = Math.min(.1, Math.max(0, (time - this.lastFrame) / 1000));
     this.lastFrame = this.lastDraw = time;
     const blend = 1 - Math.exp(-10 * dt);
-    const reach = this.mobile ? 130 : 190;
-    let unsettled = false;
+    const reach = this.mobile ? 155 : 220;
+    const glowTarget = this.pointer.active ? 1 : 0;
+    this.spot.x += (this.pointer.x - this.spot.x) * blend;
+    this.spot.y += (this.pointer.y - this.spot.y) * blend;
+    this.spot.strength += (glowTarget - this.spot.strength) * blend;
+    if (Math.abs(glowTarget - this.spot.strength) < .002) this.spot.strength = glowTarget;
+    for (const ripple of this.ripples) ripple.age += dt;
+    this.ripples = this.ripples.filter(ripple => ripple.age < 2.4);
+    let unsettled = this.ripples.length > 0 || Math.abs(glowTarget - this.spot.strength) > .002;
+    if (this.pointer.active && Math.hypot(this.spot.x - this.pointer.x, this.spot.y - this.pointer.y) > .1) unsettled = true;
     for (const p of this.particles) {
       const dx = p.homeX - this.pointer.x, dy = p.homeY - this.pointer.y;
       const distance = Math.hypot(dx, dy);
       const proximity = this.pointer.active ? Math.max(0, 1 - distance / reach) : 0;
       const influence = proximity * proximity * (3 - 2 * proximity);
       const offset = (this.mobile ? 16 : 24) * influence;
-      const x = p.homeX + dx / Math.max(1, distance) * offset;
-      const y = p.homeY + dy / Math.max(1, distance) * offset;
+      let x = p.homeX + dx / Math.max(1, distance) * offset;
+      let y = p.homeY + dy / Math.max(1, distance) * offset;
+      let light = influence;
+      for (const ripple of this.ripples) {
+        const rx = p.homeX - ripple.x, ry = p.homeY - ripple.y;
+        const radius = Math.hypot(rx, ry);
+        const crest = Math.exp(-(((radius - ripple.age * 360) / 40) ** 2)) * (1 - ripple.age / 2.4) * ripple.strength;
+        const shift = crest * (this.mobile ? 10 : 16);
+        x += rx / Math.max(1, radius) * shift;
+        y += ry / Math.max(1, radius) * shift;
+        light = Math.min(1.3, light + crest);
+      }
       p.x += (x - p.x) * blend;
       p.y += (y - p.y) * blend;
-      p.light += (influence - p.light) * blend;
-      const moving = Math.abs(x - p.x) + Math.abs(y - p.y) + Math.abs(influence - p.light) > .008;
-      if (!moving) { p.x = x; p.y = y; p.light = influence; }
+      p.light += (light - p.light) * blend;
+      const moving = Math.abs(x - p.x) + Math.abs(y - p.y) + Math.abs(light - p.light) > .008;
+      if (!moving) { p.x = x; p.y = y; p.light = light; }
       unsettled ||= moving;
     }
     this.draw();
@@ -172,17 +198,26 @@ class CanvasController {
     if (!this.ctx) return;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
+    if (this.spot.strength > .005) {
+      const radius = this.mobile ? 200 : 330;
+      const glow = ctx.createRadialGradient(this.spot.x, this.spot.y, 0, this.spot.x, this.spot.y, radius);
+      glow.addColorStop(0, `rgba(83,168,229,${this.spot.strength * .16})`);
+      glow.addColorStop(.45, `rgba(86,118,216,${this.spot.strength * .07})`);
+      glow.addColorStop(1, 'rgba(86,118,216,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, this.width, this.height);
+    }
     for (const p of this.particles) {
       if (p.light > .015) {
         ctx.fillStyle = `rgba(139,193,245,${p.light * .09})`;
         ctx.beginPath(); ctx.arc(p.x, p.y, 4 + p.light * 3, 0, Math.PI * 2); ctx.fill();
       }
-      ctx.fillStyle = `rgba(162,192,224,${.34 + p.light * .6})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 1.05 + p.light * .8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(162,192,224,${Math.min(.95, .39 + p.light * .55)})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 1.1 + p.light * .95, 0, Math.PI * 2); ctx.fill();
     }
   }
   drawStatic() {
-    this.stop(); this.pointer.active = false;
+    this.stop(); this.pointer.active = false; this.ripples = []; this.spot.strength = 0;
     for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.light = 0; }
     this.draw();
   }
@@ -198,7 +233,11 @@ class InteractionHub {
     canvasController.setPointer(event.clientX, event.clientY, { type: event.pointerType });
     if (event.pointerType !== 'touch') motionController.updatePointer(event.clientX, event.clientY);
   };
-  onDown = event => { if (event.pointerType === 'touch') canvasController.setPointer(event.clientX, event.clientY); };
+  onDown = event => {
+    if (event.button !== 0) return;
+    if (event.pointerType === 'touch') canvasController.setPointer(event.clientX, event.clientY);
+    canvasController.pulse(event.clientX, event.clientY);
+  };
   onUp = event => { if (event.pointerType === 'touch') canvasController.leave(); };
   onLeave = () => { canvasController.leave(); motionController.reset(); };
   onOut = event => { if (!event.relatedTarget) this.onLeave(); };
