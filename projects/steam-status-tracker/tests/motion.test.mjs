@@ -76,11 +76,11 @@ assert.equal(test.queue.size, 0, 'hidden tabs cannot schedule either loop');
 test.document.hidden = false;
 test.coarse.matches = true;
 test.context.background.resize();
-assert.equal(test.canvas.width, 2160, 'touch DPR is capped at 1.5');
-assert.ok(test.context.background.particles.length <= 900, 'touch dot count is bounded');
+assert.equal(test.canvas.width, 2880, 'touch uses the same 2x density as desktop');
+assert.ok(test.context.background.particles.length <= 2400, 'the shared dot budget also bounds large touch screens');
 });
 
-test('dot grid is regular, reacts locally to mouse and touch, then returns home and sleeps', () => {
+test('dot grid is regular, reacts locally to mouse and touch, then returns home while ambient light continues', () => {
   const t = fixture(), grid = t.context.background;
   grid.init();
   for (let i = 0; i < 240; i++) t.step(1000 / 60);
@@ -98,7 +98,7 @@ test('dot grid is regular, reacts locally to mouse and touch, then returns home 
   grid.leave();
   for (let i = 0; i < 120; i++) t.step(1000 / 60);
   assert.ok(dots.every(p => p.x === p.homeX && p.y === p.homeY && p.light === 0));
-  assert.equal(t.queue.size, 0);
+  assert.equal(t.queue.size, 1, 'one scene loop keeps ambient light and floating lenses in sync');
   t.coarse.matches = true;
   grid.resize();
   grid.setPointer(40, 40, { type: 'touch' });
@@ -122,11 +122,34 @@ test('click waves are bounded, displace grid dots, and fully settle; reduced mot
   assert.ok(grid.particles.every(p => Math.hypot(p.x - p.homeX, p.y - p.homeY) <= 48));
   for (let i = 0; i < 240; i++) t.step(1000 / 60);
   assert.equal(grid.ripples.length, 0);
-  assert.equal(t.queue.size, 0);
+  assert.equal(t.queue.size, 1, 'settled interactions retain only the ambient scene loop');
   assert.ok(grid.particles.every(p => p.x === p.homeX && p.y === p.homeY));
   grid.pulse(300, 200);
   t.reduced.matches = true;
   grid.resume();
   assert.equal(grid.ripples.length, 0);
   assert.equal(t.queue.size, 0);
+});
+
+
+test('phones keep desktop wave strength and 60 Hz scene updates; static mode freezes the clock', () => {
+  const desktop = fixture(), phone = fixture();
+  phone.coarse.matches = true;
+  for (const t of [desktop, phone]) {
+    t.context.background.init();
+    for (let i = 0; i < 240; i++) t.step(1000 / 60);
+    t.context.background.pulse(320, 260);
+    for (let i = 0; i < 24; i++) t.step(1000 / 60);
+  }
+  assert.equal(phone.context.background.clock, desktop.context.background.clock);
+  assert.equal(phone.context.background.lastDraw, desktop.context.background.lastDraw);
+  const before = phone.context.background.lastDraw;
+  phone.step(1000 / 60);
+  assert.ok(phone.context.background.lastDraw > before, 'touch frames must not be throttled to 30 Hz');
+  phone.reduced.matches = true;
+  phone.context.background.resume();
+  const clock = phone.context.background.clock;
+  phone.step(1000);
+  assert.equal(phone.context.background.clock, clock);
+  assert.equal(phone.queue.size, 0);
 });

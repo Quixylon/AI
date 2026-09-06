@@ -24,6 +24,7 @@ const surfaceMotion = {
         else element.classList.add('is-in-view');
       }
     });
+    canvasController.lens?.register();
   },
   cancel() {
     for (const animation of this.animations) animation.cancel();

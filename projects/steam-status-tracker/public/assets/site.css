@@ -96,15 +96,17 @@ h1[tabindex='-1']:focus {
   pointer-events:none;
   background:radial-gradient(ellipse at 15% 15%,#23456075,transparent 65%),radial-gradient(ellipse at 90% 85%,#33305465,transparent 65%),#080e18
 }
-#particleCanvas {
+#particleCanvas,#glassCanvas {
   position:fixed;
   inset:0;
   width:100%;
   height:100%;
   z-index:1;
   pointer-events:none;
-  opacity:.9
+  opacity:1
 }
+#glassCanvas { visibility:hidden; }
+.has-refraction #glassCanvas { visibility:visible; }
 .app-shell {
   position:relative;
   z-index:2;
@@ -1466,13 +1468,6 @@ h1[tabindex='-1']:focus {
   .tilt-surface {
     transform:none
   }
-  .tilt-surface::after {
-    display:none
-  }
-  .panel {
-    backdrop-filter:none;
-    -webkit-backdrop-filter:none
-  }
   a:active,button:active {
     filter:brightness(1.1)
   }
@@ -1504,19 +1499,7 @@ html.page-paused .description-char,html.page-paused .tracker-door__icon span {
   grid-template-columns:minmax(0,1fr)
 }
 
-/* Liquid surfaces: transparent body, curved light at the rim, cursor reflection. */
-.atmosphere::before {
-  content:'';
-  position:absolute;
-  inset:-15%;
-  background:radial-gradient(ellipse at 22% 35%,#428eae30,transparent 45%),radial-gradient(ellipse at 77% 72%,#7270b326,transparent 42%);
-  animation:ambient-tide 18s ease-in-out infinite alternate;
-  will-change:transform;
-}
-@keyframes ambient-tide {
-  from { transform:translate3d(-3%,-2%,0) scale(1); }
-  to { transform:translate3d(4%,5%,0) scale(1.08); }
-}
+/* Frosted fallback; the shared lens canvas supplies real background displacement. */
 .glass-surface {
   isolation:isolate;
   border-color:#d1e9fa30;
@@ -1549,6 +1532,16 @@ html.page-paused .description-char,html.page-paused .tracker-door__icon span {
   border-color:#d1e9fa52;
   box-shadow:0 28px 64px #0005,0 5px 18px #080e1833,inset 0 1px 1px #effbff55,inset 0 -1px 1px #80b9e429;
 }
+.has-refraction .glass-surface {
+  background:linear-gradient(145deg,#d0eaff12,transparent 48%),linear-gradient(160deg,#20304625,#0b162b40);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  box-shadow:0 24px 60px #02091470,0 5px 16px #02091430,inset 0 1px 1px #e9f7ff46,inset 0 -1px 1px #9bc6ec24;
+}
+.has-refraction .glass-surface::after {
+  background:radial-gradient(ellipse at var(--light-x) var(--light-y),#d7f0ff24,transparent 62%),linear-gradient(118deg,transparent 16%,#daeaff0a 37%,transparent 57%);
+  box-shadow:inset 0 0 18px #c4e7ff09;
+}
 .tracker-door.glass-surface {
   color:#e2f6f5;
   background:linear-gradient(115deg,#a9e5d838,#9bc6ec22),#15263850;
@@ -1556,6 +1549,12 @@ html.page-paused .description-char,html.page-paused .tracker-door__icon span {
 }
 .tracker-door.glass-surface:hover {
   background:linear-gradient(115deg,#a9e5d84a,#9bc6ec30),#15263850;
+}
+.has-refraction .tracker-door.glass-surface {
+  background:linear-gradient(115deg,#a9e5d826,#9bc6ec16),#15263826;
+}
+.has-refraction .tracker-door.glass-surface:hover {
+  background:linear-gradient(115deg,#a9e5d835,#9bc6ec24),#15263826;
 }
 .tracker-door__copy>span { color:#a9cbd0; }
 .tracker-door__icon { border-color:#c5f1ed33; }
@@ -1584,20 +1583,20 @@ html.page-paused .description-char,html.page-paused .tracker-door__icon span {
   50% { translate:0 var(--float-height); }
 }
 @media(hover:none),(pointer:coarse) {
-  .glass-surface {
-    -webkit-backdrop-filter:blur(12px) saturate(140%);
-    backdrop-filter:blur(12px) saturate(140%);
-    background-color:#101c2933;
-  }
-  .glass-surface::after { display:block; }
-  .float-surface { --float-height:-3px; }
   .social-link:hover { translate:none; }
+  .social-link:active { translate:0 -2px; background-color:#c6e4ff14; }
 }
-@supports not (backdrop-filter:blur(1px)) {
-  .glass-surface { background-color:#142131ed; }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  html:not(.has-refraction) .glass-surface { background-color:#142131ed; }
 }
-html.page-paused .float-surface,html.page-paused .atmosphere::before { animation-play-state:paused; }
+html.page-paused .float-surface { animation-play-state:paused; }
 @media(prefers-reduced-motion:reduce) {
   .float-surface,.social-link { translate:none!important; }
-  .atmosphere::before { will-change:auto; }
+}
+@media(prefers-contrast:more),(prefers-reduced-transparency:reduce) {
+  .glass-surface,.has-refraction .glass-surface,.has-refraction .tracker-door.glass-surface {
+    background:#142131;
+    border-color:#b5cddd80;
+  }
+  #glassCanvas { display:none; }
 }
