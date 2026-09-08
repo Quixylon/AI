@@ -1,15 +1,15 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-08T09:47:27.886Z",
+  "checkedAt": "2026-09-08T13:56:06.372Z",
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "in-game",
-    "personaState": "online",
-    "gameName": "Grand Theft Auto V Legacy",
-    "gameId": "271590",
-    "lastLogoff": "2026-09-07T10:07:03.000Z"
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "lastLogoff": "2026-09-08T11:23:31.000Z"
   }
 }
