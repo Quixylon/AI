@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 const source = fs.readFileSync(new URL('../public/assets/motion.js', import.meta.url), 'utf8');
 function fixture() {
-  let time = 0, sequence = 0, largestDot = 0, largestGlow = 0, spriteCount = 0;
+  let time = 0, sequence = 0, largestDot = 0, largestGlow = 0, spriteCount = 0, strokes = 0;
   const queue = new Map();
   const styles = new Map();
   const element = {
@@ -15,7 +15,7 @@ function fixture() {
     getBoundingClientRect: () => ({ left: 100, top: 100, right: 500, bottom: 400, width: 400, height: 300 }),
     matches: () => false
   };
-  const draw = { drawImage(image,x,y,width,height) { largestGlow=Math.max(largestGlow,width,height); }, save() {}, restore() {}, translate() {}, scale() {}, createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc(x,y,radius) { largestDot=Math.max(largestDot,radius); }, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
+  const draw = { drawImage(image,x,y,width,height) { largestGlow=Math.max(largestGlow,width,height); }, save() {}, restore() {}, translate() {}, scale() {}, createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc(x,y,radius) { largestDot=Math.max(largestDot,radius); }, fill() {}, moveTo() {}, lineTo() {}, stroke() { strokes++; } };
   const canvas = { getContext: () => draw };
   const reduced = { matches: false }, coarse = { matches: false, addEventListener() {}, removeEventListener() {} };
   const document = { hidden: false, createElement: () => { spriteCount++; return {getContext:()=>draw}; }, querySelectorAll: () => [element] };
@@ -28,9 +28,10 @@ function fixture() {
     byId: () => canvas,
     addEventListener() {}, removeEventListener() {}, setTimeout, clearTimeout, console
   });
-  vm.runInContext(source + '\nthis.motion = motionController; this.background = canvasController;', context);
+  vm.runInContext(source + '\nthis.motion = motionController; this.background = canvasController; this.hub = interactionHub;', context);
   return {
     context, reduced, coarse, document, styles, queue, canvas,
+    get strokes() { return strokes; },
     get largestDot() { return largestDot; },
     get largestGlow() { return largestGlow; },
     get spriteCount() { return spriteCount; },
@@ -219,26 +220,38 @@ test('rapid overlapping gestures preserve dot separation and never inflate halos
   assert.equal(grid.projectDot(p).x,p.homeX);assert.equal(grid.projectDot(p).y,p.homeY);
 });
 
-test('network connections remain local and valid after resizing, while motes move at rest',()=>{
+test('only a press creates connections, using the closest visible dots at that location',()=>{
   const t=fixture(),grid=t.context.background;
   t.context.innerWidth=720;t.context.innerHeight=480;grid.init();
-  const validate=()=>{
-    assert.ok(grid.links.length>20 && grid.links.length<grid.particles.length);
-    const seen=new Set();
-    for(const edge of grid.links) {
-      const a=grid.particles[edge.from],b=grid.particles[edge.to];
-      assert.ok(a && b && a!==b);
-      assert.ok(Math.hypot(a.homeX-b.homeX,a.homeY-b.homeY)<=grid.spacing*2+.001,'connections must not span unrelated grid rows');
-      const key=[edge.from,edge.to].sort((a,b)=>a-b).join(',');assert.ok(!seen.has(key));seen.add(key);
-    }
-    assert.ok(grid.motes.length>=14 && grid.motes.length<=46);
-  };
-  validate();
+  assert.equal(grid.links.length,0,'opening must not create a global network');
+  grid.setPointer(200,200);t.step(100);
+  assert.equal(grid.links.length,0,'hover must not create connections');
+  assert.equal(t.strokes,0,'there must be no stray background line segments before pressing');
   const before=grid.motes.map(p=>({x:p.x,y:p.y}));grid.stepEnergy(.25);
   assert.ok(grid.motes.some((p,i)=>Math.hypot(p.x-before[i].x,p.y-before[i].y)>2));
-  t.context.innerWidth=360;t.context.innerHeight=780;grid.resize();validate();
-  t.reduced.matches=true;grid.resume();const frozen=JSON.stringify(grid.motes);t.step(1000);
-  assert.equal(JSON.stringify(grid.motes),frozen,'reduced motion freezes free particles as well as the grid');
+  const press=(x,y,pointerType='mouse')=>{
+    t.context.hub.onDown({button:0,clientX:x,clientY:y,pointerType});
+    const px=(grid.spot.x/grid.width-.5)*grid.spot.strength*10;
+    const py=(grid.spot.y/grid.height-.5)*grid.spot.strength*7;
+    const expected=new Set(grid.particles.map((p,index)=>{
+      const point=grid.projectDot(p,px,py);return {index,distance:Math.hypot(point.x-x,point.y-y)};
+    }).filter(p=>p.distance<=Math.min(105,grid.spacing*3)).sort((a,b)=>a.distance-b.distance).slice(0,9).map(p=>p.index));
+    assert.ok(grid.links.length>0 && grid.links.length<=18);
+    const seen=new Set();
+    for(const edge of grid.links) {
+      assert.ok(expected.has(edge.from) && expected.has(edge.to),'every endpoint must belong to the nearest visible dots');
+      const key=[edge.from,edge.to].sort((a,b)=>a-b).join(',');assert.ok(!seen.has(key));seen.add(key);
+    }
+  };
+  press(320,240);t.step(150);assert.ok(t.strokes>0,'the local connections must be drawn');
+  press(650,400);grid.setPointer(100,100);
+  assert.equal(grid.networkPulse.x,650);assert.equal(grid.networkPulse.y,400,'the cluster stays at the press, not the moving pointer');
+  grid.stepEnergy(2);assert.equal(grid.links.length,0);assert.equal(grid.networkPulse,null);
+  press(100,100);t.context.innerWidth=360;t.context.innerHeight=780;grid.resize();
+  assert.equal(grid.links.length,0,'resize must remove stale endpoint indices');
+  press(180,380,'touch');
+  t.reduced.matches=true;grid.resume();assert.equal(grid.links.length,0);
+  const frozen=JSON.stringify(grid.motes);t.step(1000);assert.equal(JSON.stringify(grid.motes),frozen);
 });
 test('spark bursts are bounded, integrate consistently at different frame rates, and expire',()=>{
   const slow=fixture(),fast=fixture();

@@ -98,6 +98,7 @@ class CanvasController {
     this.particles = [];
     this.ripples = [];
     this.links = [];
+    this.networkPulse = null;
     this.motes = [];
     this.sparks = [];
     this.sparkSeed = 0;
@@ -131,27 +132,36 @@ class CanvasController {
       y:p.y+Math.sin(hx*.004+t*.36)*10+Math.cos((hy-hx)*.003-t*.23)*4+parallaxY
     };
   }
-  seedNetwork() {
-    this.links=[];this.sparks=[];
-    const columns=this.particles.filter(p=>p.homeY===this.spacing/2).length;
-    const rows=columns?this.particles.length/columns:0;
-    const connect=(column,row,toColumn,toRow)=>{
-      if(toColumn>=columns || toRow>=rows)return;
-      const from=row*columns+column,to=toRow*columns+toColumn;
-      this.links.push({from,to,phase:(from*.61803398875+to*.137)%1});
-    };
-    // Sparse fixed neighbours form constellations, with no all-pairs search.
-    for(let row=0;row<rows;row++)for(let column=0;column<columns;column++) {
-      if((column+row*2)%4!==0)continue;
-      connect(column,row,column+2,row);
-      connect(column,row,column+1,row+1);
-      if((column+row)%3!==0)connect(column,row,column,row+2);
-    }
+  resetEnergy() {
+    this.links=[];this.networkPulse=null;this.sparks=[];
     const count=Math.min(46,Math.max(14,Math.round(this.width*this.height/28000)));
     this.motes=Array.from({length:count},(_,id)=>({
       id,x:((id*.61803398875+.17)%1)*this.width,y:((id*.41421356237+.23)%1)*this.height,
       vx:Math.cos(id*2.4)*15,vy:Math.sin(id*1.7)*12,phase:id*2.399963
     }));
+  }
+  connectAt(x,y) {
+    if(REDUCED_MOTION.matches || document.hidden || !this.particles.length)return;
+    const radius=Math.min(105,this.spacing*3);
+    const px=(this.spot.x/this.width-.5)*this.spot.strength*10;
+    const py=(this.spot.y/this.height-.5)*this.spot.strength*7;
+    const nearest=this.particles.map((p,index)=>{
+      const point=this.projectDot(p,px,py);
+      return {index,...point,distance:Math.hypot(point.x-x,point.y-y)};
+    }).filter(p=>p.distance<=radius).sort((a,b)=>a.distance-b.distance).slice(0,9);
+    // A click selects actual visible neighbours, never a prebuilt global graph.
+    const seen=new Set();this.links=[];
+    for(const a of nearest) {
+      const neighbours=nearest.filter(b=>b!==a).map(b=>({b,distance:Math.hypot(a.x-b.x,a.y-b.y)}))
+        .filter(pair=>pair.distance<=this.spacing*1.75).sort((a,b)=>a.distance-b.distance).slice(0,2);
+      for(const {b} of neighbours) {
+        const key=[a.index,b.index].sort((a,b)=>a-b).join(',');
+        if(seen.has(key))continue;seen.add(key);
+        const [from,to]=a.distance<=b.distance?[a,b]:[b,a];
+        this.links.push({from:from.index,to:to.index,delay:from.distance/radius*.1});
+      }
+    }
+    this.networkPulse={x,y,age:0,life:1.6};this.start();
   }
   emitSparks(x,y,dx=0,dy=0,count=1,burst=false) {
     if(REDUCED_MOTION.matches || document.hidden)return;
@@ -164,6 +174,10 @@ class CanvasController {
     this.sparks=this.sparks.slice(-36);
   }
   stepEnergy(dt) {
+    if(this.networkPulse) {
+      this.networkPulse.age+=dt;
+      if(this.networkPulse.age>=this.networkPulse.life) {this.networkPulse=null;this.links=[];}
+    }
     const blend=1-Math.exp(-3*dt);
     for(const p of this.motes) {
       const dx=p.x-this.spot.x,dy=p.y-this.spot.y,distance=Math.hypot(dx,dy);
@@ -184,32 +198,29 @@ class CanvasController {
   drawNetwork(points) {
     const ctx=this.ctx;
     for(const point of points)point.energy=0;
+    if(!this.networkPulse || REDUCED_MOTION.matches)return;
     for(const link of this.links) {
-      const a=points[link.from],b=points[link.to];
-      if(!a || !b)continue;
-      const activity=Math.max(this.particles[link.from].light,this.particles[link.to].light);
-      const breathing=(.5+.5*Math.sin(this.clock*.8+link.phase*Math.PI*2))**2;
-      ctx.lineWidth=.65+activity*.35;
-      ctx.strokeStyle=`rgba(113,192,221,${.045+breathing*.14+activity*.27})`;
-      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-      // A luminous packet travels all the way to its endpoint, lighting the node.
-      const activation=Math.max(breathing,activity);
-      if(REDUCED_MOTION.matches || activation<.01)continue;
-      const progress=(this.clock*(.30+link.phase*.12)+link.phase)%1;
-      const strength=(.26+activity*.58)*Math.sin(progress*Math.PI)*activation;
+      const a=points[link.from],b=points[link.to],age=this.networkPulse.age-link.delay;
+      if(!a || !b || age<=0)continue;
+      const opening=Math.min(1,age/.12);
+      const fade=Math.max(0,1-Math.max(0,age-.4)/1.1)**2;
+      const envelope=opening*fade;
+      const reach=1-(1-opening)**3;
+      ctx.lineWidth=.9;
+      ctx.strokeStyle=`rgba(133,214,239,${envelope*.55})`;
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(a.x+(b.x-a.x)*reach,a.y+(b.y-a.y)*reach);ctx.stroke();
+      const progress=Math.min(1,age/.55),strength=Math.sin(progress*Math.PI)*envelope*.65;
       const x=a.x+(b.x-a.x)*progress,y=a.y+(b.y-a.y)*progress;
       if(this.dotGlow) {ctx.globalAlpha=strength;ctx.drawImage(this.dotGlow,x-5,y-5,10,10);ctx.globalAlpha=1;}
-      ctx.fillStyle=`rgba(176,235,250,${strength*.95})`;
+      ctx.fillStyle=`rgba(176,235,250,${strength})`;
       ctx.beginPath();ctx.arc(x,y,1.05,0,Math.PI*2);ctx.fill();
-      a.energy=Math.max(a.energy,(1-progress)**5*(.12+activity*.25)*activation);
-      b.energy=Math.max(b.energy,progress**5*(.12+activity*.25)*activation);
+      a.energy=Math.max(a.energy,(1-progress)*envelope*.30);
+      b.energy=Math.max(b.energy,progress*envelope*.30);
     }
   }
   drawEnergy() {
     const ctx=this.ctx;
     const paint=(p,alpha,radius)=>{
-      ctx.lineWidth=.65;ctx.strokeStyle=`rgba(146,221,242,${alpha*.45})`;
-      ctx.beginPath();ctx.moveTo(p.x-p.vx*.09,p.y-p.vy*.09);ctx.lineTo(p.x,p.y);ctx.stroke();
       if(this.dotGlow) {ctx.globalAlpha=alpha*.65;ctx.drawImage(this.dotGlow,p.x-5,p.y-5,10,10);ctx.globalAlpha=1;}
       ctx.fillStyle=`rgba(192,234,251,${alpha})`;
       ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fill();
@@ -245,7 +256,7 @@ class CanvasController {
         this.particles.push({ homeX: x, homeY: y, x, y, vx: 0, vy: 0, light: 0 });
       }
     }
-    this.seedNetwork();
+    this.resetEnergy();
     this.draw();
     this.resume();
   }
@@ -432,7 +443,7 @@ class CanvasController {
   }
   drawStatic() {
     this.stop(); this.pointer.active = false; this.ripples = []; this.spot.strength = 0;
-    this.wake=[]; this.wakeAnchor=null; this.sparks=[];
+    this.wake=[]; this.wakeAnchor=null; this.sparks=[];this.links=[];this.networkPulse=null;
     for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.vx=p.vy=0; p.light = 0; }
     this.draw();
   }
@@ -452,6 +463,7 @@ class InteractionHub {
     if (event.button !== 0) return;
     if (event.pointerType === 'touch') canvasController.setPointer(event.clientX, event.clientY);
     canvasController.pulse(event.clientX, event.clientY);
+    canvasController.connectAt(event.clientX, event.clientY);
   };
   onUp = event => { if (event.pointerType === 'touch') canvasController.leave(); };
   onLeave = () => { canvasController.leave(); motionController.reset(); };
