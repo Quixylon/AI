@@ -119,7 +119,7 @@ class CanvasController {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // Every dot has a fixed home in a regular lattice, including after resize.
     const budget = 2400;
-    let gap = this.mobile ? 30 : 32;
+    let gap = 30;
     while (Math.ceil(this.width / gap) * Math.ceil(this.height / gap) > budget) gap++;
     this.spacing = gap;
     this.particles = [];
@@ -183,8 +183,9 @@ class CanvasController {
     this.wake=this.wake.filter(sample=>sample.age<1.6);
     for (const ripple of this.ripples) ripple.age += dt;
     this.ripples = this.ripples.filter(ripple => ripple.age < 2.4);
-    const flowX=Math.max(-36,Math.min(36,this.pointer.x-this.spot.x))*.55;
-    const flowY=Math.max(-36,Math.min(36,this.pointer.y-this.spot.y))*.55;
+    const flowX=Math.max(-20,Math.min(20,this.pointer.x-this.spot.x))*.1;
+    const flowY=Math.max(-20,Math.min(20,this.pointer.y-this.spot.y))*.1;
+    const maxOffset=this.spacing*.18;
     // Exact damped-spring step: no frame-dependent Euler integration.
     const damping=12, frequency=16, decay=Math.exp(-damping*dt);
     const cosine=Math.cos(frequency*dt), sine=Math.sin(frequency*dt);
@@ -193,40 +194,45 @@ class CanvasController {
       const distance = Math.hypot(dx, dy);
       const proximity = this.pointer.active ? Math.max(0, 1 - distance / reach) : 0;
       const influence = proximity * proximity * (3 - 2 * proximity);
-      const offset = 24 * influence;
-      let x = p.homeX + dx / Math.max(1, distance) * offset + flowX*influence;
-      let y = p.homeY + dy / Math.max(1, distance) * offset + flowY*influence;
-      let light = influence*.65 + (this.pointer.active ? Math.exp(-(((distance-85)/48)**2))*.55 : 0);
+      const offset = 7 * influence;
+      let x = p.homeX + dx / (distance+45) * offset + flowX*influence;
+      let y = p.homeY + dy / (distance+45) * offset + flowY*influence;
+      let light = influence*.65;
       for (const ripple of this.ripples) {
         const rx = p.homeX - ripple.x, ry = p.homeY - ripple.y;
         const radius = Math.hypot(rx, ry);
         const crest = Math.exp(-(((radius - ripple.age * 360) / 40) ** 2)) * (1 - ripple.age / 2.4) * ripple.strength;
-        const shift = crest * 16;
+        const shift = crest * 4.5;
         x += rx / Math.max(1, radius) * shift;
         y += ry / Math.max(1, radius) * shift;
-        light = Math.min(1.3, light + crest);
+        light = Math.max(light,crest*.7);
       }
-      let curlX=0,curlY=0,wakeLight=0;
+      let wakeLight=0;
       for(const sample of this.wake) {
         const wx=p.homeX-sample.x,wy=p.homeY-sample.y;
-        const radius=Math.hypot(wx,wy),falloff=Math.exp(-radius*radius/10000);
+        const along=wx*sample.dx+wy*sample.dy,across=wx*sample.dy-wy*sample.dx;
+        const falloff=Math.exp(-(along*along/6400+across*across/1600));
         const life=(1-sample.age/1.6)**2;
-        const strength=falloff*life*sample.power;
-        // A travelling eddy turns sideways behind the cursor and then diffuses.
-        const turn=(wx*sample.dy-wy*sample.dx)>=0?1:-1;
-        curlX+=(sample.dx*18-wy/Math.max(35,radius)*turn*25)*strength;
-        curlY+=(sample.dy*18+wx/Math.max(35,radius)*turn*25)*strength;
-        wakeLight+=strength*.3;
+        // Light may trail the pointer, but samples never accumulate forces or
+        // brightness. Repeated passes cannot bunch dots into luminous clouds.
+        wakeLight=Math.max(wakeLight,falloff*life*sample.power*.5);
       }
-      const wakeScale=Math.min(1,30/Math.max(1,Math.hypot(curlX,curlY)));
-      x+=curlX*wakeScale; y+=curlY*wakeScale;
-      light=Math.min(1.3,light+wakeLight);
+      light=Math.max(light,wakeLight);
+      const offsetScale=Math.min(1,maxOffset/Math.max(.001,Math.hypot(x-p.homeX,y-p.homeY)));
+      x=p.homeX+(x-p.homeX)*offsetScale;y=p.homeY+(y-p.homeY)*offsetScale;
       const ex=p.x-x, ey=p.y-y;
       const vx=p.vx, vy=p.vy;
       p.x=x+decay*(ex*cosine+(vx+damping*ex)/frequency*sine);
       p.y=y+decay*(ey*cosine+(vy+damping*ey)/frequency*sine);
       p.vx=decay*(vx*cosine-(damping*vx+400*ex)/frequency*sine);
       p.vy=decay*(vy*cosine-(damping*vy+400*ey)/frequency*sine);
+      // Bound spring overshoot too, including a rapid reversal of the cursor.
+      const excursion=Math.hypot(p.x-p.homeX,p.y-p.homeY);
+      if(excursion>maxOffset) {
+        p.x=p.homeX+(p.x-p.homeX)*maxOffset/excursion;
+        p.y=p.homeY+(p.y-p.homeY)*maxOffset/excursion;
+        p.vx=p.vy=0;
+      }
       p.light += (light - p.light) * blend;
       const moving = Math.abs(x - p.x) + Math.abs(y - p.y) + Math.abs(light - p.light) + (Math.abs(p.vx)+Math.abs(p.vy))*.02 > .008;
       if (!moving) { p.x = x; p.y = y; p.vx=p.vy=0; p.light = light; }
@@ -240,7 +246,7 @@ class CanvasController {
     if (!this.ctx) return;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
-    ctx.fillStyle = '#080e19';
+    ctx.fillStyle = '#0b0e12';
     ctx.fillRect(0, 0, this.width, this.height);
     const t = this.clock;
     const extent = Math.max(this.width, this.height);
@@ -248,9 +254,9 @@ class CanvasController {
     const parallaxY=(this.spot.y/this.height-.5)*this.spot.strength*7;
     // Wide, slowly breathing fields give the lens a richer scene to refract.
     const pools = [
-      [.20+Math.sin(t*.085)*.14,.24+Math.cos(t*.07)*.13,.68,.66,'52,130,172',.38],
-      [.82+Math.cos(t*.07)*.13,.65+Math.sin(t*.09)*.16,.59,.84,'116,95,183',.32],
-      [.42+Math.sin(t*.06)*.21,.88+Math.cos(t*.08)*.11,.50,.50,'47,151,151',.25]
+      [.20+Math.sin(t*.085)*.14,.24+Math.cos(t*.07)*.13,.68,.66,'99,115,126',.24],
+      [.82+Math.cos(t*.07)*.13,.65+Math.sin(t*.09)*.16,.59,.84,'103,108,116',.17],
+      [.42+Math.sin(t*.06)*.21,.88+Math.cos(t*.08)*.11,.50,.50,'69,108,110',.13]
     ];
     for (const [x,y,size,aspect,color,alpha] of pools) {
       const radius=extent*size;
@@ -265,42 +271,37 @@ class CanvasController {
       ctx.restore();
     }
     if (this.spot.strength > .005) {
-      const radius = 330;
+      const radius = 270;
       const glow = ctx.createRadialGradient(this.spot.x, this.spot.y, 0, this.spot.x, this.spot.y, radius);
-      glow.addColorStop(0, `rgba(83,168,229,${this.spot.strength * .16})`);
-      glow.addColorStop(.45, `rgba(86,118,216,${this.spot.strength * .07})`);
-      glow.addColorStop(1, 'rgba(86,118,216,0)');
+      glow.addColorStop(0, `rgba(172,194,201,${this.spot.strength * .055})`);
+      glow.addColorStop(.45, `rgba(152,177,189,${this.spot.strength * .025})`);
+      glow.addColorStop(1, 'rgba(152,177,189,0)');
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, this.width, this.height);
     }
-    // Soft pigment follows the recent path, but the lattice remains the subject.
-    for(let i=0;i<this.wake.length;i+=3) {
-      const sample=this.wake[i],size=100+sample.age*40;
-      const alpha=(1-sample.age/1.6)**2*sample.power*.09;
-      const glow=ctx.createRadialGradient(sample.x,sample.y,0,sample.x,sample.y,size);
-      glow.addColorStop(0,`rgba(127,156,248,${alpha})`);
-      glow.addColorStop(.55,`rgba(74,214,205,${alpha*.45})`);
-      glow.addColorStop(1,'rgba(74,214,205,0)');
-      ctx.fillStyle=glow;ctx.fillRect(sample.x-size,sample.y-size,size*2,size*2);
-    }
-    for (const p of this.particles) {
-      // Two broad ribbons illuminate coherent rows, with a quiet darker field
-      // between them. The dots remain a regular lattice, never loose particles.
-      const u=p.homeX/this.width,v=p.homeY/this.height;
-      const ribbon=Math.exp(-(((v-.31-Math.sin(u*4-t*.15)*.13-Math.sin(t*.11)*.08)/.15)**2));
-      const echo=Math.exp(-(((v-.77-Math.sin(u*4.8+t*.12)*.12)/.13)**2));
-      const tide=.5+.5*Math.sin(p.homeX*.005+p.homeY*.003-t*.38);
-      const light=p.light+ribbon*(.18+tide*.18)+echo*.22;
-      const motion=REDUCED_MOTION.matches?0:1;
-      const depth=.62+ribbon*.26+echo*.10;
-      const x=p.x+(Math.sin(p.homeY*.007+t*.34)*7+Math.sin(p.homeX*.004+p.homeY*.006-t*.24)*4+parallaxX*depth)*motion;
-      const y=p.y+(Math.sin(p.homeX*.006-t*.38)*8+Math.cos(p.homeY*.006-p.homeX*.004+t*.21)*4+parallaxY*depth)*motion;
-      if(light>.12) {
-        ctx.fillStyle=`rgba(140,195,244,${light*.075})`;
-        ctx.beginPath();ctx.arc(x,y,3+light*3,0,Math.PI*2);ctx.fill();
+    const motion=REDUCED_MOTION.matches?0:1;
+    for (let index=0;index<this.particles.length;index++) {
+      const p=this.particles[index],u=p.homeX/this.width,v=p.homeY/this.height;
+      const ribbon=Math.exp(-(((v-.31-Math.sin(u*4-t*.15)*.13-Math.sin(t*.11)*.08)/.12)**2));
+      const echo=Math.exp(-(((v-.77-Math.sin(u*4.8+t*.12)*.12)/.10)**2));
+      const glint=Math.pow(.5+.5*Math.sin(p.homeX*.014+p.homeY*.009-t*.44),18);
+      const light=Math.min(1,p.light+ribbon*.21+echo*.13+glint*.10);
+      // Broad low-amplitude warping keeps neighbouring cells separated.
+      const x=p.x+(Math.sin(p.homeY*.006+t*.25)*2+Math.sin(p.homeX*.004-t*.18)+parallaxX)*motion;
+      const y=p.y+(Math.sin(p.homeX*.005-t*.28)*2+Math.cos(p.homeY*.004+t*.16)+parallaxY)*motion;
+      if(light>.3) {
+        ctx.fillStyle=`rgba(193,209,216,${Math.min(.045,light*.045)})`;
+        ctx.beginPath();ctx.arc(x,y,2.4,0,Math.PI*2);ctx.fill();
       }
-      ctx.fillStyle=`rgba(${Math.round(146+echo*46)},${Math.round(181+ribbon*35)},235,${Math.min(.92,.29+light*.57)*depth})`;
-      ctx.beginPath();ctx.arc(x,y,1.03+light*.72,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=`rgba(186,204,213,${.22+light*.46})`;
+      ctx.beginPath();ctx.arc(x,y,.82+light*.30,0,Math.PI*2);ctx.fill();
+      // A fine, offset lattice adds detail without random particles or linework.
+      if(index%2===0) {
+        const fineX=p.homeX+this.spacing*.5+parallaxX*.5*motion;
+        const fineY=p.homeY+this.spacing*.5+parallaxY*.5*motion;
+        ctx.fillStyle=`rgba(177,190,199,${.10+ribbon*.07+glint*.06})`;
+        ctx.beginPath();ctx.arc(fineX,fineY,.55,0,Math.PI*2);ctx.fill();
+      }
     }
     this.lens?.draw(this.canvas, this.width, this.height, this.spot);
   }
