@@ -54,6 +54,9 @@ async function ensureProfileSnapshot(signal) {
 async function fetchSteamStatus({ signal } = {}) {
   return fetchJson(CONFIG.endpoints.steamStatus, { signal });
 }
+async function fetchSteamGames({ signal } = {}) {
+  return fetchJson(CONFIG.endpoints.steamGames, { signal });
+}
 async function fetchSteamHistory({ signal } = {}) {
   const rows = await fetchJson(CONFIG.endpoints.steamHistory, { signal });
   if (!Array.isArray(rows)) return [];
@@ -137,6 +140,7 @@ class RefreshManager {
     this.register('profile', fetchProfileData, normalizeProfile, data => { state.profile.data=data; state.profile.updatedAt=new Date().toISOString(); renderProfile(); });
     this.register('steamStatus', fetchSteamStatus, normalizeSteamStatus, data => { const previous=state.steam.status; state.steam.status=data; state.steam.updatedAt=data.checkedAt; enrichSteamTimingFromHistory(); renderSteam(previous); });
     this.register('steamHistory', fetchSteamHistory, rows => normalizeHistory('steam', rows), data => { state.steam.history=data; enrichSteamTimingFromHistory(); renderSteam(); renderSteamHistory(); renderSteamStats(); });
+    this.register('steamGames', fetchSteamGames, raw => normalizeSteamGames(raw), data => { state.steam.games=data; renderSteamGames(); });
     this.register('discordStatus', fetchDiscordStatus, normalizeDiscordStatus, data => { const previous=state.discord.status; state.discord.status=data; state.discord.updatedAt=data.checkedAt; renderDiscord(previous); });
     this.register('discordHistory', fetchDiscordHistory, rows => normalizeHistory('discord', rows), data => { state.discord.history=data; renderDiscordHistory(); renderDiscordStats(); });
     this.register('telegramStatus', fetchTelegramStatus, normalizeTelegramStatus, data => { const previous=state.telegram.status; state.telegram.status=data; state.telegram.updatedAt=data.checkedAt; renderTelegram(previous); });
@@ -186,7 +190,7 @@ class RefreshManager {
     return resource.promise;
   }
   refreshPlatform(platform, options={}) {
-    if (platform === 'steam') return Promise.all([this.refresh('steamStatus', options), this.refresh('steamHistory', options)]);
+    if (platform === 'steam') return Promise.all([this.refresh('steamStatus', options), this.refresh('steamHistory', options), this.refresh('steamGames', options)]);
     if (platform === 'discord') return Promise.all([this.refresh('discordStatus', options), this.refresh('discordHistory', options)]);
     if (platform === 'telegram') return Promise.all([this.refresh('telegramStatus', options), this.refresh('telegramHistory', options)]);
     return Promise.resolve([]);
@@ -307,4 +311,3 @@ AvatarManager.prototype.updateOptional = async function(key, imageId, sourceUrl,
   catch { record.failed=url; if (!record.loaded) image.hidden=true; }
   finally { record.loading=false; }
 };
-

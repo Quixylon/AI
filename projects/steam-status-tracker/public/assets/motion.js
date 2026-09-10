@@ -100,6 +100,8 @@ class CanvasController {
     this.spot = { x: 0, y: 0, strength: 0 };
     this.pointer = { x: 0, y: 0, active: false };
     this.clock = 0;
+    this.pathLength = 0;
+    this.lastPulseAt = 0;
     this.lens = typeof GlassRenderer === 'function' ? new GlassRenderer(byId('glassCanvas')) : null;
     if (this.lens) this.lens.onRestore = () => this.draw();
   }
@@ -123,7 +125,7 @@ class CanvasController {
     this.particles = [];
     for (let y = gap / 2; y < this.height; y += gap) {
       for (let x = gap / 2; x < this.width; x += gap) {
-        this.particles.push({ homeX: x, homeY: y, x, y, light: 0 });
+        this.particles.push({ homeX: x, homeY: y, x, y, vx: 0, vy: 0, light: 0 });
       }
     }
     this.draw();
@@ -131,6 +133,12 @@ class CanvasController {
   }
   setPointer(x, y) {
     if (REDUCED_MOTION.matches) return;
+    if(this.pointer.active) this.pathLength+=Math.hypot(x-this.pointer.x,y-this.pointer.y);
+    const now=performance.now();
+    if(this.pathLength>100 && now-this.lastPulseAt>140) {
+      this.pulse(this.spot.x,this.spot.y,.32);
+      this.pathLength=0; this.lastPulseAt=now;
+    }
     if (!this.pointer.active && this.spot.strength < .01) { this.spot.x = x; this.spot.y = y; }
     this.pointer = { x, y, active: true };
     this.start();
@@ -168,15 +176,20 @@ class CanvasController {
     if (Math.abs(glowTarget - this.spot.strength) < .002) this.spot.strength = glowTarget;
     for (const ripple of this.ripples) ripple.age += dt;
     this.ripples = this.ripples.filter(ripple => ripple.age < 2.4);
+    const flowX=Math.max(-36,Math.min(36,this.pointer.x-this.spot.x))*.55;
+    const flowY=Math.max(-36,Math.min(36,this.pointer.y-this.spot.y))*.55;
+    // Exact damped-spring step: no frame-dependent Euler integration.
+    const damping=12, frequency=16, decay=Math.exp(-damping*dt);
+    const cosine=Math.cos(frequency*dt), sine=Math.sin(frequency*dt);
     for (const p of this.particles) {
       const dx = p.homeX - this.pointer.x, dy = p.homeY - this.pointer.y;
       const distance = Math.hypot(dx, dy);
       const proximity = this.pointer.active ? Math.max(0, 1 - distance / reach) : 0;
       const influence = proximity * proximity * (3 - 2 * proximity);
       const offset = 24 * influence;
-      let x = p.homeX + dx / Math.max(1, distance) * offset;
-      let y = p.homeY + dy / Math.max(1, distance) * offset;
-      let light = influence;
+      let x = p.homeX + dx / Math.max(1, distance) * offset + flowX*influence;
+      let y = p.homeY + dy / Math.max(1, distance) * offset + flowY*influence;
+      let light = influence*.65 + (this.pointer.active ? Math.exp(-(((distance-85)/48)**2))*.55 : 0);
       for (const ripple of this.ripples) {
         const rx = p.homeX - ripple.x, ry = p.homeY - ripple.y;
         const radius = Math.hypot(rx, ry);
@@ -186,11 +199,15 @@ class CanvasController {
         y += ry / Math.max(1, radius) * shift;
         light = Math.min(1.3, light + crest);
       }
-      p.x += (x - p.x) * blend;
-      p.y += (y - p.y) * blend;
+      const ex=p.x-x, ey=p.y-y;
+      const vx=p.vx, vy=p.vy;
+      p.x=x+decay*(ex*cosine+(vx+damping*ex)/frequency*sine);
+      p.y=y+decay*(ey*cosine+(vy+damping*ey)/frequency*sine);
+      p.vx=decay*(vx*cosine-(damping*vx+400*ex)/frequency*sine);
+      p.vy=decay*(vy*cosine-(damping*vy+400*ey)/frequency*sine);
       p.light += (light - p.light) * blend;
-      const moving = Math.abs(x - p.x) + Math.abs(y - p.y) + Math.abs(light - p.light) > .008;
-      if (!moving) { p.x = x; p.y = y; p.light = light; }
+      const moving = Math.abs(x - p.x) + Math.abs(y - p.y) + Math.abs(light - p.light) + (Math.abs(p.vx)+Math.abs(p.vy))*.02 > .008;
+      if (!moving) { p.x = x; p.y = y; p.vx=p.vy=0; p.light = light; }
     }
     this.draw();
     // Ambient light and refraction follow the floating surfaces even at rest.
@@ -242,11 +259,12 @@ class CanvasController {
       ctx.fillStyle = `rgba(${Math.round(151 + tide * 26)},${Math.round(186 + tide * 22)},228,${Math.min(.95, .38 + light * .55) * depth})`;
       ctx.beginPath(); ctx.arc(x, y, 1.10 + light * .85, 0, Math.PI * 2); ctx.fill();
     }
-    this.lens?.draw(this.canvas, this.width, this.height);
+    this.lens?.draw(this.canvas, this.width, this.height, this.spot);
   }
   drawStatic() {
     this.stop(); this.pointer.active = false; this.ripples = []; this.spot.strength = 0;
-    for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.light = 0; }
+    this.pathLength=0;
+    for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.vx=p.vy=0; p.light = 0; }
     this.draw();
   }
   stop() { this.running = false; cancelAnimationFrame(this.raf); this.raf = 0; }

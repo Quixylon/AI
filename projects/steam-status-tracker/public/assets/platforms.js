@@ -12,7 +12,7 @@ function renderSteam(previous=null) {
   setLiveDuration(byId('steamSessionDuration'),p.gameStartedAt||p.statusStartedAt,null,'—');
   setTone(byId('steamDetailStatusOrb'),p.status); setLink('steamProfileButton',p.profileUrl); setLink('steamCsrepButton',profileLink(state.profile.data,'csrep')?.url);
   avatarManager.update('steam-detail','steamDetailAvatar','steamDetailAvatarPlaceholder',p.avatar,p.avatarVersion,'Steam-аватар');
-  text('steamJson',JSON.stringify(data,null,2)); renderOverview(); renderProfile(); updateStaleStates(); renderSteamStats();
+  text('steamJson',JSON.stringify(data,null,2)); renderOverview(); renderProfile(); updateStaleStates(); renderSteamStats(); renderSteamGames();
   notifySteamChanges(previous,data);
 }
 function notifySteamChanges(previous,current) {

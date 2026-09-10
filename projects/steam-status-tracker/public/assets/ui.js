@@ -1,17 +1,21 @@
 'use strict';
 
-// Float uses individual translate, tilt owns transform, and entrance owns scale.
-// Keeping them separate prevents one animation from resetting another.
+// Float uses individual translate; entrances add movement to the tilt transform.
+// Additive composition prevents one animation from resetting another.
 const surfaceMotion = {
   observer: null,
   observed: new WeakSet(),
   animations: new Set(),
+  revealed: new WeakSet(),
   lastRoute: null,
   selector: '.panel, .platform-card, .detail-card, .stats-card, .history-panel',
   register() {
     if (!this.observer && typeof IntersectionObserver === 'function') {
       this.observer = new IntersectionObserver(entries => {
-        for (const entry of entries) entry.target.classList.toggle('is-in-view', entry.isIntersecting);
+        for (const entry of entries) {
+          entry.target.classList.toggle('is-in-view', entry.isIntersecting);
+          if(entry.isIntersecting && this.lastRoute && !this.revealed.has(entry.target)) this.enter(entry.target,0);
+        }
       }, { rootMargin: '30px' });
     }
     document.querySelectorAll(this.selector).forEach((element, index) => {
@@ -30,6 +34,25 @@ const surfaceMotion = {
     for (const animation of this.animations) animation.cancel();
     this.animations.clear();
   },
+  track(animation) {
+    this.animations.add(animation);
+    animation.finished.then(()=>{this.animations.delete(animation);motionController.measureSoon();},()=>this.animations.delete(animation));
+  },
+  enter(element, delay, compact=false, direction=0) {
+    if(!element || element.closest('[hidden]') || typeof element.animate!=='function') return;
+    this.revealed.add(element);
+    if(REDUCED_MOTION.matches) return;
+    // Sample a damped spring in time, then let the browser interpolate it.
+    // Additive transform preserves tilt and float; opacity has its own short fade.
+    const frames=[];
+    for(let i=0;i<=36;i++) {
+      const t=i/36, seconds=t*.72, damping=13, frequency=16;
+      const remaining=i===36?0:Math.exp(-damping*seconds)*(Math.cos(frequency*seconds)+damping/frequency*Math.sin(frequency*seconds));
+      frames.push({transform:`translate3d(${direction*remaining}px,${(compact?12:26)*remaining}px,0)`,offset:t});
+    }
+    this.track(element.animate(frames,{duration:720,delay,easing:'linear',composite:'add',fill:'backwards'}));
+    this.track(element.animate([{opacity:0},{opacity:1}],{duration:220,delay,easing:'ease-out',fill:'backwards'}));
+  },
   reveal() {
     const route = `${state.route.screen}/${state.route.trackerTab}`;
     if (route === this.lastRoute) return;
@@ -42,19 +65,11 @@ const surfaceMotion = {
     if (!view) return;
     const elements = [...view.querySelectorAll(profile ? '.profile-masthead, .panel, .profile-footer' : this.selector)];
     if (!profile && !previous?.startsWith('tracker/')) elements.unshift(document.querySelector('.tracker-topbar'));
-    const reveal = (element, delay, compact = false) => {
-      if (!element || element.closest('[hidden]') || typeof element.animate !== 'function') return;
-      const bounds = element.getBoundingClientRect();
-      if (bounds.top > innerHeight + 80) return;
-      const animation = element.animate([
-        { opacity: 0, scale: compact ? '.97' : '.94', filter: 'blur(7px)' },
-        { opacity: 1, scale: '1', filter: 'blur(0px)' }
-      ], { duration: compact ? 550 : 820, delay, easing: 'cubic-bezier(.18,.75,.22,1)', fill: 'backwards' });
-      this.animations.add(animation);
-      animation.finished.then(() => { this.animations.delete(animation); motionController.measureSoon(); }, () => this.animations.delete(animation));
-    };
-    elements.forEach((element, index) => reveal(element, Math.min(index * 85, 420)));
-    if (profile) view.querySelectorAll('.social-link').forEach((element, index) => reveal(element, 230 + index * 35, true));
+    const direction=previous?(profile?-18:18):0;
+    elements.forEach((element,index)=>{
+      if(element && element.getBoundingClientRect().top<innerHeight+40) this.enter(element,Math.min(index*45,180),false,direction);
+    });
+    if(profile) view.querySelectorAll('.social-link').forEach((element,index)=>this.enter(element,110+index*24,true));
     motionController.measureSoon();
   }
 };
@@ -125,6 +140,11 @@ function updateRoutePresentation(resetScroll) {
 }
 
 function setupPresentation() {
+  document.addEventListener('pointerdown',event=>{
+    if(REDUCED_MOTION.matches || event.button!==0) return;
+    const control=event.target.closest('.social-link,.tracker-door,.action-button,.filter-button,.tab-link,.back-link');
+    if(control?.animate) surfaceMotion.track(control.animate([{scale:'1'},{scale:'.974',offset:.24},{scale:'1'}],{duration:320,easing:'cubic-bezier(.2,.8,.2,1)'}));
+  },{passive:true});
   REDUCED_MOTION.addEventListener?.('change', () => { if (REDUCED_MOTION.matches) surfaceMotion.cancel(); });
   for (const timeline of $$('.timeline')) {
     const title = timeline.closest('.history-panel')?.querySelector('h3');

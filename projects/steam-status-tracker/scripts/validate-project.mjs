@@ -217,9 +217,9 @@ function validateHistory(history) {
 
 const requiredFiles = [
   'public/.nojekyll', 'public/index.html', 'public/assets/site.css',
-  ...['config', 'data', 'profile', 'platforms', 'history', 'navigation', 'motion', 'icons', 'ui', 'app', 'cat-audio'].map(name => `public/assets/${name}.js`),
+  ...['config', 'data', 'profile', 'platforms', 'history', 'games', 'navigation', 'motion', 'icons', 'ui', 'app', 'cat-audio'].map(name => `public/assets/${name}.js`),
   'public/assets/favicon.svg', 'public/data/bio.json', 'public/data/status.json',
-  'public/data/history.json', 'public/tracker/index.html', 'public/profile-v2/index.html'
+  'public/data/history.json', 'public/data/games.json', 'public/tracker/index.html', 'public/profile-v2/index.html'
 ];
 
 const forbiddenPaths = [
@@ -266,6 +266,21 @@ for (const filePath of scriptFiles) validateSyntax(filePath);
 const bio = await readJson(path.join(publicDirectory, 'data', 'bio.json'));
 const status = await readJson(path.join(publicDirectory, 'data', 'status.json'));
 const history = await readJson(path.join(publicDirectory, 'data', 'history.json'));
+const games = await readJson(path.join(publicDirectory, 'data', 'games.json'));
+if (!Array.isArray(games?.games)) errors.push('games.json: games must be an array');
+else {
+  const ids = new Set();
+  for (const game of games.games) {
+    if (!game || !/^\d+$/.test(game.appId) || !game.name || ids.has(game.appId)) {
+      errors.push('games.json: every game needs a unique appId and name');
+      continue;
+    }
+    ids.add(game.appId);
+    for (const key of ['totalMinutes', 'recentMinutes']) {
+      if (game[key] != null && (!Number.isInteger(game[key]) || game[key] < 0)) errors.push(`games.json: invalid ${key} for ${game.appId}`);
+    }
+  }
+}
 validateBio(bio);
 validateStatus(status);
 validateHistory(history);

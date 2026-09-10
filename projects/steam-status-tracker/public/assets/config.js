@@ -9,6 +9,7 @@ const CONFIG = {
     profile: './data/bio.json',
     steamStatus: './data/status.json',
     steamHistory: './data/history.json',
+    steamGames: './data/games.json',
     visitors: 'https://quixylon-counter.naks56toq.workers.dev/'
   },
   refreshIntervals: {
@@ -97,7 +98,7 @@ function createAvatarDataUri(letter, from, to) {
 const state = {
   route: { screen: 'profile', trackerTab: 'overview' },
   profile: { data:null, loading:false, refreshing:false, error:null, updatedAt:null },
-  steam: { status:null, history:[], loading:false, refreshing:false, error:null, updatedAt:null },
+  steam: { status:null, history:[], games:null, loading:false, refreshing:false, error:null, updatedAt:null },
   discord: { status:null, history:[], loading:false, refreshing:false, error:null, updatedAt:null },
   telegram: { status:null, history:[], loading:false, refreshing:false, error:null, updatedAt:null },
   visitors: { count:null, loading:false, error:null },
@@ -162,7 +163,8 @@ function normalizeSteamStatus(raw = {}) {
   const player = raw?.player && typeof raw.player === 'object' ? raw.player : {};
   const status = statusSets.steam.has(player.status) ? player.status : 'unknown';
   const personaState = statusSets.steam.has(player.personaState) ? player.personaState : 'unknown';
-  return { configured:raw.configured !== false, checkedAt:validDate(raw.checkedAt)?.toISOString() || null, player:{
+  return { configured:raw.configured !== false, checkedAt:validDate(raw.checkedAt)?.toISOString() || null,
+    monitoring:{intervalSeconds:Number.isFinite(raw.monitoring?.intervalSeconds)?Math.max(0,raw.monitoring.intervalSeconds):null}, player:{
     steamId:cleanString(player.steamId, '—'), name:cleanString(player.name, 'Неизвестный профиль'),
     profileUrl:normalizeExternalUrl(player.profileUrl), avatar:normalizeImageUrl(player.avatar), avatarVersion:cleanString(player.avatarVersion, 'steam'),
     status, personaState, gameName:cleanNullableString(player.gameName), gameId:cleanNullableString(player.gameId),
@@ -255,4 +257,3 @@ function normalizeHistory(platform, rawRows) {
   }
   return merged.sort((a,b) => new Date(b.startedAt) - new Date(a.startedAt));
 }
-

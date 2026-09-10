@@ -14,7 +14,7 @@ function context() {
     renderProfile(){}, renderOverview(){}, renderSteam(){}, renderDiscord(){}, renderTelegram(){}, renderVisitors(){}, renderSteamHistory(){}, renderDiscordHistory(){}, renderTelegramHistory(){},
     text:(id,value)=>values.set(id,value)
   });
-  vm.runInContext(file('config')+'\n'+file('data')+'\n'+file('history'), c);
+  vm.runInContext(file('config')+'\n'+file('data')+'\n'+file('history')+'\n'+file('games'), c);
   return { c, values, run:code=>vm.runInContext(code,c) };
 }
 test('missing dates and URLs stay missing; unsafe schemes are rejected',()=>{
@@ -91,4 +91,24 @@ test('network filters preserve game history and merge online periods across game
   assert.equal(run('filteredSteamHistory().presence.length'),1);
   assert.equal(run('filteredSteamHistory().presence[0].status'),'offline');
   assert.equal(JSON.stringify(c.rows),original,'display grouping must not mutate saved history');
+});
+
+test('game catalog combines Steam and observed titles without duplicate sessions or lost unknown dates',()=>{
+  const {c,run}=context();
+  c.catalog={sources:{owned:'ok',recent:'ok'},games:[{appId:'40',name:'Recent Game',totalMinutes:180,recentMinutes:60,lastPlayedAt:null}]};
+  c.rows=[
+    {type:'game',gameId:'40',gameName:'Recent Game',startedAt:'2025-01-01T10:00:00Z',endedAt:'2025-01-01T11:00:00Z'},
+    {type:'game',gameId:null,gameName:'Recent Game',startedAt:'2025-01-02T10:00:00Z',endedAt:'2025-01-02T10:30:00Z'},
+    {type:'game',gameId:'50',gameName:'History Only',startedAt:'2025-01-03T10:00:00Z',endedAt:'2025-01-03T11:00:00Z'}
+  ];
+  const original=JSON.stringify([c.catalog,c.rows]);
+  const result=run('buildGameCatalog(rows,normalizeSteamGames(catalog),{gameId:50,gameName:"History Only"})');
+  assert.equal(result.length,2);
+  assert.equal(result[0].appId,'50');
+  assert.equal(result[0].current,true);
+  assert.equal(result[1].totalMinutes,180);
+  assert.equal(result[1].observedSeconds,5400);
+  assert.equal(result[1].lastPlayedAt,null);
+  assert.equal(JSON.stringify([c.catalog,c.rows]),original);
+  assert.equal(run('normalizeSteamGames(null).games.length'),0);
 });

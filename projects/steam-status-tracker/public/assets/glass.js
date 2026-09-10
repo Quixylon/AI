@@ -14,6 +14,7 @@ uniform vec2 u_pixels;
 uniform vec4 u_rect;
 uniform mat3 u_projection;
 uniform float u_radius;
+uniform vec3 u_pointer;
 
 vec3 scene(vec2 p) {
   return texture2D(u_scene, clamp(p / u_view, vec2(0.0), vec2(1.0))).rgb;
@@ -31,20 +32,25 @@ void main() {
   else normal = q.x > q.y ? vec2(sign(local.x), 0.0) : vec2(0.0, sign(local.y));
 
   // A thick, rounded bevel pulls the texture inward; the centre magnifies gently.
-  float bevel = (1.0 - exp(-depth / 3.0)) * exp(-depth / 19.0);
-  vec2 samplePoint = p - normal * bevel * 34.0 - local * 0.028 * smoothstep(0.0, 40.0, depth);
-  float haze = 1.65 + bevel * 0.65;
+  float bevel = (1.0 - exp(-depth / 2.8)) * exp(-depth / 24.0);
+  vec2 samplePoint = p - normal * bevel * 54.0 - local * 0.042 * smoothstep(0.0, 46.0, depth);
+  float haze = 1.05 + smoothstep(12.0, 90.0, depth) * 0.7;
   vec3 color = scene(samplePoint) * 0.4;
   color += (scene(samplePoint + vec2(haze, 0.0)) + scene(samplePoint - vec2(haze, 0.0))
          + scene(samplePoint + vec2(0.0, haze)) + scene(samplePoint - vec2(0.0, haze))) * 0.15;
   // Very small chromatic separation lives at the bevel, not across the text.
-  vec2 split = normal * bevel * 1.3;
+  vec2 split = normal * bevel * 2.1;
   color.r = mix(color.r, scene(samplePoint + split).r, 0.24);
   color.b = mix(color.b, scene(samplePoint - split).b, 0.24);
-  color = mix(color, vec3(0.19, 0.26, 0.34), 0.13);
+  color = mix(color, vec3(0.19, 0.26, 0.34), 0.09);
   // The native card owns its outline and clipping. A second luminous shader
   // silhouette would look like a displaced duplicate during motion.
-  color = mix(color, vec3(0.055, 0.085, 0.14), 0.22);
+  color = mix(color, vec3(0.055, 0.085, 0.14), 0.12);
+  // The caustic remains inside the native clip and only faces a nearby pointer.
+  vec2 towardPointer=u_pointer.xy-p;
+  float proximity=exp(-dot(towardPointer,towardPointer)/(160.0*160.0))*u_pointer.z;
+  float facing=max(0.0,dot(normal,normalize(towardPointer+vec2(0.001))));
+  color+=vec3(0.35,0.65,0.8)*bevel*proximity*(0.04+0.13*facing);
   gl_FragColor = vec4(color, 1.0);
 }
 `;
@@ -152,7 +158,7 @@ class GlassRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      this.uniforms = Object.fromEntries(['scene', 'view', 'pixels', 'rect', 'projection', 'radius'].map(name => [name, gl.getUniformLocation(this.program, `u_${name}`)]));
+      this.uniforms = Object.fromEntries(['scene', 'view', 'pixels', 'rect', 'projection', 'radius', 'pointer'].map(name => [name, gl.getUniformLocation(this.program, `u_${name}`)]));
       gl.uniform1i(this.uniforms.scene, 0);
       this.textureWidth = this.textureHeight = 0;
       this.ready = true;
@@ -161,7 +167,7 @@ class GlassRenderer {
       this.fallback();
     }
   }
-  draw(scene, width, height) {
+  draw(scene, width, height, pointer={x:0,y:0,strength:0}) {
     if (!this.ready || document.hidden) return;
     const gl = this.gl, panels = [], density = scene.width / width;
     // Native canvases travel with their own cards. Only source sampling uses
@@ -190,6 +196,7 @@ class GlassRenderer {
       this.textureWidth = scene.width; this.textureHeight = scene.height;
     } else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, scene);
     gl.uniform2f(this.uniforms.view, width, height);
+    gl.uniform3f(this.uniforms.pointer,pointer.x,pointer.y,pointer.strength);
     for (const { surface, width: w, height: h, projection, radius, pixelsX, pixelsY } of panels) {
       gl.viewport(0, 0, pixelsX, pixelsY);
       gl.uniform2f(this.uniforms.pixels, pixelsX, pixelsY);

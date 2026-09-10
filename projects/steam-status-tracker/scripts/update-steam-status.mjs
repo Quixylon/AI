@@ -7,6 +7,7 @@ const projectDirectory = path.resolve(path.dirname(currentFile), '..');
 const dataDirectory = path.join(projectDirectory, 'public', 'data');
 const statusPath = path.join(dataDirectory, 'status.json');
 const historyPath = path.join(dataDirectory, 'history.json');
+const gamesPath = path.join(dataDirectory, 'games.json');
 
 const personaStates = {
   0: 'offline',
@@ -37,22 +38,6 @@ async function setOutput(name, value) {
   if (process.env.GITHUB_OUTPUT) {
     await appendFile(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
   }
-}
-
-function comparablePlayer(player) {
-  if (!player) return null;
-
-  return {
-    steamId: player.steamId,
-    name: player.name,
-    profileUrl: player.profileUrl,
-    avatar: player.avatar,
-    status: player.status,
-    personaState: player.personaState,
-    gameName: player.gameName,
-    gameId: player.gameId,
-    lastLogoff: player.lastLogoff
-  };
 }
 
 function closeActiveHistoryEntry(history, endedAt) {
@@ -121,11 +106,57 @@ async function keepLastSuccessfulData(message, previousStatus, history) {
   await writeJson(historyPath, Array.isArray(history) ? history : []);
 }
 
+// The live summary can miss a whole session between delayed scheduled runs.
+// These account-level counters recover the game list, never invented sessions.
+async function collectGames(apiKey, steamId, checkedAt, previous) {
+  const request = async (method, input) => {
+    const url = new URL(`https://api.steampowered.com/IPlayerService/${method}/v0001/`);
+    url.searchParams.set('key', apiKey);
+    url.searchParams.set('input_json', JSON.stringify({ steamid: steamId, ...input }));
+    const data = (await fetchSteamJson(url, method))?.response;
+    if (!data || (!Array.isArray(data.games) && data.game_count !== 0 && data.total_count !== 0)) {
+      return { available: false, reason: 'not_returned', games: [] };
+    }
+    return { available: true, games: Array.isArray(data.games) ? data.games : [] };
+  };
+  const results = await Promise.allSettled([
+    request('GetOwnedGames', { include_appinfo: true, include_played_free_games: true }),
+    request('GetRecentlyPlayedGames', { count: 0 })
+  ]);
+  const [owned, recent] = results.map(result => result.status === 'fulfilled' ? result.value : { available: false, reason: 'request_failed', games: [] });
+  const games = new Map((Array.isArray(previous?.games) ? previous.games : []).filter(g=>g && /^\d+$/.test(String(g.appId))).map(g=>[String(g.appId),{...g,appId:String(g.appId)}]));
+  // A successful recent response is a fresh 14-day window; retain old data on errors.
+  if (recent.available) for (const game of games.values()) game.recentMinutes = 0;
+  const minutes = value => value != null && Number.isFinite(Number(value)) && Number(value)>=0 ? Math.floor(Number(value)) : null;
+  for (const [source, rows] of [['owned', owned.games], ['recent', recent.games]]) {
+    for (const row of rows) {
+      const appId = String(row.appid || '');
+      if (!/^\d+$/.test(appId) || appId==='0') continue;
+      const totalMinutes = minutes(row.playtime_forever), recentMinutes = minutes(row.playtime_2weeks);
+      const timestamp = Number(row.rtime_last_played);
+      const lastPlayedAt = timestamp>0 && timestamp*1000<=Date.parse(checkedAt)+600000 ? new Date(timestamp*1000).toISOString() : null;
+      if (!(totalMinutes>0 || recentMinutes>0 || lastPlayedAt || games.has(appId))) continue;
+      const old = games.get(appId) || { appId, firstSeenAt: checkedAt };
+      games.set(appId, {...old,
+        name: typeof row.name==='string' && row.name.trim() ? row.name.trim() : old.name || `Игра ${appId}`,
+        totalMinutes: totalMinutes ?? old.totalMinutes ?? null,
+        recentMinutes: source==='recent' ? recentMinutes ?? 0 : old.recentMinutes ?? null,
+        lastPlayedAt: lastPlayedAt || old.lastPlayedAt || null,
+        checkedAt
+      });
+    }
+  }
+  return { checkedAt: owned.available || recent.available ? checkedAt : previous?.checkedAt || null,
+    attemptedAt: checkedAt, sources: { owned: owned.available ? 'ok' : owned.reason, recent: recent.available ? 'ok' : recent.reason },
+    games: [...games.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru')) };
+}
+
 await mkdir(dataDirectory, { recursive: true });
 
 const apiKey = process.env.STEAM_API_KEY?.trim();
 const previousStatus = await readJson(statusPath, null);
 const history = await readJson(historyPath, []);
+const previousGames = await readJson(gamesPath, { checkedAt: null, games: [] });
 if (!Array.isArray(history)) throw new Error('Steam history must be an array; existing files were preserved.');
 
 if (!apiKey) {
@@ -146,7 +177,10 @@ if (!apiKey) {
 
     const checkedAt = new Date().toISOString();
     const personaState = personaStates[steamPlayer.personastate] || 'unknown';
-    const status = steamPlayer.gameextrainfo ? 'in-game' : personaState;
+    const catalog = await collectGames(apiKey, steamId, checkedAt, previousGames);
+    const gameId = steamPlayer.gameid ? String(steamPlayer.gameid) : null;
+    const gameName = steamPlayer.gameextrainfo || (gameId ? catalog.games.find(g=>g.appId===gameId)?.name || `Игра ${gameId}` : null);
+    const status = gameId || gameName ? 'in-game' : personaState;
 
     const player = {
       steamId: steamPlayer.steamid,
@@ -155,8 +189,8 @@ if (!apiKey) {
       avatar: steamPlayer.avatarfull,
       status,
       personaState,
-      gameName: steamPlayer.gameextrainfo || null,
-      gameId: steamPlayer.gameid || null,
+      gameName,
+      gameId,
       lastLogoff: steamPlayer.lastlogoff
         ? new Date(steamPlayer.lastlogoff * 1000).toISOString()
         : null
@@ -166,10 +200,8 @@ if (!apiKey) {
     const presenceChanged =
       !previousStatus?.configured ||
       previousPlayer?.status !== player.status ||
+      previousPlayer?.personaState !== player.personaState ||
       previousPlayer?.gameId !== player.gameId;
-
-    const profileChanged =
-      JSON.stringify(comparablePlayer(previousPlayer)) !== JSON.stringify(comparablePlayer(player));
 
     const nextHistory = Array.isArray(history)
       ? history
@@ -182,6 +214,7 @@ if (!apiKey) {
       !activeEntry ||
       Boolean(activeEntry.endedAt) ||
       activeEntry.status !== player.status ||
+      activeEntry.personaState !== player.personaState ||
       activeEntry.gameId !== player.gameId;
 
     if (presenceChanged || historyNeedsRepair) {
@@ -200,12 +233,17 @@ if (!apiKey) {
     await writeJson(statusPath, {
       configured: true,
       checkedAt,
+      monitoring: { previousCheckedAt: previousStatus?.checkedAt || null,
+        intervalSeconds: previousStatus?.checkedAt ? Math.max(0, Math.round((Date.parse(checkedAt)-Date.parse(previousStatus.checkedAt))/1000)) : null },
       player
     });
     await writeJson(historyPath, nextHistory.slice(-500));
-    await setOutput('persist', String(profileChanged || presenceChanged || historyNeedsRepair));
+    await writeJson(gamesPath, catalog);
+    // Persist the successful collection heartbeat even when presence did not change.
+    await setOutput('persist', 'true');
     await setOutput('notify', String(presenceChanged));
 
+    console.log(`Games catalog: ${catalog.games.length}; owned=${catalog.sources.owned}; recent=${catalog.sources.recent}`);
     console.log(`Updated ${player.name}: ${player.status}${player.gameName ? ` — ${player.gameName}` : ''}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
