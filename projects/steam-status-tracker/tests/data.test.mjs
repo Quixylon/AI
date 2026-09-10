@@ -112,3 +112,17 @@ test('game catalog combines Steam and observed titles without duplicate sessions
   assert.equal(JSON.stringify([c.catalog,c.rows]),original);
   assert.equal(run('normalizeSteamGames(null).games.length'),0);
 });
+
+test('successful sibling requests cannot dismiss a partial Steam refresh failure',async()=>{
+  const {c,run}=context();const visible=new Map();let finishStatus;
+  c.showResourceError=(platform,message)=>visible.set(platform,message);
+  c.clearResourceError=platform=>visible.delete(platform);
+  c.fetchStatus=()=>new Promise(resolve=>{finishStatus=resolve;});
+  c.failHistory=()=>Promise.reject(new Error('history unavailable'));
+  run("const manager=new RefreshManager();manager.register('steamStatus',fetchStatus,x=>x,()=>{});manager.register('steamHistory',failHistory,x=>x,()=>{});this.statusRequest=manager.refresh('steamStatus');this.historyRequest=manager.refresh('steamHistory');");
+  await c.historyRequest;assert.ok(visible.has('steam'));
+  finishStatus({});await c.statusRequest;
+  assert.ok(visible.has('steam'),'later status success must preserve the history error');
+  await run("manager.get('steamHistory').fetcher=async()=>[];manager.refresh('steamHistory')");
+  assert.equal(visible.has('steam'),false,'error clears once the failed resource recovers');
+});

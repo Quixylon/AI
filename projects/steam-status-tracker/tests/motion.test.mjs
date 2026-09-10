@@ -15,7 +15,7 @@ function fixture() {
     getBoundingClientRect: () => ({ left: 100, top: 100, right: 500, bottom: 400, width: 400, height: 300 }),
     matches: () => false
   };
-  const draw = { createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
+  const draw = { save() {}, restore() {}, translate() {}, scale() {}, createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
   const canvas = { getContext: () => draw };
   const reduced = { matches: false }, coarse = { matches: false, addEventListener() {}, removeEventListener() {} };
   const document = { hidden: false, querySelectorAll: () => [element] };
@@ -31,6 +31,7 @@ function fixture() {
   vm.runInContext(source + '\nthis.motion = motionController; this.background = canvasController;', context);
   return {
     context, reduced, coarse, document, styles, queue, canvas,
+    advanceTime(ms) { time += ms; },
     step(ms) { time += ms; const callbacks = [...queue.values()]; queue.clear(); callbacks.forEach(fn => fn(time)); },
     read() { return parseFloat(styles.get('--tilt-y') || '0'); }
   };
@@ -167,4 +168,21 @@ test('cursor movement creates a bounded directional wake without emitting click 
   grid.leave();for(let i=0;i<240;i++)t.step(1000/60);
   assert.equal(grid.wake.length,0);
   assert.ok(grid.particles.every(p=>p.x===p.homeX && p.y===p.homeY));
+});
+
+test('wake strength is independent of pointer polling rate and resets on leave',()=>{
+  const slow=fixture(),fast=fixture();
+  for(const [t,interval] of [[slow,24],[fast,4]]) {
+    const grid=t.context.background;grid.setPointer(200,300);
+    for(let elapsed=interval;elapsed<=240;elapsed+=interval) {
+      t.advanceTime(interval);grid.setPointer(200+elapsed*.5,300);
+    }
+    assert.equal(grid.wake.length,10);
+  }
+  assert.deepEqual(JSON.parse(JSON.stringify(fast.context.background.wake)),JSON.parse(JSON.stringify(slow.context.background.wake)));
+  const grid=fast.context.background,count=grid.wake.length;
+  grid.leave();fast.advanceTime(100);grid.setPointer(1200,700);
+  assert.equal(grid.wake.length,count,'re-entering elsewhere must not draw a connecting streak');
+  fast.reduced.matches=true;grid.drawStatic();
+  assert.equal(grid.wakeAnchor,null);
 });

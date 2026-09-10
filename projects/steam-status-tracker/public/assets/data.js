@@ -147,7 +147,7 @@ class RefreshManager {
     this.register('telegramHistory', fetchTelegramHistory, rows => normalizeHistory('telegram', rows), data => { state.telegram.history=data; renderTelegramHistory(); renderTelegramStats(); });
     this.register('visitors', fetchVisitorCount, raw => ({ count:raw?.count != null && Number.isFinite(Number(raw.count)) ? Math.max(0, Math.floor(Number(raw.count))) : null }), data => { state.visitors.count=data.count; renderVisitors(); });
   }
-  register(name, fetcher, normalizer, apply) { this.resources.set(name, { name, fetcher, normalizer, apply, promise:null, controller:null, lastRun:null, lastSuccess:null, error:null, interval:null }); }
+  register(name, fetcher, normalizer, apply) { this.resources.set(name, { name, platform:name.replace(/(?:Status|History|Games)$/, ''), fetcher, normalizer, apply, promise:null, controller:null, lastRun:null, lastSuccess:null, error:null, interval:null }); }
   get(name) { return this.resources.get(name); }
   async refresh(name, { force=false, manual=false } = {}) {
     const resource = this.get(name);
@@ -157,7 +157,7 @@ class RefreshManager {
     const controller = new AbortController();
     resource.controller = controller;
     resource.lastRun = Date.now();
-    const platform = name.startsWith('steam') ? 'steam' : name.startsWith('discord') ? 'discord' : name.startsWith('telegram') ? 'telegram' : name;
+    const platform = resource.platform;
     setResourceBusy(platform, true, Boolean(resource.lastSuccess));
     resource.promise = (async () => {
       try {
@@ -167,18 +167,20 @@ class RefreshManager {
         resource.apply(data);
         resource.lastSuccess = Date.now();
         resource.error = null;
-        clearResourceError(platform);
         if (manual && name.endsWith('Status')) showToast(`${platformLabel(platform)} обновлён`, 'success');
         return data;
       } catch (error) {
         if (controller.signal.aborted || resource.controller !== controller || error?.name === 'AbortError') return null;
         resource.error = error instanceof Error ? error.message : 'Неизвестная ошибка';
-        showResourceError(platform, resource.error);
         if (manual) showToast(`Не удалось обновить ${platformLabel(platform)}`, 'error');
         return null;
       } finally {
         if (resource.controller === controller) {
         resource.promise = null;
+        // A successful status response must not hide a failed history/catalogue.
+        const failed=[...this.resources.values()].find(item=>item.platform===platform && item.error);
+        if(failed) showResourceError(platform,failed.error);
+        else clearResourceError(platform);
         setResourceBusy(platform, false, true);
         updateOverallState();
         updateStaleStates();

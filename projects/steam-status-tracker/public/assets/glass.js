@@ -193,13 +193,8 @@ class GlassRenderer {
       if (rect.bottom <= 0 || rect.top >= height || rect.right <= 0 || rect.left >= width) continue;
       const style = getComputedStyle(element);
       const w = parseFloat(style.width) || element.offsetWidth, h = parseFloat(style.height) || element.offsetHeight;
-      const frame=element.closest('.route-entering');
-      const ownScale=!style.scale || style.scale==='none'?[1]:style.scale.split(/\s+/).map(Number);
-      const frameValue=frame?(getComputedStyle(frame).scale || 'none'):'none';
-      const frameScale=frameValue==='none'?[1]:frameValue.split(/\s+/).map(Number);
-      const scale=`${(ownScale[0]||1)*(frameScale[0]||1)} ${(ownScale[1]||ownScale[0]||1)*(frameScale[1]||frameScale[0]||1)}`;
       panels.push({ surface, width: w, height: h,
-        projection: glassInverse(rect, w, h, style.transform, scale, false),
+        projection: glassInverse(rect, w, h, style.transform, style.scale, false),
         radius: parseFloat(style.borderTopLeftRadius) || 24,
         pixelsX: Math.max(1, Math.round(w * density)), pixelsY: Math.max(1, Math.round(h * density)) });
     }
