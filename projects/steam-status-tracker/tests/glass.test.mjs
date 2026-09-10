@@ -41,6 +41,12 @@ test('lens plane follows rounded cards through scroll, entrance scale and perspe
   close(map(inverse({ left: 16, top: -500 }, 328, 200), 180, -400), [0, 0]);
   close(map(inverse({ left: 16, top: -500 }, 328, 200), 16, -500), [-164, -100]);
   close(map(inverse({ left: 20, top: 30 }, 400, 240, 'none', '.94'), 208, 142.8), [0, 0]);
+  // The entrance moves each card backwards in perspective, not its parent.
+  const depth=150,denominator=1+depth/1200;
+  const depthRect={left:300-200/denominator,top:280+(-120+20)/denominator};
+  const depthCss=`matrix3d(1,0,0,0,0,1,0,0,0,0,1,${-1/1200},0,20,${-depth},${denominator})`;
+  const depthPlane=inverse(depthRect,400,240,depthCss,'none',false);
+  for(const [x,y] of [[0,0],[-200,-120],[200,120]])close(map(depthPlane,x,y),[300+x/denominator,280+(y+20)/denominator]);
   const angle = .02618, c = Math.cos(angle), s = Math.sin(angle), scale = .94;
   // Independently project a CSS rotateY plane under perspective(1200px).
   const project = (x, y) => [350 + scale * c * x / (1 + s * x / 1200), 260 + scale * y / (1 + s * x / 1200)];

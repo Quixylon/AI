@@ -1,6 +1,6 @@
 'use strict';
 
-// A short dissolve keeps navigation calm; cards retain their shape and position.
+// Each card advances from shallow depth; stagger preserves a clear reading order.
 const surfaceMotion = {
   observer: null,
   observed: new WeakSet(),
@@ -11,10 +11,12 @@ const surfaceMotion = {
   register() {
     if (!this.observer && typeof IntersectionObserver === 'function') {
       this.observer = new IntersectionObserver(entries => {
+        const arriving=[];
         for (const entry of entries) {
           entry.target.classList.toggle('is-in-view', entry.isIntersecting);
-          if(entry.isIntersecting && this.lastRoute && !this.revealed.has(entry.target)) this.enter(entry.target,0);
+          if(entry.isIntersecting && this.lastRoute && !this.revealed.has(entry.target)) arriving.push(entry.target);
         }
+        this.cascade(arriving);
       }, { rootMargin: '30px' });
     }
     document.querySelectorAll(this.selector).forEach((element, index) => {
@@ -37,13 +39,19 @@ const surfaceMotion = {
     this.animations.add(animation);
     animation.finished.then(()=>{this.animations.delete(animation);motionController.measureSoon();},()=>this.animations.delete(animation));
   },
+  cascade(elements) {
+    elements.forEach((element,index)=>this.enter(element,Math.min(index*95,380)));
+  },
   enter(element, delay=0) {
     if(!element || element.closest('[hidden]') || typeof element.animate!=='function')return;
     this.revealed.add(element);if(REDUCED_MOTION.matches)return;
+    const tilt='rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg))';
+    // Transform belongs to the card itself, so the lens follows its projection.
+    // Independent CSS translate keeps the gentle floating cycle uninterrupted.
     this.track(element.animate([
-      {opacity:0,filter:'blur(6px)'},
-      {opacity:1,filter:'blur(0px)'}
-    ],{duration:420,delay,easing:'cubic-bezier(.2,.8,.2,1)',fill:'backwards'}));
+      {opacity:0,filter:'blur(9px)',transform:`perspective(1200px) translate3d(0,20px,-150px) ${tilt}`},
+      {opacity:1,filter:'blur(0px)',transform:`perspective(1200px) translate3d(0,0,0) ${tilt}`}
+    ],{duration:680,delay,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
   },
   visibleElements() {
     const profile=state.route.screen==='profile';
@@ -75,7 +83,7 @@ const surfaceMotion = {
     if(!view)return;
     // Off-screen panels still get their first entrance when scrolled into view.
     view.querySelectorAll(this.selector).forEach(element=>this.revealed.delete(element));
-    this.visibleElements().forEach((element,index)=>this.enter(element,Math.min(index*30,90)));
+    this.cascade(this.visibleElements());
     motionController.measureSoon();
   }
 

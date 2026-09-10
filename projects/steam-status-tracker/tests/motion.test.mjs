@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 const source = fs.readFileSync(new URL('../public/assets/motion.js', import.meta.url), 'utf8');
 function fixture() {
-  let time = 0, sequence = 0;
+  let time = 0, sequence = 0, largestDot = 0;
   const queue = new Map();
   const styles = new Map();
   const element = {
@@ -15,7 +15,7 @@ function fixture() {
     getBoundingClientRect: () => ({ left: 100, top: 100, right: 500, bottom: 400, width: 400, height: 300 }),
     matches: () => false
   };
-  const draw = { save() {}, restore() {}, translate() {}, scale() {}, createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
+  const draw = { save() {}, restore() {}, translate() {}, scale() {}, createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc(x,y,radius) { largestDot=Math.max(largestDot,radius); }, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
   const canvas = { getContext: () => draw };
   const reduced = { matches: false }, coarse = { matches: false, addEventListener() {}, removeEventListener() {} };
   const document = { hidden: false, querySelectorAll: () => [element] };
@@ -31,6 +31,7 @@ function fixture() {
   vm.runInContext(source + '\nthis.motion = motionController; this.background = canvasController;', context);
   return {
     context, reduced, coarse, document, styles, queue, canvas,
+    get largestDot() { return largestDot; },
     advanceTime(ms) { time += ms; },
     step(ms) { time += ms; const callbacks = [...queue.values()]; queue.clear(); callbacks.forEach(fn => fn(time)); },
     read() { return parseFloat(styles.get('--tilt-y') || '0'); }
@@ -93,7 +94,7 @@ test('dot grid is regular, reacts locally to mouse and touch, then returns home 
   const far = dots.at(-1);
   grid.setPointer(near.homeX - 20, near.homeY, { type: 'mouse' });
   for (let i = 0; i < 120; i++) t.step(1000 / 60);
-  assert.ok(near.x > near.homeX + 10);
+  assert.ok(near.x > near.homeX + 1 && near.x < near.homeX + grid.spacing*.18, 'local response stays inside its cell');
   assert.ok(near.light > .5);
   assert.equal(far.x, far.homeX);
   grid.leave();
@@ -155,7 +156,7 @@ test('phones keep desktop wave strength and 60 Hz scene updates; static mode fre
   assert.equal(phone.queue.size, 0);
 });
 
-test('cursor movement creates a bounded directional wake without emitting click rings',()=>{
+test('cursor movement creates a light trail without emitting click rings',()=>{
   const t=fixture(),grid=t.context.background;
   grid.init();
   for(let i=0;i<160;i++)t.step(1000/60);
@@ -163,8 +164,8 @@ test('cursor movement creates a bounded directional wake without emitting click 
   for(let i=0;i<40;i++) {t.step(1000/30);grid.setPointer(200+i*9,300+Math.sin(i*.2)*35);}
   assert.equal(grid.ripples.length,0,'movement must not emit concentric click waves');
   assert.ok(grid.wake.length>0 && grid.wake.length<=16);
-  assert.ok(grid.particles.some(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)>8));
-  assert.ok(grid.particles.every(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)<70));
+  assert.ok(grid.particles.some(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)>1));
+  assert.ok(grid.particles.every(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)<=grid.spacing*.18+.00001));
   grid.leave();for(let i=0;i<240;i++)t.step(1000/60);
   assert.equal(grid.wake.length,0);
   assert.ok(grid.particles.every(p=>p.x===p.homeX && p.y===p.homeY));
@@ -185,4 +186,24 @@ test('wake strength is independent of pointer polling rate and resets on leave',
   assert.equal(grid.wake.length,count,'re-entering elsewhere must not draw a connecting streak');
   fast.reduced.matches=true;grid.drawStatic();
   assert.equal(grid.wakeAnchor,null);
+});
+
+test('rapid overlapping gestures preserve dot separation and never inflate halos',()=>{
+  const t=fixture(),grid=t.context.background;
+  t.context.innerWidth=720;t.context.innerHeight=480;grid.init();
+  const homes=new Map(grid.particles.map(p=>[`${p.homeX},${p.homeY}`,p]));
+  for(let frame=0;frame<100;frame++) {
+    const angle=frame*.8;
+    grid.setPointer(360+Math.cos(angle)*100,240+Math.sin(angle)*90);
+    if(frame%12===0)grid.pulse(360,240);
+    t.step(1000/60);
+    for(const p of grid.particles) {
+      assert.ok(Math.hypot(p.x-p.homeX,p.y-p.homeY)<=grid.spacing*.18+1e-6);
+      for(const key of [`${p.homeX+grid.spacing},${p.homeY}`,`${p.homeX},${p.homeY+grid.spacing}`]) {
+        const neighbour=homes.get(key);
+        if(neighbour)assert.ok(Math.hypot(p.x-neighbour.x,p.y-neighbour.y)>=grid.spacing*.63,'adjacent dots must not cluster');
+      }
+    }
+  }
+  assert.ok(t.largestDot<=2.4,'light halos stay small even after repeated gestures');
 });
