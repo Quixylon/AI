@@ -101,7 +101,7 @@ jobs:
             runId: process.env.GITHUB_RUN_ID,
             event: process.env.GITHUB_EVENT_NAME,
             builtAt: new Date().toISOString(),
-            design: 'depth-grid-20260910'
+            design: 'living-grid-20260910'
           }, null, 2) + '\n');
           JS
 

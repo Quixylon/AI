@@ -102,10 +102,31 @@ class CanvasController {
     this.clock = 0;
     this.wake = [];
     this.wakeAnchor = null;
+    this.dotGlow = null;
     this.lens = typeof GlassRenderer === 'function' ? new GlassRenderer(byId('glassCanvas')) : null;
     if (this.lens) this.lens.onRestore = () => this.draw();
   }
-  init() { this.lens?.init(); this.resize(); this.pulse(this.width * .5, this.height * .45, .65); this.resume(); }
+  init() { this.dotGlow ||= this.createDotGlow(); this.lens?.init(); this.resize(); this.pulse(this.width * .5, this.height * .45, .65); this.resume(); }
+  createDotGlow() {
+    const sprite=document.createElement('canvas');sprite.width=sprite.height=32;
+    const ctx=sprite.getContext('2d');if(!ctx)return null;
+    const glow=ctx.createRadialGradient(16,16,0,16,16,16);
+    glow.addColorStop(0,'rgba(157,221,255,.85)');
+    glow.addColorStop(.22,'rgba(115,199,251,.42)');
+    glow.addColorStop(.55,'rgba(102,174,241,.10)');
+    glow.addColorStop(1,'rgba(102,174,241,0)');
+    ctx.fillStyle=glow;ctx.fillRect(0,0,32,32);return sprite;
+  }
+  // One broad deformation field for both lattice layers. Its gradients stay
+  // small even when its amplitude is visible, so rows flow without folding.
+  projectDot(p,parallaxX=0,parallaxY=0) {
+    if(REDUCED_MOTION.matches)return {x:p.x,y:p.y};
+    const t=this.clock,hx=p.homeX,hy=p.homeY;
+    return {
+      x:p.x+Math.sin(hy*.005-t*.42)*8+Math.sin((hx+hy)*.003+t*.27)*4+parallaxX,
+      y:p.y+Math.sin(hx*.004+t*.36)*10+Math.cos((hy-hx)*.003-t*.23)*4+parallaxY
+    };
+  }
   resize() {
     if (!this.ctx) return;
     this.width = Math.max(1, innerWidth);
@@ -183,9 +204,9 @@ class CanvasController {
     this.wake=this.wake.filter(sample=>sample.age<1.6);
     for (const ripple of this.ripples) ripple.age += dt;
     this.ripples = this.ripples.filter(ripple => ripple.age < 2.4);
-    const flowX=Math.max(-20,Math.min(20,this.pointer.x-this.spot.x))*.1;
-    const flowY=Math.max(-20,Math.min(20,this.pointer.y-this.spot.y))*.1;
-    const maxOffset=this.spacing*.18;
+    const flowX=Math.max(-20,Math.min(20,this.pointer.x-this.spot.x))*.22;
+    const flowY=Math.max(-20,Math.min(20,this.pointer.y-this.spot.y))*.22;
+    const maxOffset=this.spacing*.25;
     // Exact damped-spring step: no frame-dependent Euler integration.
     const damping=12, frequency=16, decay=Math.exp(-damping*dt);
     const cosine=Math.cos(frequency*dt), sine=Math.sin(frequency*dt);
@@ -194,18 +215,18 @@ class CanvasController {
       const distance = Math.hypot(dx, dy);
       const proximity = this.pointer.active ? Math.max(0, 1 - distance / reach) : 0;
       const influence = proximity * proximity * (3 - 2 * proximity);
-      const offset = 7 * influence;
+      const offset = 14 * influence;
       let x = p.homeX + dx / (distance+45) * offset + flowX*influence;
       let y = p.homeY + dy / (distance+45) * offset + flowY*influence;
-      let light = influence*.65;
+      let light = influence*.82;
       for (const ripple of this.ripples) {
         const rx = p.homeX - ripple.x, ry = p.homeY - ripple.y;
         const radius = Math.hypot(rx, ry);
         const crest = Math.exp(-(((radius - ripple.age * 360) / 40) ** 2)) * (1 - ripple.age / 2.4) * ripple.strength;
-        const shift = crest * 4.5;
+        const shift = crest * 7;
         x += rx / Math.max(1, radius) * shift;
         y += ry / Math.max(1, radius) * shift;
-        light = Math.max(light,crest*.7);
+        light = Math.max(light,crest*.85);
       }
       let wakeLight=0;
       for(const sample of this.wake) {
@@ -215,7 +236,7 @@ class CanvasController {
         const life=(1-sample.age/1.6)**2;
         // Light may trail the pointer, but samples never accumulate forces or
         // brightness. Repeated passes cannot bunch dots into luminous clouds.
-        wakeLight=Math.max(wakeLight,falloff*life*sample.power*.5);
+        wakeLight=Math.max(wakeLight,falloff*life*sample.power*.78);
       }
       light=Math.max(light,wakeLight);
       const offsetScale=Math.min(1,maxOffset/Math.max(.001,Math.hypot(x-p.homeX,y-p.homeY)));
@@ -246,7 +267,7 @@ class CanvasController {
     if (!this.ctx) return;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
-    ctx.fillStyle = '#0b0e12';
+    ctx.fillStyle = '#0b1725';
     ctx.fillRect(0, 0, this.width, this.height);
     const t = this.clock;
     const extent = Math.max(this.width, this.height);
@@ -254,9 +275,10 @@ class CanvasController {
     const parallaxY=(this.spot.y/this.height-.5)*this.spot.strength*7;
     // Wide, slowly breathing fields give the lens a richer scene to refract.
     const pools = [
-      [.20+Math.sin(t*.085)*.14,.24+Math.cos(t*.07)*.13,.68,.66,'99,115,126',.24],
-      [.82+Math.cos(t*.07)*.13,.65+Math.sin(t*.09)*.16,.59,.84,'103,108,116',.17],
-      [.42+Math.sin(t*.06)*.21,.88+Math.cos(t*.08)*.11,.50,.50,'69,108,110',.13]
+      [.20+Math.sin(t*.15)*.16,.22+Math.cos(t*.12)*.15,.68,.72,'42,125,180',.46],
+      [.80+Math.cos(t*.11)*.15,.62+Math.sin(t*.14)*.18,.62,.84,'100,91,169',.36],
+      [.44+Math.sin(t*.10)*.22,.87+Math.cos(t*.13)*.13,.54,.62,'39,153,149',.32],
+      [.36+Math.sin(t*.18)*.18,.42+Math.sin(t*.15)*.18,.56,.19,'74,173,194',.15]
     ];
     for (const [x,y,size,aspect,color,alpha] of pools) {
       const radius=extent*size;
@@ -271,36 +293,36 @@ class CanvasController {
       ctx.restore();
     }
     if (this.spot.strength > .005) {
-      const radius = 270;
+      const radius = 300;
       const glow = ctx.createRadialGradient(this.spot.x, this.spot.y, 0, this.spot.x, this.spot.y, radius);
-      glow.addColorStop(0, `rgba(172,194,201,${this.spot.strength * .055})`);
-      glow.addColorStop(.45, `rgba(152,177,189,${this.spot.strength * .025})`);
-      glow.addColorStop(1, 'rgba(152,177,189,0)');
+      glow.addColorStop(0, `rgba(84,181,235,${this.spot.strength * .14})`);
+      glow.addColorStop(.45, `rgba(86,154,213,${this.spot.strength * .055})`);
+      glow.addColorStop(1, 'rgba(86,154,213,0)');
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, this.width, this.height);
     }
-    const motion=REDUCED_MOTION.matches?0:1;
     for (let index=0;index<this.particles.length;index++) {
       const p=this.particles[index],u=p.homeX/this.width,v=p.homeY/this.height;
-      const ribbon=Math.exp(-(((v-.31-Math.sin(u*4-t*.15)*.13-Math.sin(t*.11)*.08)/.12)**2));
-      const echo=Math.exp(-(((v-.77-Math.sin(u*4.8+t*.12)*.12)/.10)**2));
-      const glint=Math.pow(.5+.5*Math.sin(p.homeX*.014+p.homeY*.009-t*.44),18);
-      const light=Math.min(1,p.light+ribbon*.21+echo*.13+glint*.10);
-      // Broad low-amplitude warping keeps neighbouring cells separated.
-      const x=p.x+(Math.sin(p.homeY*.006+t*.25)*2+Math.sin(p.homeX*.004-t*.18)+parallaxX)*motion;
-      const y=p.y+(Math.sin(p.homeX*.005-t*.28)*2+Math.cos(p.homeY*.004+t*.16)+parallaxY)*motion;
-      if(light>.3) {
-        ctx.fillStyle=`rgba(193,209,216,${Math.min(.045,light*.045)})`;
-        ctx.beginPath();ctx.arc(x,y,2.4,0,Math.PI*2);ctx.fill();
+      const ribbon=Math.exp(-(((v-.31-Math.sin(u*4-t*.26)*.13-Math.sin(t*.18)*.08)/.12)**2));
+      const echo=Math.exp(-(((v-.77-Math.sin(u*4.8+t*.21)*.12)/.10)**2));
+      const glint=Math.pow(.5+.5*Math.sin(p.homeX*.014+p.homeY*.009-t*.72),12);
+      const light=Math.min(1,p.light+ribbon*.30+echo*.22+glint*.18);
+      const {x,y}=this.projectDot(p,parallaxX,parallaxY);
+      // Reuse a feathered light texture instead of painting hard halo discs.
+      if(this.dotGlow && light>.16) {
+        ctx.globalAlpha=.08+light*.28;
+        ctx.drawImage(this.dotGlow,x-5,y-5,10,10);
+        ctx.globalAlpha=1;
       }
-      ctx.fillStyle=`rgba(186,204,213,${.22+light*.46})`;
-      ctx.beginPath();ctx.arc(x,y,.82+light*.30,0,Math.PI*2);ctx.fill();
-      // A fine, offset lattice adds detail without random particles or linework.
+      ctx.fillStyle=`rgba(${Math.round(151+echo*37)},${Math.round(191+ribbon*37)},241,${.30+light*.43})`;
+      ctx.beginPath();ctx.arc(x,y,.90+light*.40,0,Math.PI*2);ctx.fill();
+      // The fine grid flows through the same field; it cannot drift into a
+      // separate swarm when the larger dots bend or the pointer changes course.
       if(index%2===0) {
-        const fineX=p.homeX+this.spacing*.5+parallaxX*.5*motion;
-        const fineY=p.homeY+this.spacing*.5+parallaxY*.5*motion;
-        ctx.fillStyle=`rgba(177,190,199,${.10+ribbon*.07+glint*.06})`;
-        ctx.beginPath();ctx.arc(fineX,fineY,.55,0,Math.PI*2);ctx.fill();
+        const half=this.spacing*.5;
+        const fine=this.projectDot({homeX:p.homeX+half,homeY:p.homeY+half,x:p.x+half,y:p.y+half},parallaxX,parallaxY);
+        ctx.fillStyle=`rgba(160,202,221,${.14+ribbon*.10+glint*.07})`;
+        ctx.beginPath();ctx.arc(fine.x,fine.y,.60,0,Math.PI*2);ctx.fill();
       }
     }
     this.lens?.draw(this.canvas, this.width, this.height, this.spot);
