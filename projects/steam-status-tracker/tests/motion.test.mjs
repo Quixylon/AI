@@ -218,3 +218,43 @@ test('rapid overlapping gestures preserve dot separation and never inflate halos
   t.reduced.matches=true;grid.drawStatic();
   assert.equal(grid.projectDot(p).x,p.homeX);assert.equal(grid.projectDot(p).y,p.homeY);
 });
+
+test('network connections remain local and valid after resizing, while motes move at rest',()=>{
+  const t=fixture(),grid=t.context.background;
+  t.context.innerWidth=720;t.context.innerHeight=480;grid.init();
+  const validate=()=>{
+    assert.ok(grid.links.length>20 && grid.links.length<grid.particles.length);
+    const seen=new Set();
+    for(const edge of grid.links) {
+      const a=grid.particles[edge.from],b=grid.particles[edge.to];
+      assert.ok(a && b && a!==b);
+      assert.ok(Math.hypot(a.homeX-b.homeX,a.homeY-b.homeY)<=grid.spacing*2+.001,'connections must not span unrelated grid rows');
+      const key=[edge.from,edge.to].sort((a,b)=>a-b).join(',');assert.ok(!seen.has(key));seen.add(key);
+    }
+    assert.ok(grid.motes.length>=14 && grid.motes.length<=46);
+  };
+  validate();
+  const before=grid.motes.map(p=>({x:p.x,y:p.y}));grid.stepEnergy(.25);
+  assert.ok(grid.motes.some((p,i)=>Math.hypot(p.x-before[i].x,p.y-before[i].y)>2));
+  t.context.innerWidth=360;t.context.innerHeight=780;grid.resize();validate();
+  t.reduced.matches=true;grid.resume();const frozen=JSON.stringify(grid.motes);t.step(1000);
+  assert.equal(JSON.stringify(grid.motes),frozen,'reduced motion freezes free particles as well as the grid');
+});
+test('spark bursts are bounded, integrate consistently at different frame rates, and expire',()=>{
+  const slow=fixture(),fast=fixture();
+  for(const [t,fps] of [[slow,60],[fast,144]]) {
+    const grid=t.context.background;grid.emitSparks(100,100,1,0,8,true);
+    for(let i=0;i<fps/2;i++)grid.stepEnergy(1/fps);
+  }
+  for(let i=0;i<8;i++) {
+    const a=slow.context.background.sparks[i],b=fast.context.background.sparks[i];
+    assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<1e-9,'spark motion must not depend on refresh rate');
+  }
+  const grid=slow.context.background;
+  for(let i=0;i<40;i++)grid.emitSparks(100+i,120,0,1,8,true);
+  assert.equal(grid.sparks.length,36);
+  for(let i=0;i<100;i++)grid.stepEnergy(1/60);
+  assert.equal(grid.sparks.length,0);
+  slow.document.hidden=true;grid.emitSparks(10,10);assert.equal(grid.sparks.length,0);
+  slow.document.hidden=false;slow.reduced.matches=true;grid.emitSparks(10,10);assert.equal(grid.sparks.length,0);
+});

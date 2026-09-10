@@ -97,6 +97,10 @@ class CanvasController {
     this.lastDraw = 0;
     this.particles = [];
     this.ripples = [];
+    this.links = [];
+    this.motes = [];
+    this.sparks = [];
+    this.sparkSeed = 0;
     this.spot = { x: 0, y: 0, strength: 0 };
     this.pointer = { x: 0, y: 0, active: false };
     this.clock = 0;
@@ -127,6 +131,98 @@ class CanvasController {
       y:p.y+Math.sin(hx*.004+t*.36)*10+Math.cos((hy-hx)*.003-t*.23)*4+parallaxY
     };
   }
+  seedNetwork() {
+    this.links=[];this.sparks=[];
+    const columns=this.particles.filter(p=>p.homeY===this.spacing/2).length;
+    const rows=columns?this.particles.length/columns:0;
+    const connect=(column,row,toColumn,toRow)=>{
+      if(toColumn>=columns || toRow>=rows)return;
+      const from=row*columns+column,to=toRow*columns+toColumn;
+      this.links.push({from,to,phase:(from*.61803398875+to*.137)%1});
+    };
+    // Sparse fixed neighbours form constellations, with no all-pairs search.
+    for(let row=0;row<rows;row++)for(let column=0;column<columns;column++) {
+      if((column+row*2)%4!==0)continue;
+      connect(column,row,column+2,row);
+      connect(column,row,column+1,row+1);
+      if((column+row)%3!==0)connect(column,row,column,row+2);
+    }
+    const count=Math.min(46,Math.max(14,Math.round(this.width*this.height/28000)));
+    this.motes=Array.from({length:count},(_,id)=>({
+      id,x:((id*.61803398875+.17)%1)*this.width,y:((id*.41421356237+.23)%1)*this.height,
+      vx:Math.cos(id*2.4)*15,vy:Math.sin(id*1.7)*12,phase:id*2.399963
+    }));
+  }
+  emitSparks(x,y,dx=0,dy=0,count=1,burst=false) {
+    if(REDUCED_MOTION.matches || document.hidden)return;
+    for(let i=0;i<count;i++) {
+      const seed=(++this.sparkSeed*.61803398875)%1,angle=seed*Math.PI*2;
+      const speed=burst?48+seed*48:20+seed*16;
+      this.sparks.push({x,y,vx:dx*26+Math.cos(angle)*speed,vy:dy*26+Math.sin(angle)*speed,
+        age:0,life:.75+seed*.5,phase:seed});
+    }
+    this.sparks=this.sparks.slice(-36);
+  }
+  stepEnergy(dt) {
+    const blend=1-Math.exp(-3*dt);
+    for(const p of this.motes) {
+      const dx=p.x-this.spot.x,dy=p.y-this.spot.y,distance=Math.hypot(dx,dy);
+      const influence=this.spot.strength*Math.max(0,1-distance/180);
+      const targetX=Math.cos(p.phase+this.clock*.38)*17+8-dy/Math.max(40,distance)*influence*38;
+      const targetY=Math.sin(p.phase*.7+this.clock*.31)*14-6+dx/Math.max(40,distance)*influence*38;
+      p.vx+=(targetX-p.vx)*blend;p.vy+=(targetY-p.vy)*blend;
+      p.x+=p.vx*dt;p.y+=p.vy*dt;
+      if(p.x < -12)p.x=this.width+12;else if(p.x>this.width+12)p.x=-12;
+      if(p.y < -12)p.y=this.height+12;else if(p.y>this.height+12)p.y=-12;
+    }
+    const damping=Math.exp(-1.8*dt),travel=(1-damping)/1.8;
+    for(const p of this.sparks) {
+      p.age+=dt;p.x+=p.vx*travel;p.y+=p.vy*travel;p.vx*=damping;p.vy*=damping;
+    }
+    this.sparks=this.sparks.filter(p=>p.age<p.life);
+  }
+  drawNetwork(points) {
+    const ctx=this.ctx;
+    for(const point of points)point.energy=0;
+    for(const link of this.links) {
+      const a=points[link.from],b=points[link.to];
+      if(!a || !b)continue;
+      const activity=Math.max(this.particles[link.from].light,this.particles[link.to].light);
+      const breathing=(.5+.5*Math.sin(this.clock*.8+link.phase*Math.PI*2))**2;
+      ctx.lineWidth=.65+activity*.35;
+      ctx.strokeStyle=`rgba(113,192,221,${.045+breathing*.14+activity*.27})`;
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      // A luminous packet travels all the way to its endpoint, lighting the node.
+      const activation=Math.max(breathing,activity);
+      if(REDUCED_MOTION.matches || activation<.01)continue;
+      const progress=(this.clock*(.30+link.phase*.12)+link.phase)%1;
+      const strength=(.26+activity*.58)*Math.sin(progress*Math.PI)*activation;
+      const x=a.x+(b.x-a.x)*progress,y=a.y+(b.y-a.y)*progress;
+      if(this.dotGlow) {ctx.globalAlpha=strength;ctx.drawImage(this.dotGlow,x-5,y-5,10,10);ctx.globalAlpha=1;}
+      ctx.fillStyle=`rgba(176,235,250,${strength*.95})`;
+      ctx.beginPath();ctx.arc(x,y,1.05,0,Math.PI*2);ctx.fill();
+      a.energy=Math.max(a.energy,(1-progress)**5*(.12+activity*.25)*activation);
+      b.energy=Math.max(b.energy,progress**5*(.12+activity*.25)*activation);
+    }
+  }
+  drawEnergy() {
+    const ctx=this.ctx;
+    const paint=(p,alpha,radius)=>{
+      ctx.lineWidth=.65;ctx.strokeStyle=`rgba(146,221,242,${alpha*.45})`;
+      ctx.beginPath();ctx.moveTo(p.x-p.vx*.09,p.y-p.vy*.09);ctx.lineTo(p.x,p.y);ctx.stroke();
+      if(this.dotGlow) {ctx.globalAlpha=alpha*.65;ctx.drawImage(this.dotGlow,p.x-5,p.y-5,10,10);ctx.globalAlpha=1;}
+      ctx.fillStyle=`rgba(192,234,251,${alpha})`;
+      ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fill();
+    };
+    for(const p of this.motes) {
+      const shimmer=.5+.5*Math.sin(this.clock*1.1+p.phase);
+      paint(p,.30+shimmer*.45,.8+shimmer*.45);
+    }
+    for(const p of this.sparks) {
+      const life=p.age/p.life,fade=Math.min(1,life*14)*(1-life)**1.5;
+      paint(p,fade*.85,.85+p.phase*.4);
+    }
+  }
   resize() {
     if (!this.ctx) return;
     this.width = Math.max(1, innerWidth);
@@ -149,6 +245,7 @@ class CanvasController {
         this.particles.push({ homeX: x, homeY: y, x, y, vx: 0, vy: 0, light: 0 });
       }
     }
+    this.seedNetwork();
     this.draw();
     this.resume();
   }
@@ -162,6 +259,7 @@ class CanvasController {
         // mice produce the same soft wake as a slower mouse or a finger.
         this.wake.push({x,y,dx:dx/distance,dy:dy/distance,age:0,power:Math.min(1,distance/Math.max(1,elapsed)/.7)});
         this.wake=this.wake.slice(-16);
+        this.emitSparks(x,y,dx/distance,dy/distance,2);
         this.wakeAnchor={x,y,at:now};
       } else if(distance<=2 && elapsed>80) this.wakeAnchor={x,y,at:now};
     } else this.wakeAnchor={x,y,at:now};
@@ -173,6 +271,7 @@ class CanvasController {
     if (REDUCED_MOTION.matches || document.hidden) return;
     this.ripples.push({ x, y, age: 0, strength });
     this.ripples = this.ripples.slice(-3);
+    this.emitSparks(x,y,0,0,8,true);
     this.start();
   }
   leave() { this.pointer.active = false; this.wakeAnchor = null; if (REDUCED_MOTION.matches) this.draw(); else this.start(); }
@@ -193,6 +292,7 @@ class CanvasController {
     const dt = Math.min(.1, Math.max(0, (time - this.lastFrame) / 1000));
     this.lastFrame = this.lastDraw = time;
     this.clock += dt;
+    this.stepEnergy(dt);
     const blend = 1 - Math.exp(-10 * dt);
     const reach = 220;
     const glowTarget = this.pointer.active ? 1 : 0;
@@ -301,13 +401,15 @@ class CanvasController {
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, this.width, this.height);
     }
+    const projected=this.particles.map(p=>this.projectDot(p,parallaxX,parallaxY));
+    this.drawNetwork(projected);
     for (let index=0;index<this.particles.length;index++) {
       const p=this.particles[index],u=p.homeX/this.width,v=p.homeY/this.height;
       const ribbon=Math.exp(-(((v-.31-Math.sin(u*4-t*.26)*.13-Math.sin(t*.18)*.08)/.12)**2));
       const echo=Math.exp(-(((v-.77-Math.sin(u*4.8+t*.21)*.12)/.10)**2));
       const glint=Math.pow(.5+.5*Math.sin(p.homeX*.014+p.homeY*.009-t*.72),12);
-      const light=Math.min(1,p.light+ribbon*.30+echo*.22+glint*.18);
-      const {x,y}=this.projectDot(p,parallaxX,parallaxY);
+      const light=Math.min(1,p.light+ribbon*.30+echo*.22+glint*.18+projected[index].energy);
+      const {x,y}=projected[index];
       // Reuse a feathered light texture instead of painting hard halo discs.
       if(this.dotGlow && light>.16) {
         ctx.globalAlpha=.08+light*.28;
@@ -325,11 +427,12 @@ class CanvasController {
         ctx.beginPath();ctx.arc(fine.x,fine.y,.60,0,Math.PI*2);ctx.fill();
       }
     }
+    this.drawEnergy();
     this.lens?.draw(this.canvas, this.width, this.height, this.spot);
   }
   drawStatic() {
     this.stop(); this.pointer.active = false; this.ripples = []; this.spot.strength = 0;
-    this.wake=[]; this.wakeAnchor=null;
+    this.wake=[]; this.wakeAnchor=null; this.sparks=[];
     for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.vx=p.vy=0; p.light = 0; }
     this.draw();
   }
