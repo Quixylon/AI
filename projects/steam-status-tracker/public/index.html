@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#090d13">
   <meta name="color-scheme" content="dark">
   <meta name="description" content="Qu’lon — профили, ссылки и трекер активности.">
-  <meta name="quixylon-build" content="morph-glass-20260910">
+  <meta name="quixylon-build" content="polished-glass-20260910">
   <title>Qu’lon</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/site.css?v=20260910-3">
+  <link rel="stylesheet" href="./assets/site.css?v=20260910-4">
 </head>
 <body data-route="profile">
   <div class="atmosphere" aria-hidden="true"></div>
@@ -18,7 +18,7 @@
   <div class="sr-only" id="appStatusLive" aria-live="polite"></div>
   <main class="app-shell">
     <section id="profileScreen" class="screen is-active" aria-hidden="false" aria-labelledby="profileName">
-      <div class="profile-masthead"><span class="wordmark">Q<span class="wordmark__dot">.</span></span><span class="masthead-handle">@quixylon</span></div>
+      <div class="profile-masthead"><span class="wordmark">Q<span class="wordmark__dot">.</span></span></div>
       <div class="profile-composition">
         <article id="profileCard" class="identity-panel panel">
           <div class="identity-body">
@@ -27,7 +27,7 @@
           </div>
           <div class="identity-bottomline"><div id="profileStatusPill" class="status-pill" data-state="offline" aria-live="polite"><span class="status-pill__dot" aria-hidden="true"></span><span id="profileStatusText">Проверяю статус…</span></div></div>
         <section class="intro-panel" aria-labelledby="helloTitle">
-          <div class="intro-topline"><h2 id="helloTitle">Привет<span class="accent-period">.</span></h2><button id="catButton" class="cat-button" type="button" aria-label="Мяукнуть" title="Мяу"><span class="cat-emoji" aria-hidden="true">🐈</span></button></div>
+          <div class="intro-topline"><h2 id="helloTitle">Привет<span class="accent-period">.</span></h2><button id="catButton" class="cat-button" type="button" aria-label="Погладить котика" title="Погладить котика"><span class="cat-emoji" aria-hidden="true">🐈</span><span class="cat-reaction" aria-hidden="true">мур</span></button></div>
           <p id="profileDescription">Мои профили, любимые игры и места, где меня можно найти.</p>
         </section>
         </article>
@@ -44,7 +44,7 @@
         </section>
         <a class="tracker-door panel" href="#tracker/overview" aria-label="Открыть трекер активности"><span class="tracker-door__icon" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span class="tracker-door__copy"><span>Активность в Steam</span><strong>Открыть трекер</strong></span><span class="tracker-door__arrow" aria-hidden="true">↗</span></a>
       </div>
-      <footer class="profile-footer"><div class="profile-meta"><span class="profile-meta__label">Статус</span><span id="profileFooterStatus" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Обновлено</span><span id="profileUpdatedAt" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Посетители</span><span id="visitorCount" class="profile-meta__value">—</span></div></footer>
+      <footer class="profile-footer"><button id="soundToggle" class="sound-toggle" type="button" aria-pressed="true" aria-label="Выключить звуки интерфейса" title="Звуки интерфейса"><span aria-hidden="true">♪</span><span>Звуки</span></button><div class="profile-meta"><span class="profile-meta__label">Статус</span><span id="profileFooterStatus" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Обновлено</span><span id="profileUpdatedAt" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Посетители</span><span id="visitorCount" class="profile-meta__value">—</span></div></footer>
     </section>
 <section aria-hidden="true" aria-labelledby="trackerTitle" class="screen" id="trackerScreen">
 <div class="tracker-layout">
@@ -379,19 +379,20 @@
 </main>
 <div aria-atomic="true" aria-live="polite" class="toast-region" id="toastRegion"></div>
 
-<script src="./assets/config.js?v=20260910-3" defer></script>
-<script src="./assets/data.js?v=20260910-3" defer></script>
-<script src="./assets/profile.js?v=20260910-3" defer></script>
-<script src="./assets/platforms.js?v=20260910-3" defer></script>
-<script src="./assets/history.js?v=20260910-3" defer></script>
-<script src="./assets/games.js?v=20260910-3" defer></script>
-<script src="./assets/navigation.js?v=20260910-3" defer></script>
-<script src="./assets/glass.js?v=20260910-3" defer></script>
-<script src="./assets/motion.js?v=20260910-3" defer></script>
-<script src="./assets/icons.js?v=20260910-3" defer></script>
-<script src="./assets/ui.js?v=20260910-3" defer></script>
-<script src="./assets/cat-audio.js?v=20260910-3" defer></script>
-<script src="./assets/app.js?v=20260910-3" defer></script>
+<script src="./assets/config.js?v=20260910-4" defer></script>
+<script src="./assets/data.js?v=20260910-4" defer></script>
+<script src="./assets/profile.js?v=20260910-4" defer></script>
+<script src="./assets/platforms.js?v=20260910-4" defer></script>
+<script src="./assets/history.js?v=20260910-4" defer></script>
+<script src="./assets/games.js?v=20260910-4" defer></script>
+<script src="./assets/navigation.js?v=20260910-4" defer></script>
+<script src="./assets/glass.js?v=20260910-4" defer></script>
+<script src="./assets/motion.js?v=20260910-4" defer></script>
+<script src="./assets/icons.js?v=20260910-4" defer></script>
+<script src="./assets/ui.js?v=20260910-4" defer></script>
+<script src="./assets/interface-audio.js?v=20260910-4" defer></script>
+<script src="./assets/cat-audio.js?v=20260910-4" defer></script>
+<script src="./assets/app.js?v=20260910-4" defer></script>
 <noscript><p class="no-script">Для статусов и трекера нужен JavaScript. Ссылки профиля доступны выше.</p></noscript>
 </body>
 </html>

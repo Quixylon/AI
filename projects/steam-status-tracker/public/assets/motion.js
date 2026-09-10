@@ -52,7 +52,7 @@ class MotionController {
       const ny = Math.max(-1, Math.min(1, (y - r.top - r.height / 2) / Math.max(100, r.height / 2)));
       const distance = Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom));
       const influence = active ? Math.max(0, 1 - distance / 480) : 0;
-      const max = item.element.classList.contains('panel') ? 1.5 : item.element.matches('.platform-card,.detail-card,.stats-card,.history-panel,.tracker-topbar') ? 1.6 : 2.2;
+      const max = item.element.classList.contains('panel') ? 2.05 : item.element.matches('.platform-card,.detail-card,.stats-card,.history-panel,.tracker-topbar') ? 2.15 : 2.5;
       const tx = -ny * max * influence, ty = nx * max * influence;
       const light = active ? Math.max(0, 1 - distance / 85) : 0;
       item.x += (tx - item.x) * blend;

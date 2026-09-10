@@ -1,3 +1,10 @@
+// Geometric link between a control and the destination container.
+function routeMorphGeometry(source,target) {
+  return {x:source.left+source.width/2-target.left-target.width/2,
+    y:source.top+source.height/2-target.top-target.height/2,
+    sx:Math.max(.01,Math.min(1,source.width/Math.max(1,target.width))),
+    sy:Math.max(.01,Math.min(1,source.height/Math.max(1,target.height)))};
+}
 /* =========================================================
    18. Роутинг
    ========================================================= */
@@ -8,19 +15,20 @@ function parseRoute(hash) {
   const match=value.match(/^tracker\/(steam|discord|telegram)$/); if (match) return { screen:'tracker',trackerTab:match[1],canonical:`#tracker/${match[1]}` };
   return { screen:'profile',trackerTab:'overview',canonical:'#profile' };
 }
-function navigate(route) { const parsed=typeof route==='string'?parseRoute(route):route; if (location.hash!==parsed.canonical) location.hash=parsed.canonical; else renderRoute(false); }
+function navigate(route) { surfaceMotion.captureSource(document.activeElement); const parsed=typeof route==='string'?parseRoute(route):route; if (location.hash!==parsed.canonical) location.hash=parsed.canonical; else renderRoute(false); }
 let routeRevision=0;
 async function renderRoute(moveFocus=true) {
   const revision=++routeRevision;
   surfaceMotion.cancel();
   const parsed=parseRoute(location.hash);
+  const source=surfaceMotion.takeSource?.(parsed);
   const changed=state.route.screen!==parsed.screen || state.route.trackerTab!==parsed.trackerTab;
   const release=moveFocus && changed ? await surfaceMotion.exit() : null;
   if(revision!==routeRevision) { release?.(); return; }
-  applyRoute(parsed,moveFocus);
+  applyRoute(parsed,moveFocus,source);
   release?.();
 }
-function applyRoute(parsed,moveFocus) {
+function applyRoute(parsed,moveFocus,source) {
   state.route={screen:parsed.screen,trackerTab:parsed.trackerTab};
   if (location.hash!==parsed.canonical) { history.replaceState(null,'',parsed.canonical); }
   const profileActive=parsed.screen==='profile'; document.body.dataset.route=profileActive?'profile':'tracker'; document.title=profileActive?'Qu’lon':'Qu’lon — трекер';
@@ -32,7 +40,7 @@ function applyRoute(parsed,moveFocus) {
   const panels={overview:'trackerOverviewView',steam:'steamView',discord:'discordView',telegram:'telegramView'};
   for (const [name,id] of Object.entries(panels)) { const panel=byId(id); if (!panel) continue; const active=!profileActive&&name===parsed.trackerTab; panel.hidden=!active; panel.classList.toggle('is-active',active); panel.setAttribute('aria-hidden',String(!active)); }
   if (moveFocus) window.setTimeout(()=>{ const target=profileActive?byId('profileName'):byId('trackerTitle'); target?.focus({preventScroll:true}); },30);
-  updateRoutePresentation(moveFocus);
+  updateRoutePresentation(moveFocus,source);
   motionController.measureSoon();
 }
 

@@ -33,30 +33,38 @@ void main() {
 
   // Bounded, smooth optical mapping. The old 54px displacement folded the
   // sampling plane back over itself, producing duplicate dots and long streaks.
-  float band = min(38.0, min(halfSize.x, halfSize.y) * 0.46);
+  float band = min(48.0, min(halfSize.x, halfSize.y) * 0.72);
   float phase = clamp(depth / max(band, 1.0), 0.0, 1.0);
   float bevel = pow(sin(phase * 3.14159265), 2.0);
   float viewEdge = clamp(min(min(p.x, u_view.x-p.x), min(p.y, u_view.y-p.y)) / 16.0, 0.0, 1.0);
-  float shift = band * 0.16 * bevel;
-  vec2 bent = local - (normal * shift + local * 0.008 * (1.0-exp(-depth/80.0))) * viewEdge;
+  float shift = band * 0.22 * bevel;
+  vec2 bent = local - (normal * shift + local * 0.014 * (1.0-exp(-depth/80.0))) * viewEdge;
   vec3 refracted = u_projection * vec3(bent, 1.0);
   vec2 samplePoint = refracted.xy / refracted.z;
-  float haze = 0.65;
-  vec3 color = scene(samplePoint) * 0.60;
+  // Frost the interior while retaining a crisp optical edge. Nine close taps
+  // approximate diffusion instead of splitting each dot into offset copies.
+  float haze = mix(0.55, 2.2, smoothstep(0.0, 24.0, depth));
+  vec3 color = scene(samplePoint) * 0.40;
   color += (scene(samplePoint + vec2(haze, 0.0)) + scene(samplePoint - vec2(haze, 0.0))
          + scene(samplePoint + vec2(0.0, haze)) + scene(samplePoint - vec2(0.0, haze))) * 0.10;
-  vec2 split = normal * bevel * 0.35;
-  color.r = mix(color.r, scene(samplePoint + split).r, 0.15);
-  color.b = mix(color.b, scene(samplePoint - split).b, 0.15);
-  color = mix(color, vec3(0.23, 0.31, 0.39), 0.14);
-  // The native card owns its outline and clipping. A second luminous shader
-  // silhouette would look like a displaced duplicate during motion.
-  color = mix(color, vec3(0.055, 0.085, 0.14), 0.12);
-  // The caustic remains inside the native clip and only faces a nearby pointer.
+  color += (scene(samplePoint + vec2(haze, haze)) + scene(samplePoint - vec2(haze, haze))
+         + scene(samplePoint + vec2(haze, -haze)) + scene(samplePoint + vec2(-haze, haze))) * 0.05;
+  color = mix(color, vec3(0.20, 0.29, 0.38), 0.13);
+  color = mix(color, vec3(0.04, 0.07, 0.12), 0.06);
+
+  // Reflection follows the normal of the curved edge, not a circular spotlight.
+  vec3 surfaceNormal=normalize(vec3(normal*bevel*0.82,1.0));
+  float fresnel=0.04+0.96*pow(1.0-surfaceNormal.z,5.0);
+  vec3 reflection=mix(vec3(0.20,0.29,0.43),vec3(0.65,0.76,0.85),clamp(0.5-dot(normal,vec2(.32,.5)),0.0,1.0));
+  color=mix(color,reflection,fresnel*bevel*0.8);
   vec2 towardPointer=u_pointer.xy-p;
-  float proximity=exp(-dot(towardPointer,towardPointer)/(160.0*160.0))*u_pointer.z;
-  float facing=max(0.0,dot(normal,normalize(towardPointer+vec2(0.001))));
-  color+=vec3(0.35,0.65,0.8)*bevel*proximity*(0.025+0.09*facing);
+  float proximity=exp(-dot(towardPointer,towardPointer)/(125.0*125.0))*u_pointer.z;
+  vec3 lightDirection=normalize(vec3(towardPointer/150.0,0.7));
+  vec3 halfVector=normalize(lightDirection+vec3(0.0,0.0,1.0));
+  float specular=pow(max(dot(surfaceNormal,halfVector),0.0),48.0)*bevel*proximity;
+  float rim=exp(-depth/1.35);
+  float orientation=pow(max(0.0,dot(normal,normalize(vec2(-0.6,-0.8)))),3.0);
+  color+=vec3(0.67,0.80,0.91)*(rim*(0.025+0.11*orientation)+specular*0.12);
   gl_FragColor = vec4(color, 1.0);
 }
 `;
@@ -185,8 +193,13 @@ class GlassRenderer {
       if (rect.bottom <= 0 || rect.top >= height || rect.right <= 0 || rect.left >= width) continue;
       const style = getComputedStyle(element);
       const w = parseFloat(style.width) || element.offsetWidth, h = parseFloat(style.height) || element.offsetHeight;
+      const frame=element.closest('.route-entering');
+      const ownScale=!style.scale || style.scale==='none'?[1]:style.scale.split(/\s+/).map(Number);
+      const frameValue=frame?(getComputedStyle(frame).scale || 'none'):'none';
+      const frameScale=frameValue==='none'?[1]:frameValue.split(/\s+/).map(Number);
+      const scale=`${(ownScale[0]||1)*(frameScale[0]||1)} ${(ownScale[1]||ownScale[0]||1)*(frameScale[1]||frameScale[0]||1)}`;
       panels.push({ surface, width: w, height: h,
-        projection: glassInverse(rect, w, h, style.transform, style.scale, false),
+        projection: glassInverse(rect, w, h, style.transform, scale, false),
         radius: parseFloat(style.borderTopLeftRadius) || 24,
         pixelsX: Math.max(1, Math.round(w * density)), pixelsY: Math.max(1, Math.round(h * density)) });
     }

@@ -217,7 +217,7 @@ function validateHistory(history) {
 
 const requiredFiles = [
   'public/.nojekyll', 'public/index.html', 'public/assets/site.css',
-  ...['config', 'data', 'profile', 'platforms', 'history', 'games', 'navigation', 'motion', 'icons', 'ui', 'app', 'cat-audio'].map(name => `public/assets/${name}.js`),
+  ...['config', 'data', 'profile', 'platforms', 'history', 'games', 'navigation', 'motion', 'icons', 'ui', 'app', 'interface-audio', 'cat-audio'].map(name => `public/assets/${name}.js`),
   'public/assets/favicon.svg', 'public/data/bio.json', 'public/data/status.json',
   'public/data/history.json', 'public/data/games.json', 'public/tracker/index.html', 'public/profile-v2/index.html'
 ];

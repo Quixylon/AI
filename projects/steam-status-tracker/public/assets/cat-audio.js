@@ -2,6 +2,7 @@ const playProfileMeow = (() => {
   let archiveAudioContext = null;
 
   function getArchiveAudioContext() {
+    if(typeof interfaceAudio!=='undefined') return interfaceAudio.getContext(true);
     if (archiveAudioContext) return archiveAudioContext;
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return null;
@@ -24,8 +25,8 @@ const playProfileMeow = (() => {
     const vibratoGain = context.createGain();
 
     master.gain.setValueAtTime(0.0001, start);
-    master.gain.exponentialRampToValueAtTime(0.18, start + 0.045);
-    master.gain.exponentialRampToValueAtTime(0.115, start + 0.22);
+    master.gain.exponentialRampToValueAtTime(0.10, start + 0.045);
+    master.gain.exponentialRampToValueAtTime(0.075, start + 0.22);
     master.gain.exponentialRampToValueAtTime(0.0001, finish);
 
     filter.type = 'bandpass';
@@ -62,6 +63,7 @@ const playProfileMeow = (() => {
     filter.connect(master);
     master.connect(context.destination);
 
+    voice.onended=()=>{voice.disconnect();overtone.disconnect();vibrato.disconnect();overtoneGain.disconnect();vibratoGain.disconnect();filter.disconnect();master.disconnect();};
     voice.start(start);
     overtone.start(start);
     vibrato.start(start);
@@ -72,6 +74,7 @@ const playProfileMeow = (() => {
 
 
   return async () => {
+    if(typeof interfaceAudio!=='undefined' && !interfaceAudio.enabled) return;
     const context = getArchiveAudioContext();
     if (context?.state === 'suspended') await context.resume();
     playArchiveMeow();
