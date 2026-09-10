@@ -1676,8 +1676,6 @@ html.page-paused .float-surface { animation-play-state:paused; }
   .timeline { margin-top:10px; }
 }
 
-/* Route geometry, rather than unrelated staggered fades, drives navigation. */
-.route-entering { transform-origin:center; will-change:scale,translate,clip-path; }
 @media(prefers-reduced-motion:reduce) {
   .cat-button:hover .cat-emoji,.cat-button:active .cat-emoji { transform:none; }
   .cat-button.is-meowing .cat-reaction { opacity:1; transform:none; }

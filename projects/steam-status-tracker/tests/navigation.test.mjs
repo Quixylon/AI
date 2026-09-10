@@ -33,12 +33,52 @@ test('returning to the current route cancels its pending exit immediately',async
   assert.deepEqual(t.applied,['#profile']);
 });
 
-test('route expansion begins at the originating button rectangle',()=>{
-  const t=fixture();
-  const from={left:25,top:480,width:320,height:72},to={left:180,top:20,width:960,height:1200};
-  const g=t.context.routeMorphGeometry(from,to);
-  assert.equal(to.left+to.width/2+g.x,from.left+from.width/2);
-  assert.equal(to.top+to.height/2+g.y,from.top+from.height/2);
-  assert.equal(to.width*g.sx,from.width);
-  assert.equal(to.height*g.sy,from.height);
+function domFixture() {
+  const callbacks=[],nodes=new Map(),document={body:{dataset:{}},activeElement:null};
+  function node(id,tab) {
+    const value={id,dataset:{tab},classList:{toggle(){}},setAttribute(){},removeAttribute(){},
+      getAttribute:()=>`#tracker/${tab}`,focus(){document.activeElement=value;}};
+    nodes.set(id,value);return value;
+  }
+  const tabs=['overview','steam','discord','telegram'].map(tab=>node(`tab-${tab}`,tab));
+  for(const id of ['profileName','trackerTitle','trackerOverviewView','steamView','discordView','telegramView'])node(id);
+  const context=vm.createContext({document,location:{hash:'#profile'},history:{replaceState(){}},
+    state:{route:{screen:'profile',trackerTab:'overview'}},
+    dom:{profileScreen:node('profileScreen'),trackerScreen:node('trackerScreen')},
+    $$:()=>tabs,byId:id=>nodes.get(id),window:{setTimeout:fn=>callbacks.push(fn)},
+    surfaceMotion:{cancel(){},async exit(){}},motionController:{measureSoon(){}},updateRoutePresentation(){},
+    refreshManager:{resources:new Map(),get(name){return this.resources.get(name);}}
+  });
+  vm.runInContext(source,context);
+  return {context,document,nodes,tabs,callbacks,flush(){callbacks.splice(0).forEach(fn=>fn());}};
+}
+test('repeated arrow-key navigation retains focus in the tracker tab strip',async()=>{
+  const t=domFixture();
+  t.context.state.route={screen:'tracker',trackerTab:'overview'};
+  t.tabs[0].focus();
+  for(const next of [1,2,3,0]) {
+    t.context.handleTabKeydown({key:'ArrowRight',target:t.document.activeElement,preventDefault(){}});
+    await t.context.renderRoute();t.flush();
+    assert.equal(t.document.activeElement,t.tabs[next]);
+    assert.equal(t.context.state.route.trackerTab,t.tabs[next].dataset.tab);
+  }
+});
+test('a delayed route focus cannot target an obsolete page or override user focus',async()=>{
+  const t=domFixture();
+  t.context.location.hash='#tracker/steam';await t.context.renderRoute();
+  t.context.location.hash='#profile';await t.context.renderRoute();
+  t.callbacks.shift()();
+  assert.equal(t.document.activeElement,null,'obsolete route must not focus its hidden heading');
+  t.flush();assert.equal(t.document.activeElement,t.nodes.get('profileName'));
+  t.context.location.hash='#tracker/steam';await t.context.renderRoute();
+  t.tabs[1].focus();t.flush();
+  assert.equal(t.document.activeElement,t.tabs[1],'a new user focus takes precedence');
+});
+test('Steam remains busy while the game catalogue is still loading',()=>{
+  const t=domFixture();
+  t.context.refreshManager.resources.set('steamGames',{name:'steamGames',promise:Promise.resolve()});
+  assert.equal(t.context.platformBusy('steam'),true);
+  assert.equal(t.context.platformBusy('discord'),false);
+  t.context.refreshManager.resources.get('steamGames').promise=null;
+  assert.equal(t.context.platformBusy('steam'),false);
 });

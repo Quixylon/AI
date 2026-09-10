@@ -101,7 +101,7 @@ class CanvasController {
     this.pointer = { x: 0, y: 0, active: false };
     this.clock = 0;
     this.wake = [];
-    this.lastWakeAt = 0;
+    this.wakeAnchor = null;
     this.lens = typeof GlassRenderer === 'function' ? new GlassRenderer(byId('glassCanvas')) : null;
     if (this.lens) this.lens.onRestore = () => this.draw();
   }
@@ -133,16 +133,17 @@ class CanvasController {
   }
   setPointer(x, y) {
     if (REDUCED_MOTION.matches) return;
-    const now=performance.now();
-    if(this.pointer.active) {
-      const dx=x-this.pointer.x, dy=y-this.pointer.y, distance=Math.hypot(dx,dy);
-      if(distance>2 && now-this.lastWakeAt>24) {
-        // Each sample carries direction, giving movement a curling wake rather
-        // than emitting more concentric click waves. Bound both work and energy.
-        this.wake.push({x,y,dx:dx/distance,dy:dy/distance,age:0,power:Math.min(1,distance/22)});
-        this.wake=this.wake.slice(-16); this.lastWakeAt=now;
-      }
-    }
+    const now=performance.now(),anchor=this.wakeAnchor;
+    if(anchor) {
+      const dx=x-anchor.x,dy=y-anchor.y,distance=Math.hypot(dx,dy),elapsed=now-anchor.at;
+      if(distance>2 && elapsed>=24) {
+        // Accumulate skipped pointer events; use velocity so high polling-rate
+        // mice produce the same soft wake as a slower mouse or a finger.
+        this.wake.push({x,y,dx:dx/distance,dy:dy/distance,age:0,power:Math.min(1,distance/Math.max(1,elapsed)/.7)});
+        this.wake=this.wake.slice(-16);
+        this.wakeAnchor={x,y,at:now};
+      } else if(distance<=2 && elapsed>80) this.wakeAnchor={x,y,at:now};
+    } else this.wakeAnchor={x,y,at:now};
     if (!this.pointer.active && this.spot.strength < .01) { this.spot.x = x; this.spot.y = y; }
     this.pointer = { x, y, active: true };
     this.start();
@@ -153,7 +154,7 @@ class CanvasController {
     this.ripples = this.ripples.slice(-3);
     this.start();
   }
-  leave() { this.pointer.active = false; if (REDUCED_MOTION.matches) this.draw(); else this.start(); }
+  leave() { this.pointer.active = false; this.wakeAnchor = null; if (REDUCED_MOTION.matches) this.draw(); else this.start(); }
   start() {
     if (!this.ctx || this.running || document.hidden || REDUCED_MOTION.matches) return;
     this.running = true;
@@ -243,17 +244,25 @@ class CanvasController {
     ctx.fillRect(0, 0, this.width, this.height);
     const t = this.clock;
     const extent = Math.max(this.width, this.height);
+    const parallaxX=(this.spot.x/this.width-.5)*this.spot.strength*10;
+    const parallaxY=(this.spot.y/this.height-.5)*this.spot.strength*7;
+    // Wide, slowly breathing fields give the lens a richer scene to refract.
     const pools = [
-      [.18 + Math.sin(t * .09) * .10, .23 + Math.cos(t * .08) * .13, .64, '44,104,150', .30],
-      [.80 + Math.cos(t * .07) * .12, .68 + Math.sin(t * .10) * .14, .57, '101,79,157', .26],
-      [.48 + Math.sin(t * .06) * .17, .87 + Math.cos(t * .09) * .09, .44, '37,128,133', .18]
+      [.20+Math.sin(t*.085)*.14,.24+Math.cos(t*.07)*.13,.68,.66,'52,130,172',.38],
+      [.82+Math.cos(t*.07)*.13,.65+Math.sin(t*.09)*.16,.59,.84,'116,95,183',.32],
+      [.42+Math.sin(t*.06)*.21,.88+Math.cos(t*.08)*.11,.50,.50,'47,151,151',.25]
     ];
-    for (const [x, y, size, color, alpha] of pools) {
-      const glow = ctx.createRadialGradient(x * this.width, y * this.height, 0, x * this.width, y * this.height, extent * size);
-      glow.addColorStop(0, `rgba(${color},${alpha})`);
-      glow.addColorStop(.5, `rgba(${color},${alpha * .42})`);
-      glow.addColorStop(1, `rgba(${color},0)`);
-      ctx.fillStyle = glow; ctx.fillRect(0, 0, this.width, this.height);
+    for (const [x,y,size,aspect,color,alpha] of pools) {
+      const radius=extent*size;
+      ctx.save();
+      ctx.translate(x*this.width+parallaxX,y*this.height+parallaxY);
+      ctx.scale(1,aspect);
+      const glow=ctx.createRadialGradient(0,0,0,0,0,radius);
+      glow.addColorStop(0,`rgba(${color},${alpha})`);
+      glow.addColorStop(.42,`rgba(${color},${alpha*.5})`);
+      glow.addColorStop(1,`rgba(${color},0)`);
+      ctx.fillStyle=glow;ctx.fillRect(-radius,-radius,radius*2,radius*2);
+      ctx.restore();
     }
     if (this.spot.strength > .005) {
       const radius = 330;
@@ -275,27 +284,29 @@ class CanvasController {
       ctx.fillStyle=glow;ctx.fillRect(sample.x-size,sample.y-size,size*2,size*2);
     }
     for (const p of this.particles) {
-      // Brightness rolls through a fixed lattice; it never becomes scattered lines.
-      const tide = .5 + .5 * Math.sin(p.homeX * .006 + p.homeY * .004 - t * .55);
-      const crest = Math.pow(tide, 6);
-      const interference=.5+.5*Math.sin(p.homeX*.010-p.homeY*.006+t*.38);
-      const light = p.light + crest * .25 + Math.pow(interference,9)*.25;
-      const motion = REDUCED_MOTION.matches ? 0 : 1;
-      const x = p.x + (Math.sin(p.homeY * .009 + t * .44)*8+Math.sin(p.homeX*.004+p.homeY*.007-t*.31)*5) * motion;
-      const y = p.y + (Math.sin(p.homeX * .007 - t * .56)*10+Math.cos(p.homeY*.006-p.homeX*.005+t*.26)*4) * motion;
-      const depth = .78 + .22 * Math.cos(p.homeY / this.height * Math.PI);
-      if (light > .10) {
-        ctx.fillStyle = `rgba(139,193,245,${light * .085})`;
-        ctx.beginPath(); ctx.arc(x, y, 3 + light * 3, 0, Math.PI * 2); ctx.fill();
+      // Two broad ribbons illuminate coherent rows, with a quiet darker field
+      // between them. The dots remain a regular lattice, never loose particles.
+      const u=p.homeX/this.width,v=p.homeY/this.height;
+      const ribbon=Math.exp(-(((v-.31-Math.sin(u*4-t*.15)*.13-Math.sin(t*.11)*.08)/.15)**2));
+      const echo=Math.exp(-(((v-.77-Math.sin(u*4.8+t*.12)*.12)/.13)**2));
+      const tide=.5+.5*Math.sin(p.homeX*.005+p.homeY*.003-t*.38);
+      const light=p.light+ribbon*(.18+tide*.18)+echo*.22;
+      const motion=REDUCED_MOTION.matches?0:1;
+      const depth=.62+ribbon*.26+echo*.10;
+      const x=p.x+(Math.sin(p.homeY*.007+t*.34)*7+Math.sin(p.homeX*.004+p.homeY*.006-t*.24)*4+parallaxX*depth)*motion;
+      const y=p.y+(Math.sin(p.homeX*.006-t*.38)*8+Math.cos(p.homeY*.006-p.homeX*.004+t*.21)*4+parallaxY*depth)*motion;
+      if(light>.12) {
+        ctx.fillStyle=`rgba(140,195,244,${light*.075})`;
+        ctx.beginPath();ctx.arc(x,y,3+light*3,0,Math.PI*2);ctx.fill();
       }
-      ctx.fillStyle = `rgba(${Math.round(151 + tide * 26)},${Math.round(186 + tide * 22)},228,${Math.min(.95, .38 + light * .55) * depth})`;
-      ctx.beginPath(); ctx.arc(x, y, 1.10 + light * .85, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle=`rgba(${Math.round(146+echo*46)},${Math.round(181+ribbon*35)},235,${Math.min(.92,.29+light*.57)*depth})`;
+      ctx.beginPath();ctx.arc(x,y,1.03+light*.72,0,Math.PI*2);ctx.fill();
     }
     this.lens?.draw(this.canvas, this.width, this.height, this.spot);
   }
   drawStatic() {
     this.stop(); this.pointer.active = false; this.ripples = []; this.spot.strength = 0;
-    this.wake=[];
+    this.wake=[]; this.wakeAnchor=null;
     for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.vx=p.vy=0; p.light = 0; }
     this.draw();
   }
