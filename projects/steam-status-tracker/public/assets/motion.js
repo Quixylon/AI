@@ -54,7 +54,7 @@ class MotionController {
       const influence = active ? Math.max(0, 1 - distance / 480) : 0;
       const max = item.element.classList.contains('panel') ? 1.5 : item.element.matches('.platform-card,.detail-card,.stats-card,.history-panel,.tracker-topbar') ? 1.6 : 2.2;
       const tx = -ny * max * influence, ty = nx * max * influence;
-      const light = active && distance === 0 ? 1 : 0;
+      const light = active ? Math.max(0, 1 - distance / 85) : 0;
       item.x += (tx - item.x) * blend;
       item.y += (ty - item.y) * blend;
       item.light += (light - item.light) * blend;
@@ -64,8 +64,8 @@ class MotionController {
       const style = item.element.style;
       style.setProperty('--tilt-x', `${item.x.toFixed(3)}deg`);
       style.setProperty('--tilt-y', `${item.y.toFixed(3)}deg`);
-      style.setProperty('--light-x', `${Math.max(0, Math.min(100, (x - r.left) / r.width * 100)).toFixed(1)}%`);
-      style.setProperty('--light-y', `${Math.max(0, Math.min(100, (y - r.top) / r.height * 100)).toFixed(1)}%`);
+      style.setProperty('--light-x', `${(x - r.left).toFixed(1)}px`);
+      style.setProperty('--light-y', `${(y - r.top).toFixed(1)}px`);
       style.setProperty('--light-opacity', item.light.toFixed(3));
       item.element.classList.toggle('is-tilting', moving);
     }
@@ -229,14 +229,18 @@ class CanvasController {
     for (const p of this.particles) {
       // Brightness rolls through a fixed lattice; it never becomes scattered lines.
       const tide = .5 + .5 * Math.sin(p.homeX * .006 + p.homeY * .004 - t * .55);
-      const light = p.light + tide * .16;
+      const crest = Math.pow(tide, 6);
+      const light = p.light + crest * .38;
+      const motion = REDUCED_MOTION.matches ? 0 : 1;
+      const x = p.x + Math.sin(p.homeY * .009 + t * .44) * 8 * motion;
+      const y = p.y + Math.sin(p.homeX * .007 - t * .56) * 10 * motion;
       const depth = .78 + .22 * Math.cos(p.homeY / this.height * Math.PI);
-      if (p.light > .015) {
-        ctx.fillStyle = `rgba(139,193,245,${p.light * .09})`;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 4 + p.light * 3, 0, Math.PI * 2); ctx.fill();
+      if (light > .10) {
+        ctx.fillStyle = `rgba(139,193,245,${light * .085})`;
+        ctx.beginPath(); ctx.arc(x, y, 3 + light * 3, 0, Math.PI * 2); ctx.fill();
       }
       ctx.fillStyle = `rgba(${Math.round(151 + tide * 26)},${Math.round(186 + tide * 22)},228,${Math.min(.95, .38 + light * .55) * depth})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 1.15 + light * .85, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, 1.10 + light * .85, 0, Math.PI * 2); ctx.fill();
     }
     this.lens?.draw(this.canvas, this.width, this.height);
   }

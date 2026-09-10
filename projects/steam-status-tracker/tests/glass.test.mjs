@@ -5,7 +5,7 @@ import test from 'node:test';
 
 const source = fs.readFileSync(new URL('../public/assets/glass.js', import.meta.url), 'utf8');
 function fixture(available = true) {
-  const classes = new Set(), events = {}, calls = [];
+  const classes = new Set(), events = {}, calls = [], copies = [];
   const gl = new Proxy({}, { get: (_, name) => {
     if (name === 'getShaderParameter' || name === 'getProgramParameter') return () => true;
     if (name === 'getUniformLocation') return (_, uniform) => uniform;
@@ -13,10 +13,12 @@ function fixture(available = true) {
     return (...args) => { calls.push([name, ...args]); return {}; };
   } });
   const visible = { offsetWidth: 328, offsetHeight: 200,
+    prepend() {},
     closest: () => null,
     getBoundingClientRect: () => ({ left: 16, top: 20, right: 344, bottom: 220, width: 328, height: 200 }) };
   const offscreen = { ...visible, getBoundingClientRect: () => ({ left: 16, top: 850, right: 344, bottom: 1050, width: 328, height: 200 }) };
   const document = { hidden: false,
+    createElement: () => ({ width:0, height:0, setAttribute() {}, remove() {}, getContext: () => ({ drawImage: (...args) => copies.push(args) }) }),
     querySelectorAll: () => [visible, offscreen, { ...visible, offsetWidth: 0 }],
     documentElement: { classList: { add: name => classes.add(name), remove: name => classes.delete(name) } } };
   const canvas = { width: 0, height: 0, getContext: () => available ? gl : null,
@@ -24,7 +26,7 @@ function fixture(available = true) {
   const context = vm.createContext({ document, Float32Array,
     getComputedStyle: () => ({ width: '328px', height: '200px', borderTopLeftRadius: '23px', opacity: '1', transform: 'none', scale: 'none' }) });
   vm.runInContext(source + '\nthis.Glass = GlassRenderer; this.inverse = glassInverse;', context);
-  return { context, classes, events, calls, document, renderer: new context.Glass(canvas) };
+  return { context, classes, events, calls, copies, document, renderer: new context.Glass(canvas) };
 }
 function map(matrix, x, y) {
   const w = matrix[2] * x + matrix[5] * y + matrix[8];
@@ -47,12 +49,16 @@ test('lens plane follows rounded cards through scroll, entrance scale and perspe
   const css = `matrix3d(${[c, 0, -s, s / 1200, 0, 1, 0, 0, s, 0, c, -c / 1200, 0, 0, 0, 1].join(',')})`;
   const matrix = inverse(rect, 400, 240, css, String(scale));
   for (const point of [[0, 0], [-200, -120], [200, 120], [170, -70]]) close(map(matrix, ...project(...point)), point);
+  const forward = inverse(rect, 400, 240, css, String(scale), false);
+  for (const point of [[0, 0], [-200, -120], [200, 120], [170, -70]]) close(map(forward, ...point), project(...point));
 });
 
 test('one shared lens texture draws visible cards only and survives context loss', () => {
   const t = fixture(), scene = { width: 720, height: 1600 };
   t.renderer.init(); t.renderer.draw(scene, 360, 800); t.renderer.draw(scene, 360, 800);
   assert.equal(t.calls.filter(c => c[0] === 'drawArrays').length, 2, 'offscreen and hidden cards must not render');
+  assert.equal(t.copies.length, 2, 'each visible card receives its own clipped texture');
+  assert.deepEqual(t.copies[0].slice(1), [0, 0, 656, 400, 0, 0, 656, 400]);
   assert.equal(t.calls.filter(c => c[0] === 'texImage2D').length, 1, 'allocate once per size');
   assert.equal(t.calls.filter(c => c[0] === 'texSubImage2D').length, 1, 'reuse the live source texture');
   assert.ok(t.classes.has('has-refraction'));

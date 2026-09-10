@@ -36,7 +36,23 @@ function bindEvents(){
   $('.tracker-tabs')?.addEventListener('keydown',handleTabKeydown);
   document.addEventListener('click',event=>{
     const copy=event.target.closest('[data-copy-target]');if(copy){handleCopy(copy);return;}
-    const filter=event.target.closest('[data-history-platform][data-history-filter]');if(filter){const platform=filter.dataset.historyPlatform,value=filter.dataset.historyFilter;state.historyView[platform].filter=value;state.historyView[platform].visible=CONFIG.history.initialVisibleEntries;if(platform==='steam'){state.historyView.steamGames.visible=CONFIG.history.initialVisibleEntries;state.historyView.steamPresence.visible=CONFIG.history.initialVisibleEntries;renderSteamHistory();}else if(platform==='discord')renderDiscordHistory();else renderTelegramHistory();for(const button of $$(`[data-history-platform="${platform}"]`)){button.classList.toggle('is-active',button===filter);button.setAttribute('aria-pressed',String(button===filter));}return;}
+    const filter=event.target.closest('[data-history-platform][data-history-filter]');
+    if(filter){
+      const key=filter.dataset.historyPlatform, view=state.historyView[key];
+      if(!view) return;
+      view.filter=filter.dataset.historyFilter;
+      view.visible=CONFIG.history.initialVisibleEntries;
+      const target=byId(key==='steamPresence'?'steamPresenceTimeline':key==='discord'?'discordTimeline':'telegramTimeline');
+      if(target) target.scrollTop=0;
+      if(key==='steamPresence') renderSteamHistory();
+      else if(key==='discord') renderDiscordHistory();
+      else if(key==='telegram') renderTelegramHistory();
+      for(const button of $$(`[data-history-platform="${key}"]`)){
+        button.classList.toggle('is-active',button===filter);
+        button.setAttribute('aria-pressed',String(button===filter));
+      }
+      return;
+    }
     const more=event.target.closest('[data-history-more]');if(more){changeHistoryVisible(more.dataset.historyMore,'more');return;}
     const collapse=event.target.closest('[data-history-collapse]');if(collapse){changeHistoryVisible(collapse.dataset.historyCollapse,'collapse');return;}
   });

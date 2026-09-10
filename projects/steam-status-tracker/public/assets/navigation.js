@@ -12,7 +12,7 @@ function navigate(route) { const parsed=typeof route==='string'?parseRoute(route
 function renderRoute(moveFocus=true) {
   const parsed=parseRoute(location.hash); state.route={screen:parsed.screen,trackerTab:parsed.trackerTab};
   if (location.hash!==parsed.canonical) { history.replaceState(null,'',parsed.canonical); }
-  const profileActive=parsed.screen==='profile'; document.body.dataset.route=profileActive?'profile':'tracker'; document.title=profileActive?'Qu’lon — цифровой профиль':'Qu’lon — цифровой трекер';
+  const profileActive=parsed.screen==='profile'; document.body.dataset.route=profileActive?'profile':'tracker'; document.title=profileActive?'Qu’lon':'Qu’lon — трекер';
   if (dom.profileScreen) { dom.profileScreen.hidden=!profileActive; dom.profileScreen.classList.toggle('is-active',profileActive); dom.profileScreen.setAttribute('aria-hidden',String(!profileActive)); }
   if (dom.trackerScreen) { dom.trackerScreen.hidden=profileActive; dom.trackerScreen.classList.toggle('is-active',!profileActive); dom.trackerScreen.setAttribute('aria-hidden',String(profileActive)); }
   for (const tab of $$('.tracker-tabs [role="tab"]')) {

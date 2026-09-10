@@ -12,22 +12,19 @@ uniform sampler2D u_scene;
 uniform vec2 u_view;
 uniform vec2 u_pixels;
 uniform vec4 u_rect;
-uniform mat3 u_inverse;
+uniform mat3 u_projection;
 uniform float u_radius;
-uniform float u_opacity;
 
 vec3 scene(vec2 p) {
   return texture2D(u_scene, clamp(p / u_view, vec2(0.0), vec2(1.0))).rgb;
 }
 void main() {
-  vec2 p = vec2(gl_FragCoord.x, u_pixels.y - gl_FragCoord.y) * u_view / u_pixels;
   vec2 halfSize = u_rect.zw * 0.5;
-  vec3 plane = u_inverse * vec3(p, 1.0);
-  vec2 local = plane.xy / plane.z;
+  vec2 local = vec2(gl_FragCoord.x, u_pixels.y - gl_FragCoord.y) * u_rect.zw / u_pixels - halfSize;
+  vec3 plane = u_projection * vec3(local, 1.0);
+  vec2 p = plane.xy / plane.z;
   vec2 q = abs(local) - halfSize + u_radius;
   float distance = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_radius;
-  float coverage = 1.0 - smoothstep(-0.8, 0.3, distance);
-  if (coverage < 0.001) discard;
   float depth = max(0.0, -distance);
   vec2 normal;
   if (max(q.x, q.y) > 0.0) normal = normalize(max(q, 0.0) + 0.0001) * sign(local);
@@ -36,7 +33,7 @@ void main() {
   // A thick, rounded bevel pulls the texture inward; the centre magnifies gently.
   float bevel = (1.0 - exp(-depth / 3.0)) * exp(-depth / 19.0);
   vec2 samplePoint = p - normal * bevel * 34.0 - local * 0.028 * smoothstep(0.0, 40.0, depth);
-  float haze = 0.85 + bevel * 1.25;
+  float haze = 1.65 + bevel * 0.65;
   vec3 color = scene(samplePoint) * 0.4;
   color += (scene(samplePoint + vec2(haze, 0.0)) + scene(samplePoint - vec2(haze, 0.0))
          + scene(samplePoint + vec2(0.0, haze)) + scene(samplePoint - vec2(0.0, haze))) * 0.15;
@@ -45,17 +42,16 @@ void main() {
   color.r = mix(color.r, scene(samplePoint + split).r, 0.24);
   color.b = mix(color.b, scene(samplePoint - split).b, 0.24);
   color = mix(color, vec3(0.19, 0.26, 0.34), 0.13);
-  float rim = exp(-depth / 3.2);
-  float reflection = 0.4 + 0.6 * abs(dot(normal, normalize(vec2(-0.6, -0.8))));
-  color += vec3(0.52, 0.72, 0.88) * rim * reflection * 0.22;
-  color += vec3(0.14, 0.22, 0.3) * bevel * 0.10;
-  gl_FragColor = vec4(color, coverage * u_opacity);
+  // The native card owns its outline and clipping. A second luminous shader
+  // silhouette would look like a displaced duplicate during motion.
+  color = mix(color, vec3(0.055, 0.085, 0.14), 0.22);
+  gl_FragColor = vec4(color, 1.0);
 }
 `;
 
 // Invert the element's projected plane, including CSS perspective and entrance
 // scale. An axis-aligned bounding box alone would make the lens spill on tilt.
-function glassInverse(rect, width, height, transform = 'none', scale = 'none') {
+function glassInverse(rect, width, height, transform = 'none', scale = 'none', invert = true) {
   const values = transform.match(/^matrix(3d)?\((.+)\)$/);
   let m = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
   if (values) {
@@ -76,6 +72,7 @@ function glassInverse(rect, width, height, transform = 'none', scale = 'none') {
   const ox = rect.left - minX, oy = rect.top - minY;
   a += ox * g; b += ox * h; c += ox * i;
   d += oy * g; e += oy * h; f += oy * i;
+  if (!invert) return new Float32Array([a, d, g, b, e, h, c, f, i]);
   const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
   return new Float32Array([
     e * i - f * h, f * g - d * i, d * h - e * g,
@@ -90,6 +87,7 @@ class GlassRenderer {
     this.gl = null;
     this.ready = false;
     this.elements = [];
+    this.surfaces = new Map();
     this.textureWidth = this.textureHeight = 0;
     this.onLost = event => { event.preventDefault(); this.fallback(); };
     this.onRestored = () => { this.init(); this.onRestore?.(); };
@@ -98,6 +96,20 @@ class GlassRenderer {
   }
   register() {
     this.elements = [...document.querySelectorAll('.glass-surface')];
+    for (const element of this.elements) {
+      if (this.surfaces.has(element)) continue;
+      const canvas = document.createElement('canvas');
+      canvas.className = 'glass-texture';
+      canvas.setAttribute('aria-hidden', 'true');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) continue;
+      element.prepend(canvas);
+      this.surfaces.set(element, { canvas, ctx });
+    }
+    for (const [element, surface] of this.surfaces) {
+      if (this.elements.includes(element)) continue;
+      surface.canvas.remove(); this.surfaces.delete(element);
+    }
   }
   fallback() {
     this.ready = false;
@@ -140,7 +152,7 @@ class GlassRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      this.uniforms = Object.fromEntries(['scene', 'view', 'pixels', 'rect', 'inverse', 'radius', 'opacity'].map(name => [name, gl.getUniformLocation(this.program, `u_${name}`)]));
+      this.uniforms = Object.fromEntries(['scene', 'view', 'pixels', 'rect', 'projection', 'radius'].map(name => [name, gl.getUniformLocation(this.program, `u_${name}`)]));
       gl.uniform1i(this.uniforms.scene, 0);
       this.textureWidth = this.textureHeight = 0;
       this.ready = true;
@@ -151,44 +163,43 @@ class GlassRenderer {
   }
   draw(scene, width, height) {
     if (!this.ready || document.hidden) return;
-    const gl = this.gl;
-    // Read together before drawing. Bounds track independent float/tilt/entrance
-    // transforms and nested scrolling; hidden cards never reach the GPU.
-    const panels = [];
+    const gl = this.gl, panels = [], density = scene.width / width;
+    // Native canvases travel with their own cards. Only source sampling uses
+    // viewport coordinates; clipping/opacity/scale are applied exactly once by CSS.
     for (const element of this.elements) {
-      if (!element.offsetWidth || element.closest('[hidden]')) continue;
+      const surface = this.surfaces.get(element);
+      if (!surface || !element.offsetWidth || element.closest('[hidden]')) continue;
       const rect = element.getBoundingClientRect();
       if (rect.bottom <= 0 || rect.top >= height || rect.right <= 0 || rect.left >= width) continue;
       const style = getComputedStyle(element);
       const w = parseFloat(style.width) || element.offsetWidth, h = parseFloat(style.height) || element.offsetHeight;
-      panels.push({ rect, width: w, height: h,
-        inverse: glassInverse(rect, w, h, style.transform, style.scale),
-        radius: parseFloat(style.borderTopLeftRadius) || 24, opacity: Number(style.opacity) });
+      panels.push({ surface, width: w, height: h,
+        projection: glassInverse(rect, w, h, style.transform, style.scale, false),
+        radius: parseFloat(style.borderTopLeftRadius) || 24,
+        pixelsX: Math.max(1, Math.round(w * density)), pixelsY: Math.max(1, Math.round(h * density)) });
     }
-    if (this.canvas.width !== scene.width || this.canvas.height !== scene.height) {
-      this.canvas.width = scene.width; this.canvas.height = scene.height;
-    }
-    gl.viewport(0, 0, scene.width, scene.height);
+    // One reusable GPU buffer, shared across cards, with no full-screen ghost layer.
+    const maxWidth = Math.max(1, ...panels.map(p => p.pixelsX));
+    const maxHeight = Math.max(1, ...panels.map(p => p.pixelsY));
+    if (this.canvas.width < maxWidth) this.canvas.width = maxWidth;
+    if (this.canvas.height < maxHeight) this.canvas.height = maxHeight;
     gl.disable(gl.SCISSOR_TEST);
-    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     if (this.textureWidth !== scene.width || this.textureHeight !== scene.height) {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, scene);
       this.textureWidth = scene.width; this.textureHeight = scene.height;
     } else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, scene);
     gl.uniform2f(this.uniforms.view, width, height);
-    gl.uniform2f(this.uniforms.pixels, scene.width, scene.height);
-    gl.enable(gl.SCISSOR_TEST);
-    const sx = scene.width / width, sy = scene.height / height;
-    for (const { rect: r, width: w, height: h, inverse, radius, opacity } of panels) {
-      const left = Math.max(0, Math.floor(r.left * sx)), right = Math.min(scene.width, Math.ceil(r.right * sx));
-      const bottom = Math.max(0, Math.floor((height - r.bottom) * sy)), top = Math.min(scene.height, Math.ceil((height - r.top) * sy));
-      gl.scissor(left, bottom, Math.max(0, right - left), Math.max(0, top - bottom));
-      gl.uniform4f(this.uniforms.rect, r.left, r.top, w, h);
-      gl.uniformMatrix3fv(this.uniforms.inverse, false, inverse);
+    for (const { surface, width: w, height: h, projection, radius, pixelsX, pixelsY } of panels) {
+      gl.viewport(0, 0, pixelsX, pixelsY);
+      gl.uniform2f(this.uniforms.pixels, pixelsX, pixelsY);
+      gl.uniform4f(this.uniforms.rect, 0, 0, w, h);
+      gl.uniformMatrix3fv(this.uniforms.projection, false, projection);
       gl.uniform1f(this.uniforms.radius, Math.min(radius, w / 2, h / 2));
-      gl.uniform1f(this.uniforms.opacity, opacity);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      if (surface.canvas.width !== pixelsX) surface.canvas.width = pixelsX;
+      if (surface.canvas.height !== pixelsY) surface.canvas.height = pixelsY;
+      surface.ctx.drawImage(this.canvas, 0, this.canvas.height - pixelsY, pixelsX, pixelsY, 0, 0, pixelsX, pixelsY);
     }
     document.documentElement.classList.add('has-refraction');
   }

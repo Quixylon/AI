@@ -67,3 +67,28 @@ test('superseded request cannot overwrite data or clear the current request',asy
   assert.deepEqual(applied,['fresh']);
   assert.equal(run("manager.get('sample').promise"),null);
 });
+
+
+test('network filters preserve game history and merge online periods across game changes',()=>{
+  const {c,run}=context();
+  const start=Date.now()-60000;
+  c.rows=[
+    {id:'p1',type:'presence',status:'online',personaState:'online',startedAt:new Date(start).toISOString(),endedAt:new Date(start+10000).toISOString()},
+    {id:'p2',type:'presence',status:'in-game',personaState:'online',startedAt:new Date(start+10000).toISOString(),endedAt:new Date(start+20000).toISOString()},
+    {id:'g1',type:'game',status:'in-game',gameName:'Game',startedAt:new Date(start+10000).toISOString(),endedAt:new Date(start+20000).toISOString()},
+    {id:'p3',type:'presence',status:'offline',personaState:'offline',startedAt:new Date(start+20000).toISOString(),endedAt:null}
+  ];
+  const original=JSON.stringify(c.rows);
+  run('state.steam.history=rows');
+  assert.equal(run('filteredSteamHistory().presence.length'),2);
+  assert.equal(run('filteredSteamHistory().presence[1].status'),'online');
+  assert.equal(run('filteredSteamHistory().presence[1].endedAt'),c.rows[1].endedAt);
+  for(const filter of ['all','online','offline']) {
+    c.filter=filter;
+    run('state.historyView.steamPresence.filter=filter');
+    assert.equal(run('filteredSteamHistory().games.length'),1);
+  }
+  assert.equal(run('filteredSteamHistory().presence.length'),1);
+  assert.equal(run('filteredSteamHistory().presence[0].status'),'offline');
+  assert.equal(JSON.stringify(c.rows),original,'display grouping must not mutate saved history');
+});
