@@ -1046,7 +1046,7 @@ h1[tabindex='-1']:focus {
   padding:11px 12px;
   border:0;
   border-bottom:1px solid #c1daef17;
-  border-left:2px solid #91a6b23d;
+  border-left:0;
   border-radius:0;
   background:transparent
 }
@@ -1072,15 +1072,36 @@ h1[tabindex='-1']:focus {
   letter-spacing:.04em;
 }
 #steamView { align-items:start; }
-.timeline-entry[data-kind='online'],.timeline-entry[data-kind='in-game'] {
-  border-left-color:#98d4b988
+/* The label carries the status, not a faint legacy stripe. */
+.timeline-entry { --status-color:#b7c8e2; }
+.timeline-entry[data-kind='online'],.timeline-entry[data-kind='in-game'] { --status-color:#7ef0d0; }
+.timeline-entry[data-kind='offline'] { --status-color:#b5c5df; }
+.timeline-entry[data-kind='away'] { --status-color:#ffcf89; }
+.timeline-entry[data-kind='snooze'] { --status-color:#c6b2ff; }
+.timeline-entry[data-kind='busy'],.timeline-entry[data-kind='dnd'] { --status-color:#ff9eba; }
+.timeline-entry[data-type='presence'] {
+  margin-bottom:5px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid color-mix(in srgb,var(--status-color) 13%,transparent);
+  background:linear-gradient(110deg,color-mix(in srgb,var(--status-color) 7%,transparent),#0b15241a 80%);
 }
-.timeline-entry[data-kind='away'] {
-  border-left-color:#91bcd4aa
+.timeline-entry[data-type='presence'][data-current='true'] {
+  border-color:color-mix(in srgb,var(--status-color) 35%,transparent);
+  background:linear-gradient(110deg,color-mix(in srgb,var(--status-color) 12%,transparent),#0b15241a 80%);
 }
-.timeline-entry[data-kind='snooze'] {
-  border-left-color:#d3bd8aaa
+.timeline-entry__head .timeline-entry__status {
+  display:inline-flex;
+  align-items:center;
+  padding:4px 10px;
+  border-radius:9px;
+  font-size:14px;
+  font-weight:600;
+  color:var(--status-color);
+  background:color-mix(in srgb,var(--status-color) 12%,#0b1423);
 }
+.timeline-entry__head .timeline-entry__current { color:var(--status-color); font-size:12px; margin-right:auto; align-self:center; }
+#steamPresenceTimeline .timeline-entry__meta { color:#c3d0e2; }
 .timeline-entry__head {
   display:flex;
   justify-content:space-between;
@@ -1607,14 +1628,14 @@ html.page-paused .description-char,html.page-paused .tracker-door__icon span {
   box-shadow:0 8px 18px #0002,inset 0 1px 0 #e2f1ff20;
 }
 .float-surface {
-  --float-height:-5px;
+  --float-height:-2px;
   animation:surface-float var(--float-period,8s) ease-in-out infinite;
   animation-delay:var(--float-phase,0s);
   animation-play-state:paused;
 }
 .float-surface.is-in-view { animation-play-state:running; }
 @keyframes surface-float {
-  0%,100% { translate:0 2px; }
+  0%,100% { translate:0 1px; }
   50% { translate:0 var(--float-height); }
 }
 @media(hover:none),(pointer:coarse) {

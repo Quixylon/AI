@@ -15,8 +15,9 @@ function historyDetails(platform, entry) {
   return approximateTelegramStatuses.has(entry.status) ? 'Точное время недоступно' : entry.status==='online' ? 'Точный онлайн-период' : 'Известный период статуса';
 }
 function buildTimelineEntry(platform, entry) {
-  const item=createElement('article','timeline-entry'); item.dataset.kind=entry.status;
-  const head=createElement('div','timeline-entry__head'); const title=createElement('strong','',historyTitle(platform,entry)); head.append(title);
+  const item=createElement('article','timeline-entry'); item.dataset.kind=entry.status; item.dataset.type=entry.type || 'presence';
+  const head=createElement('div','timeline-entry__head'); const title=createElement('strong',entry.type==='game'?'':'timeline-entry__status',historyTitle(platform,entry)); head.append(title);
+  if(!entry.endedAt) head.append(createElement('span','timeline-entry__current','Сейчас'));
   const meta=createElement('div','timeline-entry__meta');
   const range=createElement('span','',historyTimeRange(entry));
   const duration=createElement('span','timeline-entry__duration');

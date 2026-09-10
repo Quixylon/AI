@@ -101,7 +101,7 @@ jobs:
             runId: process.env.GITHUB_RUN_ID,
             event: process.env.GITHUB_EVENT_NAME,
             builtAt: new Date().toISOString(),
-            design: 'fluid-games-20260910'
+            design: 'morph-glass-20260910'
           }, null, 2) + '\n');
           JS
 

@@ -27,22 +27,28 @@ void main() {
   vec2 q = abs(local) - halfSize + u_radius;
   float distance = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_radius;
   float depth = max(0.0, -distance);
-  vec2 normal;
-  if (max(q.x, q.y) > 0.0) normal = normalize(max(q, 0.0) + 0.0001) * sign(local);
-  else normal = q.x > q.y ? vec2(sign(local.x), 0.0) : vec2(0.0, sign(local.y));
+  // Blend edge normals through the corner instead of switching axes abruptly.
+  vec2 gradient = max(q, 0.0) + exp((q-max(q.x,q.y))/6.0)*3.0;
+  vec2 normal = normalize(gradient+vec2(0.0001))*sign(local);
 
-  // A thick, rounded bevel pulls the texture inward; the centre magnifies gently.
-  float bevel = (1.0 - exp(-depth / 2.8)) * exp(-depth / 24.0);
-  vec2 samplePoint = p - normal * bevel * 54.0 - local * 0.042 * smoothstep(0.0, 46.0, depth);
-  float haze = 1.05 + smoothstep(12.0, 90.0, depth) * 0.7;
-  vec3 color = scene(samplePoint) * 0.4;
+  // Bounded, smooth optical mapping. The old 54px displacement folded the
+  // sampling plane back over itself, producing duplicate dots and long streaks.
+  float band = min(38.0, min(halfSize.x, halfSize.y) * 0.46);
+  float phase = clamp(depth / max(band, 1.0), 0.0, 1.0);
+  float bevel = pow(sin(phase * 3.14159265), 2.0);
+  float viewEdge = clamp(min(min(p.x, u_view.x-p.x), min(p.y, u_view.y-p.y)) / 16.0, 0.0, 1.0);
+  float shift = band * 0.16 * bevel;
+  vec2 bent = local - (normal * shift + local * 0.008 * (1.0-exp(-depth/80.0))) * viewEdge;
+  vec3 refracted = u_projection * vec3(bent, 1.0);
+  vec2 samplePoint = refracted.xy / refracted.z;
+  float haze = 0.65;
+  vec3 color = scene(samplePoint) * 0.60;
   color += (scene(samplePoint + vec2(haze, 0.0)) + scene(samplePoint - vec2(haze, 0.0))
-         + scene(samplePoint + vec2(0.0, haze)) + scene(samplePoint - vec2(0.0, haze))) * 0.15;
-  // Very small chromatic separation lives at the bevel, not across the text.
-  vec2 split = normal * bevel * 2.1;
-  color.r = mix(color.r, scene(samplePoint + split).r, 0.24);
-  color.b = mix(color.b, scene(samplePoint - split).b, 0.24);
-  color = mix(color, vec3(0.19, 0.26, 0.34), 0.09);
+         + scene(samplePoint + vec2(0.0, haze)) + scene(samplePoint - vec2(0.0, haze))) * 0.10;
+  vec2 split = normal * bevel * 0.35;
+  color.r = mix(color.r, scene(samplePoint + split).r, 0.15);
+  color.b = mix(color.b, scene(samplePoint - split).b, 0.15);
+  color = mix(color, vec3(0.23, 0.31, 0.39), 0.14);
   // The native card owns its outline and clipping. A second luminous shader
   // silhouette would look like a displaced duplicate during motion.
   color = mix(color, vec3(0.055, 0.085, 0.14), 0.12);
@@ -50,7 +56,7 @@ void main() {
   vec2 towardPointer=u_pointer.xy-p;
   float proximity=exp(-dot(towardPointer,towardPointer)/(160.0*160.0))*u_pointer.z;
   float facing=max(0.0,dot(normal,normalize(towardPointer+vec2(0.001))));
-  color+=vec3(0.35,0.65,0.8)*bevel*proximity*(0.04+0.13*facing);
+  color+=vec3(0.35,0.65,0.8)*bevel*proximity*(0.025+0.09*facing);
   gl_FragColor = vec4(color, 1.0);
 }
 `;

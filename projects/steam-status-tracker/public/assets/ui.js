@@ -1,7 +1,7 @@
 'use strict';
 
-// Float uses individual translate; entrances add movement to the tilt transform.
-// Additive composition prevents one animation from resetting another.
+// Panels morph around their own centres: no offscreen or directional entrance.
+// Scale/rounding belong to the transition; translate and transform retain float/tilt.
 const surfaceMotion = {
   observer: null,
   observed: new WeakSet(),
@@ -38,38 +38,47 @@ const surfaceMotion = {
     this.animations.add(animation);
     animation.finished.then(()=>{this.animations.delete(animation);motionController.measureSoon();},()=>this.animations.delete(animation));
   },
-  enter(element, delay, compact=false, direction=0) {
+  enter(element, delay=0) {
     if(!element || element.closest('[hidden]') || typeof element.animate!=='function') return;
     this.revealed.add(element);
     if(REDUCED_MOTION.matches) return;
-    // Sample a damped spring in time, then let the browser interpolate it.
-    // Additive transform preserves tilt and float; opacity has its own short fade.
-    const frames=[];
-    for(let i=0;i<=36;i++) {
-      const t=i/36, seconds=t*.72, damping=13, frequency=16;
-      const remaining=i===36?0:Math.exp(-damping*seconds)*(Math.cos(frequency*seconds)+damping/frequency*Math.sin(frequency*seconds));
-      frames.push({transform:`translate3d(${direction*remaining}px,${(compact?12:26)*remaining}px,0)`,offset:t});
-    }
-    this.track(element.animate(frames,{duration:720,delay,easing:'linear',composite:'add',fill:'backwards'}));
-    this.track(element.animate([{opacity:0},{opacity:1}],{duration:220,delay,easing:'ease-out',fill:'backwards'}));
+    const radius=parseFloat(getComputedStyle(element).borderTopLeftRadius)||0;
+    this.track(element.animate([
+      {opacity:0,scale:'.985 .95',filter:'blur(3px)',borderRadius:`${radius+14}px`},
+      {opacity:1,scale:'1.002 1.004',filter:'blur(0px)',borderRadius:`${Math.max(0,radius-1)}px`,offset:.68},
+      {opacity:1,scale:'1',filter:'blur(0px)',borderRadius:`${radius}px`}
+    ],{duration:460,delay,easing:'cubic-bezier(.22,.8,.24,1)',fill:'backwards'}));
+  },
+  visibleElements() {
+    const profile=state.route.screen==='profile';
+    const view=profile?dom.profileScreen:document.querySelector('.tracker-view.is-active');
+    return view?[...view.querySelectorAll(this.selector)].filter(element=>{
+      const r=element.getBoundingClientRect();
+      return !element.closest('[hidden]') && r.width>0 && r.bottom>0 && r.top<innerHeight;
+    }):[];
+  },
+  async exit() {
+    this.cancel();
+    if(REDUCED_MOTION.matches || document.hidden) return;
+    const animations=this.visibleElements().filter(element=>typeof element.animate==='function').map(element=>{
+      const radius=parseFloat(getComputedStyle(element).borderTopLeftRadius)||0;
+      const animation=element.animate([
+        {opacity:1,scale:'1',filter:'blur(0px)',borderRadius:`${radius}px`},
+        {opacity:0,scale:'.985 .96',filter:'blur(5px)',borderRadius:`${radius+18}px`}
+      ],{duration:150,easing:'cubic-bezier(.4,0,.8,.3)',fill:'forwards'});
+      this.track(animation); return animation;
+    });
+    await Promise.allSettled(animations.map(animation=>animation.finished));
+    // The caller hides the old route synchronously before removing filled effects.
+    return ()=>animations.forEach(animation=>animation.cancel());
   },
   reveal() {
     const route = `${state.route.screen}/${state.route.trackerTab}`;
     if (route === this.lastRoute) return;
-    const previous = this.lastRoute;
     this.lastRoute = route;
     this.cancel();
     if (REDUCED_MOTION.matches) return;
-    const profile = state.route.screen === 'profile';
-    const view = profile ? dom.profileScreen : document.querySelector('.tracker-view.is-active');
-    if (!view) return;
-    const elements = [...view.querySelectorAll(profile ? '.profile-masthead, .panel, .profile-footer' : this.selector)];
-    if (!profile && !previous?.startsWith('tracker/')) elements.unshift(document.querySelector('.tracker-topbar'));
-    const direction=previous?(profile?-18:18):0;
-    elements.forEach((element,index)=>{
-      if(element && element.getBoundingClientRect().top<innerHeight+40) this.enter(element,Math.min(index*45,180),false,direction);
-    });
-    if(profile) view.querySelectorAll('.social-link').forEach((element,index)=>this.enter(element,110+index*24,true));
+    this.visibleElements().forEach((element,index)=>this.enter(element,Math.min(index*28,84)));
     motionController.measureSoon();
   }
 };

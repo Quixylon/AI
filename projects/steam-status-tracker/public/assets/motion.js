@@ -100,8 +100,8 @@ class CanvasController {
     this.spot = { x: 0, y: 0, strength: 0 };
     this.pointer = { x: 0, y: 0, active: false };
     this.clock = 0;
-    this.pathLength = 0;
-    this.lastPulseAt = 0;
+    this.wake = [];
+    this.lastWakeAt = 0;
     this.lens = typeof GlassRenderer === 'function' ? new GlassRenderer(byId('glassCanvas')) : null;
     if (this.lens) this.lens.onRestore = () => this.draw();
   }
@@ -133,11 +133,15 @@ class CanvasController {
   }
   setPointer(x, y) {
     if (REDUCED_MOTION.matches) return;
-    if(this.pointer.active) this.pathLength+=Math.hypot(x-this.pointer.x,y-this.pointer.y);
     const now=performance.now();
-    if(this.pathLength>100 && now-this.lastPulseAt>140) {
-      this.pulse(this.spot.x,this.spot.y,.32);
-      this.pathLength=0; this.lastPulseAt=now;
+    if(this.pointer.active) {
+      const dx=x-this.pointer.x, dy=y-this.pointer.y, distance=Math.hypot(dx,dy);
+      if(distance>2 && now-this.lastWakeAt>24) {
+        // Each sample carries direction, giving movement a curling wake rather
+        // than emitting more concentric click waves. Bound both work and energy.
+        this.wake.push({x,y,dx:dx/distance,dy:dy/distance,age:0,power:Math.min(1,distance/22)});
+        this.wake=this.wake.slice(-16); this.lastWakeAt=now;
+      }
     }
     if (!this.pointer.active && this.spot.strength < .01) { this.spot.x = x; this.spot.y = y; }
     this.pointer = { x, y, active: true };
@@ -174,6 +178,8 @@ class CanvasController {
     this.spot.y += (this.pointer.y - this.spot.y) * blend;
     this.spot.strength += (glowTarget - this.spot.strength) * blend;
     if (Math.abs(glowTarget - this.spot.strength) < .002) this.spot.strength = glowTarget;
+    for (const sample of this.wake) sample.age+=dt;
+    this.wake=this.wake.filter(sample=>sample.age<1.6);
     for (const ripple of this.ripples) ripple.age += dt;
     this.ripples = this.ripples.filter(ripple => ripple.age < 2.4);
     const flowX=Math.max(-36,Math.min(36,this.pointer.x-this.spot.x))*.55;
@@ -199,6 +205,21 @@ class CanvasController {
         y += ry / Math.max(1, radius) * shift;
         light = Math.min(1.3, light + crest);
       }
+      let curlX=0,curlY=0,wakeLight=0;
+      for(const sample of this.wake) {
+        const wx=p.homeX-sample.x,wy=p.homeY-sample.y;
+        const radius=Math.hypot(wx,wy),falloff=Math.exp(-radius*radius/10000);
+        const life=(1-sample.age/1.6)**2;
+        const strength=falloff*life*sample.power;
+        // A travelling eddy turns sideways behind the cursor and then diffuses.
+        const turn=(wx*sample.dy-wy*sample.dx)>=0?1:-1;
+        curlX+=(sample.dx*18-wy/Math.max(35,radius)*turn*25)*strength;
+        curlY+=(sample.dy*18+wx/Math.max(35,radius)*turn*25)*strength;
+        wakeLight+=strength*.3;
+      }
+      const wakeScale=Math.min(1,30/Math.max(1,Math.hypot(curlX,curlY)));
+      x+=curlX*wakeScale; y+=curlY*wakeScale;
+      light=Math.min(1.3,light+wakeLight);
       const ex=p.x-x, ey=p.y-y;
       const vx=p.vx, vy=p.vy;
       p.x=x+decay*(ex*cosine+(vx+damping*ex)/frequency*sine);
@@ -243,14 +264,25 @@ class CanvasController {
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, this.width, this.height);
     }
+    // Soft pigment follows the recent path, but the lattice remains the subject.
+    for(let i=0;i<this.wake.length;i+=3) {
+      const sample=this.wake[i],size=100+sample.age*40;
+      const alpha=(1-sample.age/1.6)**2*sample.power*.09;
+      const glow=ctx.createRadialGradient(sample.x,sample.y,0,sample.x,sample.y,size);
+      glow.addColorStop(0,`rgba(127,156,248,${alpha})`);
+      glow.addColorStop(.55,`rgba(74,214,205,${alpha*.45})`);
+      glow.addColorStop(1,'rgba(74,214,205,0)');
+      ctx.fillStyle=glow;ctx.fillRect(sample.x-size,sample.y-size,size*2,size*2);
+    }
     for (const p of this.particles) {
       // Brightness rolls through a fixed lattice; it never becomes scattered lines.
       const tide = .5 + .5 * Math.sin(p.homeX * .006 + p.homeY * .004 - t * .55);
       const crest = Math.pow(tide, 6);
-      const light = p.light + crest * .38;
+      const interference=.5+.5*Math.sin(p.homeX*.010-p.homeY*.006+t*.38);
+      const light = p.light + crest * .25 + Math.pow(interference,9)*.25;
       const motion = REDUCED_MOTION.matches ? 0 : 1;
-      const x = p.x + Math.sin(p.homeY * .009 + t * .44) * 8 * motion;
-      const y = p.y + Math.sin(p.homeX * .007 - t * .56) * 10 * motion;
+      const x = p.x + (Math.sin(p.homeY * .009 + t * .44)*8+Math.sin(p.homeX*.004+p.homeY*.007-t*.31)*5) * motion;
+      const y = p.y + (Math.sin(p.homeX * .007 - t * .56)*10+Math.cos(p.homeY*.006-p.homeX*.005+t*.26)*4) * motion;
       const depth = .78 + .22 * Math.cos(p.homeY / this.height * Math.PI);
       if (light > .10) {
         ctx.fillStyle = `rgba(139,193,245,${light * .085})`;
@@ -263,7 +295,7 @@ class CanvasController {
   }
   drawStatic() {
     this.stop(); this.pointer.active = false; this.ripples = []; this.spot.strength = 0;
-    this.pathLength=0;
+    this.wake=[];
     for (const p of this.particles) { p.x = p.homeX; p.y = p.homeY; p.vx=p.vy=0; p.light = 0; }
     this.draw();
   }
