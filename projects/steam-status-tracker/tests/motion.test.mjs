@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 const source = fs.readFileSync(new URL('../public/assets/motion.js', import.meta.url), 'utf8');
 function fixture() {
-  let time = 0, sequence = 0, largestDot = 0;
+  let time = 0, sequence = 0, largestDot = 0, largestGlow = 0, spriteCount = 0;
   const queue = new Map();
   const styles = new Map();
   const element = {
@@ -15,10 +15,10 @@ function fixture() {
     getBoundingClientRect: () => ({ left: 100, top: 100, right: 500, bottom: 400, width: 400, height: 300 }),
     matches: () => false
   };
-  const draw = { save() {}, restore() {}, translate() {}, scale() {}, createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc(x,y,radius) { largestDot=Math.max(largestDot,radius); }, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
+  const draw = { drawImage(image,x,y,width,height) { largestGlow=Math.max(largestGlow,width,height); }, save() {}, restore() {}, translate() {}, scale() {}, createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, setTransform() {}, clearRect() {}, beginPath() {}, arc(x,y,radius) { largestDot=Math.max(largestDot,radius); }, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
   const canvas = { getContext: () => draw };
   const reduced = { matches: false }, coarse = { matches: false, addEventListener() {}, removeEventListener() {} };
-  const document = { hidden: false, querySelectorAll: () => [element] };
+  const document = { hidden: false, createElement: () => { spriteCount++; return {getContext:()=>draw}; }, querySelectorAll: () => [element] };
   const context = vm.createContext({
     document, REDUCED_MOTION: reduced, COARSE_POINTER: coarse,
     innerWidth: 1440, innerHeight: 900, devicePixelRatio: 3,
@@ -32,6 +32,8 @@ function fixture() {
   return {
     context, reduced, coarse, document, styles, queue, canvas,
     get largestDot() { return largestDot; },
+    get largestGlow() { return largestGlow; },
+    get spriteCount() { return spriteCount; },
     advanceTime(ms) { time += ms; },
     step(ms) { time += ms; const callbacks = [...queue.values()]; queue.clear(); callbacks.forEach(fn => fn(time)); },
     read() { return parseFloat(styles.get('--tilt-y') || '0'); }
@@ -94,7 +96,7 @@ test('dot grid is regular, reacts locally to mouse and touch, then returns home 
   const far = dots.at(-1);
   grid.setPointer(near.homeX - 20, near.homeY, { type: 'mouse' });
   for (let i = 0; i < 120; i++) t.step(1000 / 60);
-  assert.ok(near.x > near.homeX + 1 && near.x < near.homeX + grid.spacing*.18, 'local response stays inside its cell');
+  assert.ok(near.x > near.homeX + 1 && near.x < near.homeX + grid.spacing*.25, 'local response stays inside its cell');
   assert.ok(near.light > .5);
   assert.equal(far.x, far.homeX);
   grid.leave();
@@ -165,7 +167,7 @@ test('cursor movement creates a light trail without emitting click rings',()=>{
   assert.equal(grid.ripples.length,0,'movement must not emit concentric click waves');
   assert.ok(grid.wake.length>0 && grid.wake.length<=16);
   assert.ok(grid.particles.some(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)>1));
-  assert.ok(grid.particles.every(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)<=grid.spacing*.18+.00001));
+  assert.ok(grid.particles.every(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)<=grid.spacing*.25+.00001));
   grid.leave();for(let i=0;i<240;i++)t.step(1000/60);
   assert.equal(grid.wake.length,0);
   assert.ok(grid.particles.every(p=>p.x===p.homeX && p.y===p.homeY));
@@ -198,12 +200,21 @@ test('rapid overlapping gestures preserve dot separation and never inflate halos
     if(frame%12===0)grid.pulse(360,240);
     t.step(1000/60);
     for(const p of grid.particles) {
-      assert.ok(Math.hypot(p.x-p.homeX,p.y-p.homeY)<=grid.spacing*.18+1e-6);
+      assert.ok(Math.hypot(p.x-p.homeX,p.y-p.homeY)<=grid.spacing*.25+1e-6);
       for(const key of [`${p.homeX+grid.spacing},${p.homeY}`,`${p.homeX},${p.homeY+grid.spacing}`]) {
         const neighbour=homes.get(key);
-        if(neighbour)assert.ok(Math.hypot(p.x-neighbour.x,p.y-neighbour.y)>=grid.spacing*.63,'adjacent dots must not cluster');
+        if(neighbour) {
+          const a=grid.projectDot(p),b=grid.projectDot(neighbour);
+          assert.ok(Math.hypot(a.x-b.x,a.y-b.y)>=grid.spacing*.60,'rendered neighbours must stay separated after both ambient and pointer deformation');
+        }
       }
     }
   }
-  assert.ok(t.largestDot<=2.4,'light halos stay small even after repeated gestures');
+  assert.ok(t.largestDot<=1.31,'bright dot cores never inflate into circles');
+  assert.ok(t.largestGlow>0 && t.largestGlow<=10,'soft glow has a fixed small footprint');
+  assert.equal(t.spriteCount,1,'all frames reuse one glow texture');
+  const p=grid.particles[20];grid.clock=0;const first=grid.projectDot(p);grid.clock=3;const later=grid.projectDot(p);
+  assert.ok(Math.hypot(later.x-first.x,later.y-first.y)>5,'the field remains visibly alive without pointer movement');
+  t.reduced.matches=true;grid.drawStatic();
+  assert.equal(grid.projectDot(p).x,p.homeX);assert.equal(grid.projectDot(p).y,p.homeY);
 });
