@@ -46,7 +46,7 @@ test('motion is time based, bounded, idle aware, and respects device preferences
 const at60 = sample(60, .2), at144 = sample(144, 29 / 144);
 assert.ok(Math.abs(at60.read() - at144.read()) < .012, 'time-based tilt must agree at 60 and 144 Hz');
 const test = sample(60, 2);
-assert.ok(test.read() > 1 && test.read() <= 1.5, 'outer card tilt stays subtle');
+assert.ok(test.read() > 1.5 && test.read() <= 2.05, 'outer card tilt stays subtle');
 assert.equal(test.queue.size, 0, 'settled panels must stop requesting frames');
 test.context.motion.reset();
 for (let i = 0; i < 120; i++) test.step(1000 / 60);

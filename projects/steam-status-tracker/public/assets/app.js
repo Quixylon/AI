@@ -5,7 +5,7 @@
 class CatController {
   constructor(button,hint){this.button=button;this.hint=hint;this.audioContext=null;this.animationTimer=null;this.clicked=false;}
   init(){if(!this.button)return;try{this.clicked=localStorage.getItem('qulon-cat-clicked')==='1';}catch{}if(this.hint)this.hint.hidden=this.clicked;this.button.addEventListener('click',()=>this.meow());}
-  async meow(){clearTimeout(this.animationTimer);this.button.classList.remove('is-meowing');void this.button.offsetWidth;this.button.classList.add('is-meowing');this.animationTimer=setTimeout(()=>this.button.classList.remove('is-meowing'),600);if(this.hint)this.hint.hidden=true;try{localStorage.setItem('qulon-cat-clicked','1');}catch{}if(navigator.vibrate)navigator.vibrate(24);try{await this.playSound();}catch{} }
+  async meow(){const now=performance.now();if(this.lastMeow && now-this.lastMeow<300)return;this.lastMeow=now;clearTimeout(this.animationTimer);this.button.classList.remove('is-meowing');void this.button.offsetWidth;this.button.classList.add('is-meowing');this.animationTimer=setTimeout(()=>this.button.classList.remove('is-meowing'),1150);if(this.hint)this.hint.hidden=true;try{localStorage.setItem('qulon-cat-clicked','1');}catch{}if(navigator.vibrate)navigator.vibrate(12);try{await this.playSound();}catch{} }
   async playSound(){ return playProfileMeow(); }
 }
 const catController=new CatController(dom.catButton,dom.catHint);
@@ -66,6 +66,7 @@ async function initializeData(){
 }
 function initialize(){
   setupPresentation();
+  interfaceAudio.init();
   byId('profileName')?.setAttribute('tabindex','-1'); byId('trackerTitle')?.setAttribute('tabindex','-1');
   renderBuiltInIcons(); bindEvents(); motionController.registerAll(); interactionHub.init(); canvasController.init(); catController.init(); startLiveTicker(); renderRoute(false); initializeData();
 }

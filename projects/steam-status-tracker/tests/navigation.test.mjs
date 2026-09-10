@@ -32,3 +32,13 @@ test('returning to the current route cancels its pending exit immediately',async
   t.pending[0]();await first;
   assert.deepEqual(t.applied,['#profile']);
 });
+
+test('route expansion begins at the originating button rectangle',()=>{
+  const t=fixture();
+  const from={left:25,top:480,width:320,height:72},to={left:180,top:20,width:960,height:1200};
+  const g=t.context.routeMorphGeometry(from,to);
+  assert.equal(to.left+to.width/2+g.x,from.left+from.width/2);
+  assert.equal(to.top+to.height/2+g.y,from.top+from.height/2);
+  assert.equal(to.width*g.sx,from.width);
+  assert.equal(to.height*g.sy,from.height);
+});
