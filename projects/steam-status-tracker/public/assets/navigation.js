@@ -9,8 +9,19 @@ function parseRoute(hash) {
   return { screen:'profile',trackerTab:'overview',canonical:'#profile' };
 }
 function navigate(route) { const parsed=typeof route==='string'?parseRoute(route):route; if (location.hash!==parsed.canonical) location.hash=parsed.canonical; else renderRoute(false); }
-function renderRoute(moveFocus=true) {
-  const parsed=parseRoute(location.hash); state.route={screen:parsed.screen,trackerTab:parsed.trackerTab};
+let routeRevision=0;
+async function renderRoute(moveFocus=true) {
+  const revision=++routeRevision;
+  surfaceMotion.cancel();
+  const parsed=parseRoute(location.hash);
+  const changed=state.route.screen!==parsed.screen || state.route.trackerTab!==parsed.trackerTab;
+  const release=moveFocus && changed ? await surfaceMotion.exit() : null;
+  if(revision!==routeRevision) { release?.(); return; }
+  applyRoute(parsed,moveFocus);
+  release?.();
+}
+function applyRoute(parsed,moveFocus) {
+  state.route={screen:parsed.screen,trackerTab:parsed.trackerTab};
   if (location.hash!==parsed.canonical) { history.replaceState(null,'',parsed.canonical); }
   const profileActive=parsed.screen==='profile'; document.body.dataset.route=profileActive?'profile':'tracker'; document.title=profileActive?'Qu’lon':'Qu’lon — трекер';
   if (dom.profileScreen) { dom.profileScreen.hidden=!profileActive; dom.profileScreen.classList.toggle('is-active',profileActive); dom.profileScreen.setAttribute('aria-hidden',String(!profileActive)); }

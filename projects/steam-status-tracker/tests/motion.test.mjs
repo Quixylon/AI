@@ -153,3 +153,18 @@ test('phones keep desktop wave strength and 60 Hz scene updates; static mode fre
   assert.equal(phone.context.background.clock, clock);
   assert.equal(phone.queue.size, 0);
 });
+
+test('cursor movement creates a bounded directional wake without emitting click rings',()=>{
+  const t=fixture(),grid=t.context.background;
+  grid.init();
+  for(let i=0;i<160;i++)t.step(1000/60);
+  grid.setPointer(200,300);
+  for(let i=0;i<40;i++) {t.step(1000/30);grid.setPointer(200+i*9,300+Math.sin(i*.2)*35);}
+  assert.equal(grid.ripples.length,0,'movement must not emit concentric click waves');
+  assert.ok(grid.wake.length>0 && grid.wake.length<=16);
+  assert.ok(grid.particles.some(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)>8));
+  assert.ok(grid.particles.every(p=>Math.hypot(p.x-p.homeX,p.y-p.homeY)<70));
+  grid.leave();for(let i=0;i<240;i++)t.step(1000/60);
+  assert.equal(grid.wake.length,0);
+  assert.ok(grid.particles.every(p=>p.x===p.homeX && p.y===p.homeY));
+});
