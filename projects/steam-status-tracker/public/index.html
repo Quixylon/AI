@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#090d13">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Qu’lon — мои цифровые следы. Профили, ссылки и трекер активности.">
-  <meta name="quixylon-build" content="refractive-glass-20260906">
-  <title>Qu’lon — цифровые следы</title>
+  <meta name="description" content="Qu’lon — профили, ссылки и трекер активности.">
+  <meta name="quixylon-build" content="surface-flow-20260910">
+  <title>Qu’lon</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/site.css?v=20260906-6">
+  <link rel="stylesheet" href="./assets/site.css?v=20260910-1">
 </head>
 <body data-route="profile">
   <div class="atmosphere" aria-hidden="true"></div>
@@ -18,7 +18,7 @@
   <div class="sr-only" id="appStatusLive" aria-live="polite"></div>
   <main class="app-shell">
     <section id="profileScreen" class="screen is-active" aria-hidden="false" aria-labelledby="profileName">
-      <div class="profile-masthead"><span class="wordmark">Q<span class="wordmark__dot">.</span></span><span>ЦИФРОВЫЕ СЛЕДЫ</span><span class="masthead-handle">@quixylon</span></div>
+      <div class="profile-masthead"><span class="wordmark">Q<span class="wordmark__dot">.</span></span><span class="masthead-handle">@quixylon</span></div>
       <div class="profile-composition">
         <article id="profileCard" class="identity-panel panel">
           <div class="identity-body">
@@ -26,11 +26,11 @@
             <div class="avatar-shell"><div class="avatar-frame"><div id="profileAvatarPlaceholder" class="avatar-placeholder" aria-hidden="true">Q</div><img id="profileAvatar" alt="Аватар Qu’lon" hidden width="112" height="112"></div><span id="profilePresenceDot" class="presence-dot" data-state="offline" aria-hidden="true"></span></div>
           </div>
           <div class="identity-bottomline"><div id="profileStatusPill" class="status-pill" data-state="offline" aria-live="polite"><span class="status-pill__dot" aria-hidden="true"></span><span id="profileStatusText">Проверяю статус…</span></div></div>
-        </article>
-        <section class="intro-panel panel" aria-labelledby="helloTitle">
+        <section class="intro-panel" aria-labelledby="helloTitle">
           <div class="intro-topline"><h2 id="helloTitle">Привет<span class="accent-period">.</span></h2><button id="catButton" class="cat-button" type="button" aria-label="Мяукнуть" title="Мяу"><span class="cat-emoji" aria-hidden="true">🐈</span></button></div>
-          <p id="profileDescription">Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.</p>
+          <p id="profileDescription">Мои профили, любимые игры и места, где меня можно найти.</p>
         </section>
+        </article>
         <section class="destinations-panel panel" aria-labelledby="linksTitle">
           <header class="destinations-header"><div><h2 id="linksTitle">Где меня найти</h2></div></header>
           <nav id="profileLinks" class="links-grid" aria-label="Ссылки профиля"><a class="social-link" data-key="telegram" href="https://t.me/quixylon" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="telegram" aria-hidden="true"></span><span class="social-link__label">Telegram</span><span class="social-link__arrow" aria-hidden="true">↗</span></a>
@@ -42,7 +42,7 @@
 <a class="social-link" data-key="github" href="https://github.com/Quixylon/AI" target="_blank" rel="noopener noreferrer"><span class="social-link__icon" data-icon="github" aria-hidden="true"></span><span class="social-link__label">GitHub</span><span class="social-link__arrow" aria-hidden="true">↗</span></a></nav>
           <a id="gunsProfileButton" class="guns-link" href="https://guns.lol/quixylon" target="_blank" rel="noopener noreferrer"><span>guns.lol</span><span aria-hidden="true">↗</span></a>
         </section>
-        <a class="tracker-door panel" href="#tracker/overview" aria-label="Открыть трекер активности"><span class="tracker-door__icon" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span class="tracker-door__copy"><span>За цифровыми следами</span><strong>Открыть трекер</strong></span><span class="tracker-door__arrow" aria-hidden="true">↗</span></a>
+        <a class="tracker-door panel" href="#tracker/overview" aria-label="Открыть трекер активности"><span class="tracker-door__icon" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span class="tracker-door__copy"><span>Активность в Steam</span><strong>Открыть трекер</strong></span><span class="tracker-door__arrow" aria-hidden="true">↗</span></a>
       </div>
       <footer class="profile-footer"><div class="profile-meta"><span class="profile-meta__label">Статус</span><span id="profileFooterStatus" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Обновлено</span><span id="profileUpdatedAt" class="profile-meta__value">—</span></div><div class="profile-meta"><span class="profile-meta__label">Посетители</span><span id="visitorCount" class="profile-meta__value">—</span></div></footer>
     </section>
@@ -205,25 +205,25 @@
 <div class="stat-row"><span>Онлайн</span><strong id="steamStatOnline">—</strong></div>
 <div class="stat-row"><span>В играх</span><strong id="steamStatGames">—</strong></div>
 <div class="stat-row"><span>Запусков игр</span><strong id="steamStatLaunches">—</strong></div>
-<div class="stat-row"><span>Последняя игра</span><strong id="steamStatLastGame">—</strong></div>
-<div class="stat-row"><span>В играх за 7 дней</span><strong id="steamStatGames7d">—</strong></div><div class="stat-row"><span>Уникальных игр</span><strong id="steamStatUniqueGames">—</strong></div><div class="stat-row"><span>Чаще запускается</span><strong id="steamStatMostLaunched">—</strong></div><div class="stat-row"><span>Больше всего времени</span><strong id="steamStatLongestGame">—</strong></div></div>
+<p class="stats-section-label">За 7 дней</p><div class="stat-row"><span>В играх за 7 дней</span><strong id="steamStatGames7d">—</strong></div><p class="stats-section-label">В сохранённой истории</p><div class="stat-row"><span>Последняя игра</span><strong id="steamStatLastGame">—</strong></div>
+<div class="stat-row"><span>Уникальных игр</span><strong id="steamStatUniqueGames">—</strong></div><div class="stat-row"><span>Чаще запускается</span><strong id="steamStatMostLaunched">—</strong></div><div class="stat-row"><span>Больше всего времени</span><strong id="steamStatLongestGame">—</strong></div></div>
 </aside>
 </div>
 <section aria-labelledby="steamGamesHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
 <div class="panel-title history-panel-title">
-<div><h3 id="steamGamesHistoryTitle">История игр</h3><p>Запуски и игровые сессии Steam</p></div>
-<div aria-label="Фильтр истории Steam" class="history-filters" role="group">
-<button aria-pressed="true" class="filter-button is-active" data-history-filter="all" data-history-platform="steam" type="button">Всё</button>
-<button aria-pressed="false" class="filter-button" data-history-filter="games" data-history-platform="steam" type="button">Игры</button>
-<button aria-pressed="false" class="filter-button" data-history-filter="online" data-history-platform="steam" type="button">Онлайн</button>
-<button aria-pressed="false" class="filter-button" data-history-filter="offline" data-history-platform="steam" type="button">Офлайн</button>
-</div>
+<div><h3 id="steamGamesHistoryTitle">История игр</h3><p>Последние сессии · сначала новые</p></div>
+
 </div>
 <div aria-live="polite" class="timeline" tabindex="0" role="region" id="steamGameTimeline"></div>
 
 </section>
 <section aria-labelledby="steamPresenceHistoryTitle" class="history-panel motion-panel" data-motion-max="1.15" data-motion-panel="1">
-<div class="panel-title"><div><h3 id="steamPresenceHistoryTitle">История сети</h3><p>Периоды онлайна и офлайна</p></div></div>
+<div class="panel-title"><div><h3 id="steamPresenceHistoryTitle">История сети</h3><p>Подключения, выходы и смены статуса</p></div></div>
+<div aria-label="Фильтр истории сети" class="history-filters" role="group">
+<button aria-pressed="true" class="filter-button is-active" data-history-filter="all" data-history-platform="steamPresence" type="button">Всё</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="online" data-history-platform="steamPresence" type="button">В сети</button>
+<button aria-pressed="false" class="filter-button" data-history-filter="offline" data-history-platform="steamPresence" type="button">Не в сети</button>
+</div>
 <div aria-live="polite" class="timeline" tabindex="0" role="region" id="steamPresenceTimeline"></div>
 
 </section>
@@ -370,18 +370,18 @@
 </main>
 <div aria-atomic="true" aria-live="polite" class="toast-region" id="toastRegion"></div>
 
-<script src="./assets/config.js?v=20260906-6" defer></script>
-<script src="./assets/data.js?v=20260906-6" defer></script>
-<script src="./assets/profile.js?v=20260906-6" defer></script>
-<script src="./assets/platforms.js?v=20260906-6" defer></script>
-<script src="./assets/history.js?v=20260906-6" defer></script>
-<script src="./assets/navigation.js?v=20260906-6" defer></script>
-<script src="./assets/glass.js?v=20260906-6" defer></script>
-<script src="./assets/motion.js?v=20260906-6" defer></script>
-<script src="./assets/icons.js?v=20260906-6" defer></script>
-<script src="./assets/ui.js?v=20260906-6" defer></script>
-<script src="./assets/cat-audio.js?v=20260906-6" defer></script>
-<script src="./assets/app.js?v=20260906-6" defer></script>
+<script src="./assets/config.js?v=20260910-1" defer></script>
+<script src="./assets/data.js?v=20260910-1" defer></script>
+<script src="./assets/profile.js?v=20260910-1" defer></script>
+<script src="./assets/platforms.js?v=20260910-1" defer></script>
+<script src="./assets/history.js?v=20260910-1" defer></script>
+<script src="./assets/navigation.js?v=20260910-1" defer></script>
+<script src="./assets/glass.js?v=20260910-1" defer></script>
+<script src="./assets/motion.js?v=20260910-1" defer></script>
+<script src="./assets/icons.js?v=20260910-1" defer></script>
+<script src="./assets/ui.js?v=20260910-1" defer></script>
+<script src="./assets/cat-audio.js?v=20260910-1" defer></script>
+<script src="./assets/app.js?v=20260910-1" defer></script>
 <noscript><p class="no-script">Для статусов и трекера нужен JavaScript. Ссылки профиля доступны выше.</p></noscript>
 </body>
 </html>

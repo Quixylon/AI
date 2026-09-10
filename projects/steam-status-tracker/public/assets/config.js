@@ -102,8 +102,7 @@ const state = {
   telegram: { status:null, history:[], loading:false, refreshing:false, error:null, updatedAt:null },
   visitors: { count:null, loading:false, error:null },
   historyView: {
-    steam: { filter:'all', visible:CONFIG.history.initialVisibleEntries },
-    steamGames: { filter:'games', visible:CONFIG.history.initialVisibleEntries },
+    steamGames: { visible:CONFIG.history.initialVisibleEntries },
     steamPresence: { filter:'all', visible:CONFIG.history.initialVisibleEntries },
     discord: { filter:'all', visible:CONFIG.history.initialVisibleEntries },
     telegram: { filter:'all', visible:CONFIG.history.initialVisibleEntries }
@@ -153,7 +152,7 @@ function normalizeProfile(raw = {}) {
   })).filter(item => item.url) : [];
   return {
     displayName:cleanString(raw.displayName, 'Qu’lon'), handle:cleanString(raw.handle, '@quixylon'),
-    description:cleanString(raw.description, 'Здесь собраны мои некоторые цифровые следы — места, где я иногда появляюсь.'),
+    description:cleanString(raw.description, 'Мои профили, любимые игры и места, где меня можно найти.'),
     avatarUrl:normalizeExternalUrl(raw.avatarUrl) || (typeof raw.avatarUrl === 'string' && raw.avatarUrl.startsWith('data:image/') ? raw.avatarUrl : null),
     useSteamAvatar:raw.useSteamAvatar !== false, links
   };

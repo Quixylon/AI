@@ -16,27 +16,53 @@ function historyDetails(platform, entry) {
 }
 function buildTimelineEntry(platform, entry) {
   const item=createElement('article','timeline-entry'); item.dataset.kind=entry.status;
-  const head=createElement('div','timeline-entry__head'); const title=createElement('strong','',historyTitle(platform,entry)); const date=createElement('span','',formatDateTime(entry.startedAt)); head.append(title,date);
+  const head=createElement('div','timeline-entry__head'); const title=createElement('strong','',historyTitle(platform,entry)); head.append(title);
   const meta=createElement('div','timeline-entry__meta');
-  const range=createElement('span','',formatDateRange(entry.startedAt,entry.endedAt));
-  const duration=createElement('span');
+  const range=createElement('span','',historyTimeRange(entry));
+  const duration=createElement('span','timeline-entry__duration');
   if (platform==='telegram'&&approximateTelegramStatuses.has(entry.status)) duration.textContent='Точное время недоступно';
   else if (!entry.endedAt) { duration.dataset.liveDuration=entry.startedAt; duration.textContent=formatDuration(getElapsedSeconds(entry.startedAt)); }
   else duration.textContent=formatDuration(getElapsedSeconds(entry.startedAt,entry.endedAt));
-  meta.append(range,duration);
+  head.append(duration); meta.append(range);
   const details=createElement('p','timeline-entry__details',historyDetails(platform,entry));
   const badges=createElement('div','timeline-entry__meta');
-  if (!entry.endedAt) badges.append(createElement('span','timeline-entry__badge is-current','Сейчас'));
+  if (!entry.endedAt) item.dataset.current='true';
   if (platform==='telegram'&&approximateTelegramStatuses.has(entry.status)) badges.append(createElement('span','timeline-entry__badge is-approximate','Приблизительно'));
   item.append(head,meta); if (details.textContent) item.append(details); if (badges.childNodes.length) item.append(badges); return item;
+}
+function historyDateKey(value) {
+  const date=new Date(value);
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+function historyDayLabel(value) {
+  const date=new Date(value), today=new Date(), yesterday=new Date(today);
+  yesterday.setDate(today.getDate()-1);
+  if(historyDateKey(date)===historyDateKey(today)) return 'Сегодня';
+  if(historyDateKey(date)===historyDateKey(yesterday)) return 'Вчера';
+  return new Intl.DateTimeFormat(CONFIG.interface.locale,{day:'numeric',month:'long',...(date.getFullYear()!==today.getFullYear()?{year:'numeric'}:{})}).format(date);
+}
+function historyTimeRange(entry) {
+  const start=timeFormatter.format(new Date(entry.startedAt));
+  if(!entry.endedAt) return `${start} — сейчас`;
+  const end=historyDateKey(entry.startedAt)===historyDateKey(entry.endedAt)
+    ? timeFormatter.format(new Date(entry.endedAt)) : formatDateTime(entry.endedAt);
+  return `${start} — ${end}`;
 }
 function renderTimeline(containerId, entries, platform, viewKey) {
   const container=byId(containerId); if (!container) return;
   const view=state.historyView[viewKey]; const visibleEntries=entries.slice(0,view.visible);
   const scrollTop = container.scrollTop;
   container.replaceChildren();
-  if (!visibleEntries.length) container.append(createElement('div','timeline-empty','Для выбранного фильтра записей нет.'));
-  else { const fragment=document.createDocumentFragment(); for (const entry of visibleEntries) fragment.append(buildTimelineEntry(platform,entry)); container.append(fragment); }
+  if (!visibleEntries.length) container.append(createElement('div','timeline-empty',viewKey==='steamGames'?'Игровых сессий пока нет.':'Для выбранного статуса записей нет.'));
+  else {
+    const fragment=document.createDocumentFragment(); let previousDay=null;
+    for (const entry of visibleEntries) {
+      const day=historyDateKey(entry.startedAt);
+      if(day!==previousDay) fragment.append(createElement('h4','timeline-day',historyDayLabel(entry.startedAt)));
+      fragment.append(buildTimelineEntry(platform,entry)); previousDay=day;
+    }
+    container.append(fragment);
+  }
   container.scrollTop = scrollTop;
   const more=byId(viewKey==='steamGames'?'steamGameMore':viewKey==='steamPresence'?'steamPresenceMore':viewKey==='discord'?'discordMore':'telegramMore');
   const collapse=byId(viewKey==='steamGames'?'steamGameCollapse':viewKey==='steamPresence'?'steamPresenceCollapse':viewKey==='discord'?'discordCollapse':'telegramCollapse');
@@ -44,10 +70,22 @@ function renderTimeline(containerId, entries, platform, viewKey) {
   motionController.measureSoon();
 }
 function filteredSteamHistory() {
-  const filter=state.historyView.steam.filter; const history=state.steam.history;
+  const filter=state.historyView.steamPresence.filter; const history=state.steam.history;
+  const presence=[];
+  // Game launches belong to the game stream. Preserve actual persona changes,
+  // but coalesce continuous network states across game launches and exits.
+  for(const raw of history.filter(e=>e.type==='presence').sort((a,b)=>new Date(a.startedAt)-new Date(b.startedAt))) {
+    const persona=raw.personaState && raw.personaState!=='unknown' ? raw.personaState : raw.status;
+    const entry={...raw,status:persona==='in-game'?'online':persona};
+    const previous=presence.at(-1);
+    const gap=previous?.endedAt ? new Date(entry.startedAt)-new Date(previous.endedAt) : Infinity;
+    if(previous && previous.status===entry.status && gap>=0 && gap<=10000) {
+      previous.endedAt=entry.endedAt;
+    } else presence.push(entry);
+  }
   return {
-    games:filter==='online'||filter==='offline' ? [] : history.filter(e=>e.type==='game'),
-    presence:filter==='games'?[]:history.filter(e=>e.type==='presence').filter(e=>filter==='all'||(filter==='online'?e.status!=='offline'&&e.status!=='unknown':filter==='offline'?e.status==='offline':true))
+    games:history.filter(e=>e.type==='game'),
+    presence:presence.reverse().filter(e=>filter==='all'||(filter==='online'?e.status!=='offline'&&e.status!=='unknown':e.status==='offline'))
   };
 }
 function renderSteamHistory() {
@@ -106,4 +144,3 @@ function renderTelegramStats() {
   text('telegramStatOnlineToday',formatDuration(onlineToday)); text('telegramStatEntriesToday',entriesToday); text('telegramStatLastEntry',lastEntry?formatDateTime(lastEntry.startedAt):'—');
   text('telegramStatLastExit',lastExit?formatDateTime(lastExit.endedAt):'—'); text('telegramStatCategory',state.telegram.status?statusLabel('telegram',state.telegram.status.user.status):'—');
 }
-
