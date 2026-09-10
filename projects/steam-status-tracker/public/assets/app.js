@@ -28,6 +28,7 @@ function cleanup(){refreshManager.destroy();canvasController.destroy();interacti
    ========================================================= */
 function renderBuiltInIcons(){for(const holder of $$('[data-icon]')){const name=holder.dataset.icon;if(ICONS[name])holder.innerHTML=ICONS[name];}}
 function bindEvents(){
+  byId('steamGameSearch')?.addEventListener('input',()=>{ const list=byId('steamPlayedGames'); if(list) list.scrollTop=0; renderSteamGames(); });
   window.addEventListener('hashchange',()=>renderRoute(true)); window.addEventListener('focus',()=>refreshManager.refreshStale()); document.addEventListener('visibilitychange',handleVisibility); window.addEventListener('beforeunload',cleanup,{once:true});
   dom.refreshAllButton?.addEventListener('click',()=>refreshManager.refreshAll({force:true,manual:true}));
   byId('retrySteamButton')?.addEventListener('click',()=>refreshManager.refreshPlatform('steam',{force:true,manual:true}));

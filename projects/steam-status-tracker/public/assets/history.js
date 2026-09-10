@@ -90,7 +90,7 @@ function filteredSteamHistory() {
 }
 function renderSteamHistory() {
   const filtered=filteredSteamHistory(); renderTimeline('steamGameTimeline',filtered.games,'steam','steamGames'); renderTimeline('steamPresenceTimeline',filtered.presence,'steam','steamPresence');
-  updateTechnicalJson();
+  renderSteamGames(); updateTechnicalJson();
 }
 function renderDiscordHistory() {
   const filter=state.historyView.discord.filter;

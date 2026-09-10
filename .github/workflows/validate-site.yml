@@ -18,7 +18,7 @@ on:
       - .github/workflows/validate-site.yml
       - projects/steam-status-tracker/**
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '2-59/5 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -78,15 +78,16 @@ jobs:
         working-directory: projects/steam-status-tracker
         run: npm run check
 
-      - name: Save meaningful Steam changes
+      - name: Save successful Steam snapshot
         if: steps.steam.outputs.persist == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add projects/steam-status-tracker/public/data/status.json
           git add projects/steam-status-tracker/public/data/history.json
+          git add projects/steam-status-tracker/public/data/games.json
           if ! git diff --cached --quiet; then
-            git commit -m "chore: update Steam activity [skip ci]"
+            git commit -m "chore: refresh Steam snapshot [skip ci]"
             git push origin HEAD:main
           fi
 
@@ -100,7 +101,7 @@ jobs:
             runId: process.env.GITHUB_RUN_ID,
             event: process.env.GITHUB_EVENT_NAME,
             builtAt: new Date().toISOString(),
-            design: 'digital-traces-v2'
+            design: 'fluid-games-20260910'
           }, null, 2) + '\n');
           JS
 
