@@ -1,6 +1,10 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-10T15:18:55.964Z",
+  "checkedAt": "2026-09-10T15:53:03.193Z",
+  "monitoring": {
+    "previousCheckedAt": "2026-09-10T15:18:55.964Z",
+    "intervalSeconds": 2047
+  },
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",

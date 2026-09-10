@@ -1,6 +1,1081 @@
 {
-  "checkedAt": null,
-  "attemptedAt": null,
-  "sources": { "owned": "pending", "recent": "pending" },
-  "games": []
+  "checkedAt": "2026-09-10T15:53:03.193Z",
+  "attemptedAt": "2026-09-10T15:53:03.193Z",
+  "sources": {
+    "owned": "ok",
+    "recent": "ok"
+  },
+  "games": [
+    {
+      "appId": "410110",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "12 is Better Than 6",
+      "totalMinutes": 1,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-19T14:20:36.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "503560",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "911 Operator",
+      "totalMinutes": 1,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-19T14:20:38.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "873190",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "ЕСТЬ ДВА СТУЛА",
+      "totalMinutes": 15,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-11-12T16:03:30.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1222700",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "A Way Out",
+      "totalMinutes": 130,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-25T13:10:49.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "714010",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Aimlabs",
+      "totalMinutes": 90,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-19T14:20:32.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "504390",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Along the Edge",
+      "totalMinutes": 1,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-19T14:20:34.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "57300",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Amnesia: The Dark Descent",
+      "totalMinutes": 37,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-19T14:20:30.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1356040",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Ampersat",
+      "totalMinutes": 1,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-19T14:20:33.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1399720",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Antimatter Dimensions",
+      "totalMinutes": 92,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-04-21T15:21:23.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1172470",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Apex Legends",
+      "totalMinutes": 205,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-09T10:58:25.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1808500",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "ARC Raiders",
+      "totalMinutes": 424,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-14T14:32:42.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "244210",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Assetto Corsa",
+      "totalMinutes": 240,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-01-16T08:59:58.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2923300",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Banana",
+      "totalMinutes": 211,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-01-16T08:59:57.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1949740",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Banana Shooter",
+      "totalMinutes": 99,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:09.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1239260",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Barro F",
+      "totalMinutes": 774,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-12T16:38:20.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1238810",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Battlefield™ V",
+      "totalMinutes": 289,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-01-31T14:01:40.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "284160",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "BeamNG.drive",
+      "totalMinutes": 1107,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-10T15:25:02.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "582660",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Black Desert",
+      "totalMinutes": 1,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-15T13:00:48.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "420290",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Blackwake",
+      "totalMinutes": 98,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-15T13:00:44.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "365670",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Blender",
+      "totalMinutes": 9035,
+      "recentMinutes": 79,
+      "lastPlayedAt": "2026-09-05T15:56:36.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1092040",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "BomjMan",
+      "totalMinutes": 154,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-02-22T11:26:43.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2835570",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Buckshot Roulette",
+      "totalMinutes": 948,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-06-18T11:30:33.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3028500",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Cakey's Twisted Bakery",
+      "totalMinutes": 84,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-15T13:00:46.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "4576510",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Casualties: Unknown Demo",
+      "totalMinutes": 991,
+      "recentMinutes": 533,
+      "lastPlayedAt": "2026-09-09T14:49:28.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "814540",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Changed",
+      "totalMinutes": 622,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-11T12:18:48.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "597170",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Clone Drone in the Danger Zone",
+      "totalMinutes": 25,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-04-24T14:02:30.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2881650",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Content Warning",
+      "totalMinutes": 113,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-15T13:00:45.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "730",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Counter-Strike 2",
+      "totalMinutes": 78425,
+      "recentMinutes": 672,
+      "lastPlayedAt": "2026-09-10T14:33:02.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "240",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Counter-Strike: Source",
+      "totalMinutes": 240,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-15T13:00:47.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "4465480",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Counter-Strike:Global Offensive",
+      "totalMinutes": 155,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-03-11T14:20:07.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "386180",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Crossout",
+      "totalMinutes": 85,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:20.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1313140",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Cult of the Lamb",
+      "totalMinutes": 176,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-25T13:10:50.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3064370",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Dark Hours: Prologue",
+      "totalMinutes": 71,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:02.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "300",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Day of Defeat: Source",
+      "totalMinutes": 602,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-10T17:22:03.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "383180",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Dead Island Riptide Definitive Edition",
+      "totalMinutes": 84,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:22.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1422450",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Deadlock",
+      "totalMinutes": 12,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-11-05T07:30:04.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "466240",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Deceit",
+      "totalMinutes": 85,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:23.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2064870",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Deceit 2",
+      "totalMinutes": 85,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:24.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1085660",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Destiny 2",
+      "totalMinutes": 84,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:25.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1222140",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Detroit: Become Human",
+      "totalMinutes": 1076,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:26.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "569610",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Distant Space",
+      "totalMinutes": 84,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:03.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "729460",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Distant Space 2",
+      "totalMinutes": 1,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:28.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "322330",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Don't Starve Together",
+      "totalMinutes": 406,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-25T13:10:49.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2181930",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "DR LIVESEY ROM AND DEATH EDITION",
+      "totalMinutes": 439,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-10T17:22:04.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "442070",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Drawful 2",
+      "totalMinutes": 75,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:27.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "667530",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Drunken Wrestlers 2",
+      "totalMinutes": 30,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-19T17:26:31.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "249050",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Dungeon of the ENDLESS™",
+      "totalMinutes": 84,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:29.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "898890",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Endling - Extinction is Forever",
+      "totalMinutes": 236,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:31.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2051620",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Enlisted",
+      "totalMinutes": 10,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:29:33.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "227300",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Euro Truck Simulator 2",
+      "totalMinutes": 527,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-11T13:50:59.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "609320",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "FAR: Lone Sails",
+      "totalMinutes": 277,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-07T05:26:53.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1293830",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Forza Horizon 4",
+      "totalMinutes": 712,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-12T16:38:16.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1334590",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Furry Love",
+      "totalMinutes": 12413,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-09-26T18:08:21.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1349040",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Furry Love 2",
+      "totalMinutes": 8260,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-09-26T18:08:26.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2389240",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "G.O.P.O.T.A",
+      "totalMinutes": 121,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-01T17:26:32.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "4000",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Garry's Mod",
+      "totalMinutes": 797,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-20T11:10:03.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "322170",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Geometry Dash",
+      "totalMinutes": 527,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-19T08:24:00.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "265930",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Goat Simulator",
+      "totalMinutes": 598,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-11T16:49:24.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "271590",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Grand Theft Auto V Legacy",
+      "totalMinutes": 8715,
+      "recentMinutes": 7,
+      "lastPlayedAt": "2026-09-08T09:47:41.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2527870",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Half Sword Playtest",
+      "totalMinutes": 8,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-02-08T09:07:36.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "70",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Half-Life",
+      "totalMinutes": 91,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-07-19T18:28:46.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "220",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Half-Life 2",
+      "totalMinutes": 467,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-12T16:38:21.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1260390",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Hentai Furry",
+      "totalMinutes": 582,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-11-13T16:25:43.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1659040",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "HITMAN World of Assassination",
+      "totalMinutes": 763,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-12T10:42:05.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "203140",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Hitman: Absolution",
+      "totalMinutes": 563,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-12T13:32:05.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1030300",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Hollow Knight: Silksong",
+      "totalMinutes": 214,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-10-18T03:00:07.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "219150",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Hotline Miami",
+      "totalMinutes": 398,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-12T10:41:16.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "638230",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Journey",
+      "totalMinutes": 100,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-26T18:05:45.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "550",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Left 4 Dead 2",
+      "totalMinutes": 13,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-08-12T16:18:26.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3097560",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Liar's Bar",
+      "totalMinutes": 52,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-10-01T16:58:08.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2767030",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Marvel Rivals",
+      "totalMinutes": 39,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-19T13:26:34.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "4704690",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "MECCHA CHAMELEON",
+      "totalMinutes": 219,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-07-30T10:33:47.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1127400",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Mindustry",
+      "totalMinutes": 169,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-04-20T09:19:22.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2527500",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "MiSide",
+      "totalMinutes": 406,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-01-14T06:17:56.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1566060",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Miss Furry",
+      "totalMinutes": 158,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-01T17:26:37.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "275850",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "No Man's Sky",
+      "totalMinutes": 1082,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-30T14:27:11.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2696480",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Nothing",
+      "totalMinutes": 2038,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-01-02T12:35:42.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1977530",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "One-armed cook",
+      "totalMinutes": 21,
+      "recentMinutes": null,
+      "lastPlayedAt": "2023-08-06T10:29:03.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3527290",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "PEAK",
+      "totalMinutes": 788,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-24T14:56:27.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1118200",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "People Playground",
+      "totalMinutes": 386,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-29T11:08:21.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "367450",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Poly Bridge",
+      "totalMinutes": 643,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-11-13T16:25:42.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "400",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Portal",
+      "totalMinutes": 195,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-01-02T13:24:50.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "620",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Portal 2",
+      "totalMinutes": 548,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-04-22T11:21:19.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "578080",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "PUBG: BATTLEGROUNDS",
+      "totalMinutes": 386,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-21T10:51:48.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1836120",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "QUICKERFLAK",
+      "totalMinutes": 642,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-11T16:23:18.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3241660",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "R.E.P.O.",
+      "totalMinutes": 926,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-18T13:17:12.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "312520",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Rain World",
+      "totalMinutes": 494,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-11-13T16:25:42.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3290710",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "RATSHAKER™",
+      "totalMinutes": 221,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-06-27T03:43:05.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1174180",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Red Dead Redemption 2",
+      "totalMinutes": 2215,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-06-27T05:11:58.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1557990",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Retail Royale",
+      "totalMinutes": 43,
+      "recentMinutes": null,
+      "lastPlayedAt": "2023-11-22T11:29:27.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "252490",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Rust",
+      "totalMinutes": 706,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-18T16:36:33.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3949040",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "RV There Yet?",
+      "totalMinutes": 95,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-12-16T17:15:08.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1279510",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Screw Drivers",
+      "totalMinutes": 43,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-06-21T16:58:41.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1069740",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Seen",
+      "totalMinutes": 405,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-09T15:51:39.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1750200",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Sex and the Furry Titty 2: Sins of the City",
+      "totalMinutes": 357,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-24T12:50:51.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1567080",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Sexy Tails",
+      "totalMinutes": 306,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-24T12:50:50.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "629520",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Soundpad",
+      "totalMinutes": 622,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-10-18T01:05:28.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "972660",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Spiritfarer®: Farewell Edition",
+      "totalMinutes": 121,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-01T17:26:37.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "393380",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Squad",
+      "totalMinutes": 380,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-10-19T12:10:34.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "209190",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Stealth Bastard Deluxe",
+      "totalMinutes": 414,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-11-12T14:43:30.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "3125250",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "STORROR Parkour Pro",
+      "totalMinutes": 95,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-07-14T16:38:16.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2386720",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "STRAFTAT",
+      "totalMinutes": 72,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-12-05T15:45:18.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1332010",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Stray",
+      "totalMinutes": 269,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-08-24T12:50:49.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "1167630",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Teardown",
+      "totalMinutes": 199,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-03-16T12:37:28.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "2073850",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "THE FINALS",
+      "totalMinutes": 18,
+      "recentMinutes": null,
+      "lastPlayedAt": "2023-12-13T02:00:05.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "242760",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "The Forest",
+      "totalMinutes": 106,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-01-04T10:09:25.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "292030",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "The Witcher 3: Wild Hunt - Complete Edition",
+      "totalMinutes": 756,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-12T11:18:10.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "546090",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Trip to Vinelands",
+      "totalMinutes": 60,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-03-14T06:04:56.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "701470",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "TTV2",
+      "totalMinutes": 405,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-05-09T15:51:39.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "357070",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "UBERMOSH",
+      "totalMinutes": 336,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-12T13:04:13.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "391540",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Undertale",
+      "totalMinutes": 561,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-01T21:09:43.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "304930",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Unturned",
+      "totalMinutes": 41,
+      "recentMinutes": null,
+      "lastPlayedAt": "2024-01-20T17:58:08.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "244890",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Velocity®Ultra",
+      "totalMinutes": 222,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-05-01T21:09:57.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "438100",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "VRChat",
+      "totalMinutes": 568,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-06-19T10:21:04.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "431960",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Wallpaper Engine",
+      "totalMinutes": 879,
+      "recentMinutes": 2,
+      "lastPlayedAt": "2026-09-08T16:24:30.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "236390",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "War Thunder",
+      "totalMinutes": 2048,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-01-13T11:16:25.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "489630",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Warhammer 40,000: Gladius - Relics of War",
+      "totalMinutes": 1,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-12T11:18:27.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "552500",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "Warhammer: Vermintide 2",
+      "totalMinutes": 950,
+      "recentMinutes": null,
+      "lastPlayedAt": "2026-06-27T03:43:05.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    },
+    {
+      "appId": "562260",
+      "firstSeenAt": "2026-09-10T15:53:03.193Z",
+      "name": "WAVESHAPER",
+      "totalMinutes": 787,
+      "recentMinutes": null,
+      "lastPlayedAt": "2025-06-11T16:49:01.000Z",
+      "checkedAt": "2026-09-10T15:53:03.193Z"
+    }
+  ]
 }
