@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-14T13:38:24.130Z",
+  "checkedAt": "2026-09-14T18:52:00.002Z",
   "monitoring": {
-    "previousCheckedAt": "2026-09-14T06:55:44.284Z",
-    "intervalSeconds": 24160
+    "previousCheckedAt": "2026-09-14T13:38:24.130Z",
+    "intervalSeconds": 18816
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "in-game",
-    "personaState": "online",
-    "gameName": "Casualties: Unknown Demo",
-    "gameId": "4576510",
-    "lastLogoff": "2026-09-13T10:14:09.000Z"
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "lastLogoff": "2026-09-14T15:31:47.000Z"
   }
 }
