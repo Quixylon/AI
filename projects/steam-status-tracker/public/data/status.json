@@ -1,9 +1,9 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-15T10:10:59.961Z",
+  "checkedAt": "2026-09-15T15:00:11.113Z",
   "monitoring": {
-    "previousCheckedAt": "2026-09-15T05:19:25.591Z",
-    "intervalSeconds": 17494
+    "previousCheckedAt": "2026-09-15T10:10:59.961Z",
+    "intervalSeconds": 17351
   },
   "player": {
     "steamId": "76561199524001992",
@@ -14,6 +14,6 @@
     "personaState": "online",
     "gameName": null,
     "gameId": null,
-    "lastLogoff": "2026-09-14T15:31:47.000Z"
+    "lastLogoff": "2026-09-15T13:37:01.000Z"
   }
 }
