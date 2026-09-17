@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-17T05:47:31.528Z",
+  "checkedAt": "2026-09-17T10:28:40.994Z",
   "monitoring": {
-    "previousCheckedAt": "2026-09-17T00:56:22.640Z",
-    "intervalSeconds": 17469
+    "previousCheckedAt": "2026-09-17T05:47:31.528Z",
+    "intervalSeconds": 16869
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "online",
-    "personaState": "online",
+    "status": "offline",
+    "personaState": "offline",
     "gameName": null,
     "gameId": null,
-    "lastLogoff": "2026-09-17T05:26:01.000Z"
+    "lastLogoff": "2026-09-17T07:11:41.000Z"
   }
 }
