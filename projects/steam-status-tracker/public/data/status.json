@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-18T13:38:09.328Z",
+  "checkedAt": "2026-09-18T17:12:31.835Z",
   "monitoring": {
-    "previousCheckedAt": "2026-09-18T09:14:04.287Z",
-    "intervalSeconds": 15845
+    "previousCheckedAt": "2026-09-18T13:38:09.328Z",
+    "intervalSeconds": 12863
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "in-game",
+    "status": "online",
     "personaState": "online",
-    "gameName": "Counter-Strike 2",
-    "gameId": "730",
+    "gameName": null,
+    "gameId": null,
     "lastLogoff": "2026-09-18T10:19:38.000Z"
   }
 }
