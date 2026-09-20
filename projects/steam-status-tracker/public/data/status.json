@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-20T15:57:45.960Z",
+  "checkedAt": "2026-09-20T18:34:02.174Z",
   "monitoring": {
-    "previousCheckedAt": "2026-09-20T12:02:01.248Z",
-    "intervalSeconds": 14145
+    "previousCheckedAt": "2026-09-20T15:57:45.960Z",
+    "intervalSeconds": 9376
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Тинькоф Платинум",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "online",
+    "status": "in-game",
     "personaState": "online",
-    "gameName": null,
-    "gameId": null,
+    "gameName": "VRChat",
+    "gameId": "438100",
     "lastLogoff": "2026-09-20T15:05:17.000Z"
   }
 }
