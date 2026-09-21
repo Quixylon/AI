@@ -1,13 +1,13 @@
 {
   "configured": true,
-  "checkedAt": "2026-09-21T18:23:28.811Z",
+  "checkedAt": "2026-09-21T22:05:14.909Z",
   "monitoring": {
-    "previousCheckedAt": "2026-09-21T12:53:06.174Z",
-    "intervalSeconds": 19823
+    "previousCheckedAt": "2026-09-21T18:23:28.811Z",
+    "intervalSeconds": 13306
   },
   "player": {
     "steamId": "76561199524001992",
-    "name": "Тинькоф Платинум",
+    "name": "Страпон",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
     "status": "offline",
