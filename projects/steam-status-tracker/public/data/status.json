@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-10-03T11:55:53.069Z",
+  "checkedAt": "2026-10-03T15:44:16.949Z",
   "monitoring": {
-    "previousCheckedAt": "2026-10-03T06:28:19.913Z",
-    "intervalSeconds": 19653
+    "previousCheckedAt": "2026-10-03T11:55:53.069Z",
+    "intervalSeconds": 13704
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Прорвало днище",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "in-game",
-    "personaState": "online",
-    "gameName": "Casualties: Unknown Demo",
-    "gameId": "4576510",
-    "lastLogoff": "2026-10-03T02:35:58.000Z"
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "lastLogoff": "2026-10-03T13:29:16.000Z"
   }
 }
