@@ -1517,6 +1517,15 @@
     "gameName": "Buckshot Roulette",
     "gameId": "2835570",
     "startedAt": "2026-10-04T15:52:04.275Z",
+    "endedAt": "2026-10-04T18:52:06.478Z",
+    "durationSeconds": 10802
+  },
+  {
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-10-04T18:52:06.478Z",
     "endedAt": null,
     "durationSeconds": null
   }
