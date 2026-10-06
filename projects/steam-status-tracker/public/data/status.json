@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-10-06T15:33:14.268Z",
+  "checkedAt": "2026-10-06T20:31:22.586Z",
   "monitoring": {
-    "previousCheckedAt": "2026-10-06T08:53:02.008Z",
-    "intervalSeconds": 24012
+    "previousCheckedAt": "2026-10-06T15:33:14.268Z",
+    "intervalSeconds": 17888
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Прорвало днище",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "online",
-    "personaState": "online",
+    "status": "offline",
+    "personaState": "offline",
     "gameName": null,
     "gameId": null,
-    "lastLogoff": "2026-10-06T11:24:57.000Z"
+    "lastLogoff": "2026-10-06T17:09:11.000Z"
   }
 }
