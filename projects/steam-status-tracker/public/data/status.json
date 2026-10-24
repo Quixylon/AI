@@ -1,9 +1,9 @@
 {
   "configured": true,
-  "checkedAt": "2026-10-24T21:26:13.104Z",
+  "checkedAt": "2026-10-24T23:31:41.734Z",
   "monitoring": {
-    "previousCheckedAt": "2026-10-24T18:57:26.316Z",
-    "intervalSeconds": 8927
+    "previousCheckedAt": "2026-10-24T21:26:13.104Z",
+    "intervalSeconds": 7529
   },
   "player": {
     "steamId": "76561199524001992",
