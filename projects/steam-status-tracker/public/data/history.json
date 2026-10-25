@@ -1706,6 +1706,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-10-25T12:02:55.752Z",
+    "endedAt": "2026-10-25T16:02:52.266Z",
+    "durationSeconds": 14397
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Dumpster Gang Demo",
+    "gameId": "4895870",
+    "startedAt": "2026-10-25T16:02:52.266Z",
     "endedAt": null,
     "durationSeconds": null
   }

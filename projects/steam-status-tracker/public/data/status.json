@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-10-25T12:02:55.752Z",
+  "checkedAt": "2026-10-25T16:02:52.266Z",
   "monitoring": {
-    "previousCheckedAt": "2026-10-25T06:43:22.909Z",
-    "intervalSeconds": 19173
+    "previousCheckedAt": "2026-10-25T12:02:55.752Z",
+    "intervalSeconds": 14397
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Qu`lon",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "online",
+    "status": "in-game",
     "personaState": "online",
-    "gameName": null,
-    "gameId": null,
+    "gameName": "Dumpster Gang Demo",
+    "gameId": "4895870",
     "lastLogoff": "2026-10-25T10:28:35.000Z"
   }
 }
