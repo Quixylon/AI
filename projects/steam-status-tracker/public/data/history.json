@@ -1733,6 +1733,15 @@
     "gameName": "Counter-Strike 2",
     "gameId": "730",
     "startedAt": "2026-10-29T11:41:22.411Z",
+    "endedAt": "2026-10-29T17:32:33.169Z",
+    "durationSeconds": 21071
+  },
+  {
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-10-29T17:32:33.169Z",
     "endedAt": null,
     "durationSeconds": null
   }
