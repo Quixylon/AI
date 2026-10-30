@@ -1751,6 +1751,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-10-30T14:33:32.534Z",
+    "endedAt": "2026-10-30T19:38:23.465Z",
+    "durationSeconds": 18291
+  },
+  {
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-10-30T19:38:23.465Z",
     "endedAt": null,
     "durationSeconds": null
   }
