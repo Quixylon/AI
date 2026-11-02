@@ -101,7 +101,7 @@ jobs:
             runId: process.env.GITHUB_RUN_ID,
             event: process.env.GITHUB_EVENT_NAME,
             builtAt: new Date().toISOString(),
-            design: 'click-network-20260910'
+            design: 'dark-glass-20261103'
           }, null, 2) + '\n');
           JS
 

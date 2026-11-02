@@ -1,13 +1,13 @@
 'use strict';
 
-// Each card advances from shallow depth; stagger preserves a clear reading order.
+// Subtle opacity transitions preserve the geometry of the optical surfaces.
 const surfaceMotion = {
   observer: null,
   observed: new WeakSet(),
   animations: new Set(),
   revealed: new WeakSet(),
   lastRoute: null,
-  selector: '.panel, .platform-card, .detail-card, .stats-card, .history-panel',
+  selector: '.destinations-panel, .tracker-topbar, .platform-card, .detail-card, .stats-card, .history-panel',
   register() {
     if (!this.observer && typeof IntersectionObserver === 'function') {
       this.observer = new IntersectionObserver(entries => {
@@ -19,10 +19,8 @@ const surfaceMotion = {
         this.cascade(arriving);
       }, { rootMargin: '30px' });
     }
-    document.querySelectorAll(this.selector).forEach((element, index) => {
-      element.classList.add('glass-surface', 'float-surface');
-      element.style.setProperty('--float-phase', `${-index * 1.7}s`);
-      element.style.setProperty('--float-period', `${7.5 + index % 4 * .7}s`);
+    document.querySelectorAll(this.selector).forEach(element => {
+      element.classList.add('glass-surface');
       if (!this.observed.has(element)) {
         this.observed.add(element);
         if (this.observer) this.observer.observe(element);
@@ -40,18 +38,15 @@ const surfaceMotion = {
     animation.finished.then(()=>{this.animations.delete(animation);motionController.measureSoon();},()=>this.animations.delete(animation));
   },
   cascade(elements) {
-    elements.forEach((element,index)=>this.enter(element,Math.min(index*95,380)));
+    elements.forEach(element=>this.enter(element,0));
   },
   enter(element, delay=0) {
     if(!element || element.closest('[hidden]') || typeof element.animate!=='function')return;
     this.revealed.add(element);if(REDUCED_MOTION.matches)return;
-    const tilt='rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg))';
-    // Transform belongs to the card itself, so the lens follows its projection.
-    // Independent CSS translate keeps the gentle floating cycle uninterrupted.
     this.track(element.animate([
-      {opacity:0,filter:'blur(9px)',transform:`perspective(1200px) translate3d(0,20px,-150px) ${tilt}`},
-      {opacity:1,filter:'blur(0px)',transform:`perspective(1200px) translate3d(0,0,0) ${tilt}`}
-    ],{duration:680,delay,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
+      {opacity:0},
+      {opacity:1}
+    ],{duration:240,delay,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
   },
   visibleElements() {
     const profile=state.route.screen==='profile';
@@ -66,8 +61,8 @@ const surfaceMotion = {
     if(REDUCED_MOTION.matches || document.hidden) return;
     const animations=this.visibleElements().filter(element=>typeof element.animate==='function').map(element=>{
       const animation=element.animate([
-        {opacity:1,filter:'blur(0px)'},
-        {opacity:0,filter:'blur(3px)'}
+        {opacity:1},
+        {opacity:0}
       ],{duration:110,easing:'ease-in',fill:'forwards'});
       this.track(animation); return animation;
     });
@@ -92,26 +87,7 @@ const surfaceMotion = {
 // Rendering hooks replace the previous whole-page MutationObserver patch layers.
 function updateProfilePresentation() {
   const description = byId('profileDescription');
-  if (description && !description.querySelector('.description-char')) {
-    description.setAttribute('aria-label', description.textContent);
-    const fragment = document.createDocumentFragment();
-    let order = 0;
-    description.textContent.split(' ').forEach((text, index) => {
-      if (index) fragment.append(' ');
-      const word = document.createElement('span');
-      word.className = 'description-word';
-      word.setAttribute('aria-hidden', 'true');
-      for (const letter of Array.from(text)) {
-        const character = document.createElement('span');
-        character.className = 'description-char';
-        character.textContent = letter;
-        character.style.setProperty('--char-order', order++);
-        word.append(character);
-      }
-      fragment.append(word);
-    });
-    description.replaceChildren(fragment);
-  }
+  if (description) description.removeAttribute('aria-label');
   surfaceMotion.register();
   window.renderBrandIcons?.();
   motionController.registerAll();
