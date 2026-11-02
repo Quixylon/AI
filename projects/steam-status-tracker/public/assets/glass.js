@@ -1,7 +1,7 @@
 'use strict';
 
 // One WebGL 1 context bends the same canvas pixels that form the background.
-// No DOM screenshots, external textures, SVG backdrop filters or per-card contexts.
+// No DOM screenshots or external textures. SVG filters provide a live CPU fallback.
 const GLASS_VERTEX = `
 attribute vec2 a_position;
 void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
@@ -31,29 +31,31 @@ void main() {
   vec2 gradient = max(q, 0.0) + exp((q-max(q.x,q.y))/6.0)*3.0;
   vec2 normal = normalize(gradient+vec2(0.0001))*sign(local);
 
-  // Bounded, smooth optical mapping. The old 54px displacement folded the
-  // sampling plane back over itself, producing duplicate dots and long streaks.
-  float band = min(48.0, min(halfSize.x, halfSize.y) * 0.72);
+  // A smooth rounded bevel: refract a view ray through a finite glass slab.
+  // The centre is flat (no displacement); edge normals drive the lens.
+  float band = min(28.0, min(halfSize.x, halfSize.y) * 0.65);
   float phase = clamp(depth / max(band, 1.0), 0.0, 1.0);
-  float bevel = pow(sin(phase * 3.14159265), 2.0);
-  float viewEdge = clamp(min(min(p.x, u_view.x-p.x), min(p.y, u_view.y-p.y)) / 16.0, 0.0, 1.0);
-  float shift = band * 0.22 * bevel;
-  vec2 bent = local - (normal * shift + local * 0.014 * (1.0-exp(-depth/80.0))) * viewEdge;
+  float bevel = sin(phase * 3.14159265);
+  vec3 surfaceNormal = normalize(vec3(normal * bevel * 1.35, 1.0));
+  vec3 ray = refract(vec3(0.0, 0.0, -1.0), surfaceNormal, 1.0 / 1.46);
+  float thickness = 20.0 * smoothstep(0.0, 0.25, phase);
+  vec2 offset = ray.xy * thickness / max(0.1, -ray.z);
+  float viewEdge = clamp(min(min(p.x,u_view.x-p.x),min(p.y,u_view.y-p.y))/20.0,0.0,1.0);
+  vec2 bent = local + offset * viewEdge;
   vec3 refracted = u_projection * vec3(bent, 1.0);
   vec2 samplePoint = refracted.xy / refracted.z;
   // Frost the interior while retaining a crisp optical edge. Nine close taps
   // approximate diffusion instead of splitting each dot into offset copies.
-  float haze = mix(0.55, 2.2, smoothstep(0.0, 24.0, depth));
+  float haze = mix(0.25, 0.85, smoothstep(0.0, 24.0, depth));
   vec3 color = scene(samplePoint) * 0.40;
   color += (scene(samplePoint + vec2(haze, 0.0)) + scene(samplePoint - vec2(haze, 0.0))
          + scene(samplePoint + vec2(0.0, haze)) + scene(samplePoint - vec2(0.0, haze))) * 0.10;
   color += (scene(samplePoint + vec2(haze, haze)) + scene(samplePoint - vec2(haze, haze))
          + scene(samplePoint + vec2(haze, -haze)) + scene(samplePoint + vec2(-haze, haze))) * 0.05;
-  color = mix(color, vec3(0.20, 0.29, 0.38), 0.13);
-  color = mix(color, vec3(0.04, 0.07, 0.12), 0.06);
+  color = mix(color, vec3(0.18, 0.20, 0.23), 0.22);
+  color = mix(color, vec3(0.06, 0.07, 0.09), 0.08);
 
   // Reflection follows the normal of the curved edge, not a circular spotlight.
-  vec3 surfaceNormal=normalize(vec3(normal*bevel*0.82,1.0));
   float fresnel=0.04+0.96*pow(1.0-surfaceNormal.z,5.0);
   vec3 reflection=mix(vec3(0.20,0.29,0.43),vec3(0.65,0.76,0.85),clamp(0.5-dot(normal,vec2(.32,.5)),0.0,1.0));
   color=mix(color,reflection,fresnel*bevel*0.8);
@@ -109,6 +111,7 @@ class GlassRenderer {
     this.elements = [];
     this.surfaces = new Map();
     this.textureWidth = this.textureHeight = 0;
+    this.filterGeneration = 0;
     this.onLost = event => { event.preventDefault(); this.fallback(); };
     this.onRestored = () => { this.init(); this.onRestore?.(); };
     canvas?.addEventListener('webglcontextlost', this.onLost);
@@ -128,7 +131,7 @@ class GlassRenderer {
     }
     for (const [element, surface] of this.surfaces) {
       if (this.elements.includes(element)) continue;
-      surface.canvas.remove(); this.surfaces.delete(element);
+      surface.canvas.remove(); surface.filter?.remove(); this.surfaces.delete(element);
     }
   }
   fallback() {
@@ -139,15 +142,16 @@ class GlassRenderer {
     if (!this.canvas || this.ready) return;
     try {
       const gl = this.canvas.getContext('webgl', { alpha: true, antialias: false, depth: false, stencil: false, premultipliedAlpha: false });
-      if (!gl) return;
+      if (!gl) { this.canvas.dataset.glassState = 'svg-fallback'; this.register(); return; }
       this.gl = gl;
       const compile = (type, source) => {
         const shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          const message = gl.getShaderInfoLog(shader);
           gl.deleteShader(shader);
-          throw new Error('Glass shader unavailable');
+          throw new Error('Glass shader unavailable: ' + message);
         }
         return shader;
       };
@@ -176,13 +180,79 @@ class GlassRenderer {
       gl.uniform1i(this.uniforms.scene, 0);
       this.textureWidth = this.textureHeight = 0;
       this.ready = true;
+      this.canvas.dataset.glassState = 'ready';
       this.register();
-    } catch {
+      for (const surface of this.surfaces.values()) surface.canvas.style.filter = '';
+    } catch (error) {
+      this.canvas.dataset.glassState = 'shader-failed';
+      console.warn(error.message);
       this.fallback();
     }
   }
+  // SVG filter on a copy of our own canvas, not an SVG backdrop-filter.
+  // This path needs no WebGL and never filters foreground text/controls.
+  drawSVG(scene, width, height) {
+    if (!this.canvas || !document.createElementNS) return;
+    let painted = false;
+    for (const element of this.elements) {
+      const surface = this.surfaces.get(element), rect = element.getBoundingClientRect();
+      if (!surface || !element.offsetWidth || element.closest('[hidden]') || rect.bottom <= 0 || rect.top >= height) continue;
+      const w = Math.max(1,Math.round(rect.width)), h = Math.max(1,Math.round(rect.height));
+      // CSS-space map is regenerated on resize only; the live scene is copied each frame.
+      if (surface.width !== w || surface.height !== h) {
+        surface.filter?.remove();
+        const radius = parseFloat(getComputedStyle(element).borderTopLeftRadius) || 20;
+        const map = document.createElement('canvas'); map.width = w; map.height = h;
+        const ctx = map.getContext('2d'), pixels = ctx.createImageData(w,h);
+        const band = Math.min(28,Math.min(w,h)*.325);
+        for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+          const lx=x+.5-w/2, ly=y+.5-h/2;
+          const qx=Math.abs(lx)-w/2+radius, qy=Math.abs(ly)-h/2+radius;
+          const distance=Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-radius;
+          const phase=Math.min(1,Math.max(0,-distance)/band), bevel=phase>=1?0:Math.sin(phase*Math.PI);
+          let nx=Math.max(qx,0)+Math.exp((qx-Math.max(qx,qy))/6)*3;
+          let ny=Math.max(qy,0)+Math.exp((qy-Math.max(qx,qy))/6)*3;
+          const length=Math.hypot(nx,ny)||1;
+          nx=nx/length*Math.sign(lx)*bevel*1.35; ny=ny/length*Math.sign(ly)*bevel*1.35;
+          const norm=Math.hypot(nx,ny,1), nz=1/norm; nx/=norm; ny/=norm;
+          const eta=1/1.46, f=eta*nz-Math.sqrt(1-eta*eta*(1-nz*nz));
+          const t=Math.min(1,phase/.25), travel=20*t*t*(3-2*t)/Math.max(.1,eta-f*nz);
+          const offset=(y*w+x)*4;
+          pixels.data[offset]=Math.round(255*(.5+nx*f*travel/32));
+          pixels.data[offset+1]=Math.round(255*(.5+ny*f*travel/32));
+          pixels.data[offset+2]=128; pixels.data[offset+3]=255;
+        }
+        ctx.putImageData(pixels,0,0);
+        const ns='http://www.w3.org/2000/svg', svg=document.createElementNS(ns,'svg');
+        svg.setAttribute('width','0'); svg.setAttribute('height','0'); svg.setAttribute('aria-hidden','true');
+        svg.style.position='absolute'; svg.style.pointerEvents='none';
+        const filter=document.createElementNS(ns,'filter'), id='qulon-lens-'+(++this.filterGeneration);
+        filter.id=id; filter.setAttribute('x','0'); filter.setAttribute('y','0'); filter.setAttribute('width','100%'); filter.setAttribute('height','100%');
+        filter.setAttribute('color-interpolation-filters','sRGB');
+        const image=document.createElementNS(ns,'feImage');
+        image.setAttribute('href',map.toDataURL()); image.setAttribute('result','map');
+        image.setAttribute('x','0'); image.setAttribute('y','0'); image.setAttribute('width','100%'); image.setAttribute('height','100%'); image.setAttribute('preserveAspectRatio','none');
+        const displacement=document.createElementNS(ns,'feDisplacementMap');
+        for (const [key,value] of Object.entries({in:'SourceGraphic',in2:'map',scale:'32',xChannelSelector:'R',yChannelSelector:'G'})) displacement.setAttribute(key,value);
+        filter.append(image,displacement); svg.append(filter); element.prepend(svg);
+        surface.filter=svg; surface.width=w; surface.height=h;
+        surface.canvas.style.filter='url(#'+id+')';
+      }
+      const density=Math.min(2,scene.width/width), pw=Math.round(w*density), ph=Math.round(h*density);
+      if(surface.canvas.width!==pw)surface.canvas.width=pw;
+      if(surface.canvas.height!==ph)surface.canvas.height=ph;
+      const ctx=surface.ctx;
+      ctx.fillStyle='#101319';ctx.fillRect(0,0,pw,ph);
+      // Draw the complete scene offset into the panel; clipping happens at its bounds.
+      ctx.drawImage(scene, -rect.left*density, -rect.top*density, width*density, height*density);
+      ctx.fillStyle='rgba(46,51,59,.22)';ctx.fillRect(0,0,pw,ph);
+      painted=true;
+    }
+    if (painted) document.documentElement.classList.add('has-refraction');
+  }
   draw(scene, width, height, pointer={x:0,y:0,strength:0}) {
-    if (!this.ready || document.hidden) return;
+    if (document.hidden) return;
+    if (!this.ready) { this.drawSVG(scene, width, height); return; }
     const gl = this.gl, panels = [], density = scene.width / width;
     // Native canvases travel with their own cards. Only source sampling uses
     // viewport coordinates; clipping/opacity/scale are applied exactly once by CSS.

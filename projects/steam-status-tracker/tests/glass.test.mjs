@@ -18,10 +18,10 @@ function fixture(available = true) {
     getBoundingClientRect: () => ({ left: 16, top: 20, right: 344, bottom: 220, width: 328, height: 200 }) };
   const offscreen = { ...visible, getBoundingClientRect: () => ({ left: 16, top: 850, right: 344, bottom: 1050, width: 328, height: 200 }) };
   const document = { hidden: false,
-    createElement: () => ({ width:0, height:0, setAttribute() {}, remove() {}, getContext: () => ({ drawImage: (...args) => copies.push(args) }) }),
+    createElement: () => ({ width:0, height:0, style: {}, setAttribute() {}, remove() {}, getContext: () => ({ drawImage: (...args) => copies.push(args) }) }),
     querySelectorAll: () => [visible, offscreen, { ...visible, offsetWidth: 0 }],
     documentElement: { classList: { add: name => classes.add(name), remove: name => classes.delete(name) } } };
-  const canvas = { width: 0, height: 0, getContext: () => available ? gl : null,
+  const canvas = { dataset: {}, width: 0, height: 0, getContext: () => available ? gl : null,
     addEventListener: (name, fn) => { events[name] = fn; } };
   const context = vm.createContext({ document, Float32Array,
     getComputedStyle: () => ({ width: '328px', height: '200px', borderTopLeftRadius: '23px', opacity: '1', transform: 'none', scale: 'none' }) });
@@ -85,4 +85,39 @@ test('one shared lens texture draws visible cards only and survives context loss
   unavailable.renderer.init(); unavailable.renderer.draw(scene, 360, 800);
   assert.equal(unavailable.renderer.ready, false);
   assert.equal(unavailable.classes.has('has-refraction'), false);
+});
+
+test('SVG fallback bends the live background, keeps centre flat, and invalidates maps on resize', () => {
+  const t = fixture(false), maps = [], copies = [];
+  t.document.createElement = () => ({ width: 0, height: 0, style: {}, setAttribute() {}, remove() {},
+    toDataURL: () => 'data:image/png;base64,map',
+    getContext: () => ({
+      createImageData: (w,h) => ({ data:new Uint8ClampedArray(w*h*4), width:w, height:h }),
+      putImageData: data => maps.push(data),
+      fillRect() {}, drawImage: (...args) => copies.push(args)
+    })
+  });
+  t.document.createElementNS = (_, tag) => ({ tag, style:{}, attrs:{},
+    setAttribute(k,v) { this.attrs[k]=v; }, append(...children) { this.children=children; }, remove() {}
+  });
+  t.renderer.init();
+  const scene = {width:720,height:1600};
+  t.renderer.draw(scene,360,800);
+  assert.equal(maps.length,1,'only the visible surface builds an optical map');
+  assert.ok(t.classes.has('has-refraction'));
+  const map=maps[0], centre=(100*map.width+164)*4, edge=(100*map.width+12)*4;
+  assert.equal(map.data[centre],128); assert.equal(map.data[centre+1],128);
+  assert.ok(Math.abs(map.data[edge]-128)>15,'the bevel must displace pixels, not just tint them');
+  assert.equal(copies[0][0],scene,'the texture source is the current background canvas');
+  assert.deepEqual(copies[0].slice(1),[-32,-40,720,1600],'align the copy in CSS-space at DPR 2');
+  const surface=[...t.renderer.surfaces.values()][0], firstFilter=surface.canvas.style.filter;
+  t.renderer.draw(scene,360,800);
+  assert.equal(maps.length,1,'reuse the map while refreshing the live source');
+  assert.equal(copies.length,2);
+  t.renderer.elements[0].getBoundingClientRect=()=>({left:20,top:30,width:300,height:180,bottom:210,right:320});
+  t.renderer.draw(scene,360,800);
+  assert.equal(maps.length,2);
+  assert.notEqual(surface.canvas.style.filter,firstFilter,'fresh filter id prevents stale browser cache on resize');
+  t.document.hidden=true; t.renderer.draw(scene,360,800);
+  assert.equal(copies.length,3,'no copying while hidden');
 });
