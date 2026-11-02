@@ -1706,7 +1706,7 @@ body { font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
 #profileDescription { font-size:17px; line-height:1.7; color:var(--muted); max-width:400px; }
 .description-char { animation:none; }
 .cat-button { border-radius:10px; border-color:var(--border); background:#ffffff04; box-shadow:none; color:var(--muted); }
-.cat-emoji svg { width:24px; height:24px; }
+
 .destinations-panel { padding:32px; }
 .destinations-header { padding:0 0 24px; }
 .destinations-header h2 { font-size:24px; letter-spacing:-.02em; }
@@ -1719,7 +1719,7 @@ body { font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
 .tracker-door { padding:20px 0; border:0; border-top:1px solid var(--border); border-radius:0; background:none; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; color:var(--text); }
 .tracker-door:hover { background:#ffffff04; }
 .tracker-door__icon { border-radius:10px; border-color:var(--border); width:40px; height:40px; }
-.tracker-door__icon span { animation:none; background:var(--accent); }
+.tracker-door__icon span { background:var(--accent); }
 .tracker-door__copy>span { color:var(--muted); }
 .tracker-door__copy strong { font-size:18px; letter-spacing:0; }
 .tracker-door__arrow { color:var(--accent); }
@@ -1728,8 +1728,8 @@ body { font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
 .profile-meta__label { color:var(--muted-2); }
 .profile-meta__value { color:var(--muted); }
 .sound-toggle { color:var(--muted); background:none; border-color:var(--border); min-height:36px; padding:8px 12px; }
-.tilt-surface { transform:none!important; }
-.float-surface { animation:none; translate:none; }
+.glass-surface.tilt-surface { transform:none; }
+.float-surface { --float-height:-4px; }
 .glass-surface,.has-refraction .glass-surface { border-radius:20px; border-color:#d8dfe528; background:#1b202a8c; box-shadow:0 16px 40px #0003,inset 0 1px 0 #fff2; }
 .glass-surface:hover { border-color:#d8dfe53a; box-shadow:0 16px 40px #0003,inset 0 1px 0 #fff2; }
 .has-refraction .glass-surface { background:none; }
@@ -1765,4 +1765,11 @@ body { font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
 @media(max-width:360px) { #profileName { font-size:52px; } .app-shell { padding:20px; } .destinations-panel { padding:20px; } }
 @media(prefers-contrast:more),(prefers-reduced-transparency:reduce) {
  .glass-surface,.has-refraction .glass-surface { background:#181c23; border-color:#9199a6; }
+}
+
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+ .social-link { transition:translate .22s,color .16s,background-color .16s; }
+ .social-link:hover { translate:4px 0; }
+ .social-link__arrow { transition:transform .22s; }
+ .social-link:hover .social-link__arrow { transform:translate(2px,-2px); }
 }

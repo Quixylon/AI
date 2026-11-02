@@ -117,8 +117,8 @@ class CanvasController {
   }
   projectDot(p) {
     if (REDUCED_MOTION.matches) return { x: p.homeX, y: p.homeY };
-    return { x: p.homeX + Math.sin(p.homeY * .005 - this.clock * .26) * 5,
-      y: p.homeY + Math.sin(p.homeX * .004 + this.clock * .22) * 6 };
+    return { x: p.homeX + Math.sin(p.homeY * .005 - this.clock * .65) * 9,
+      y: p.homeY + Math.sin(p.homeX * .004 + this.clock * .55) * 10 };
   }
   setPointer(x, y) {
     this.pointer.x = x; this.pointer.y = y;
@@ -195,6 +195,7 @@ class InteractionHub {
     if (event.pointerType === 'mouse' && this.pointerId !== null && !(event.buttons & 1)) this.onLeave();
     if (event.pointerType === 'touch' && this.pointerId === null) return;
     canvasController.setPointer(event.clientX, event.clientY);
+    if (event.pointerType !== 'touch') motionController.updatePointer(event.clientX, event.clientY);
   };
   onDown = event => {
     if (event.button !== 0 || event.isPrimary === false || this.pointerId !== null || this.blocked(event.target)) return;

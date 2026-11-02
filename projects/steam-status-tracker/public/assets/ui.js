@@ -1,13 +1,13 @@
 'use strict';
 
-// Subtle opacity transitions preserve the geometry of the optical surfaces.
+// Translation-based entrances keep the live SVG background aligned.
 const surfaceMotion = {
   observer: null,
   observed: new WeakSet(),
   animations: new Set(),
   revealed: new WeakSet(),
   lastRoute: null,
-  selector: '.destinations-panel, .tracker-topbar, .platform-card, .detail-card, .stats-card, .history-panel',
+  selector: '.identity-panel, .tracker-door, .destinations-panel, .tracker-topbar, .platform-card, .detail-card, .stats-card, .history-panel',
   register() {
     if (!this.observer && typeof IntersectionObserver === 'function') {
       this.observer = new IntersectionObserver(entries => {
@@ -19,8 +19,11 @@ const surfaceMotion = {
         this.cascade(arriving);
       }, { rootMargin: '30px' });
     }
-    document.querySelectorAll(this.selector).forEach(element => {
-      element.classList.add('glass-surface');
+    document.querySelectorAll(this.selector).forEach((element, index) => {
+      if (!element.matches('.identity-panel,.tracker-door')) element.classList.add('glass-surface');
+      element.classList.add('float-surface');
+      element.style.setProperty('--float-phase', `${-index * 1.7}s`);
+      element.style.setProperty('--float-period', `${7 + index % 4}s`);
       if (!this.observed.has(element)) {
         this.observed.add(element);
         if (this.observer) this.observer.observe(element);
@@ -38,15 +41,15 @@ const surfaceMotion = {
     animation.finished.then(()=>{this.animations.delete(animation);motionController.measureSoon();},()=>this.animations.delete(animation));
   },
   cascade(elements) {
-    elements.forEach(element=>this.enter(element,0));
+    elements.forEach((element,index)=>this.enter(element,Math.min(index*85,340)));
   },
   enter(element, delay=0) {
     if(!element || element.closest('[hidden]') || typeof element.animate!=='function')return;
     this.revealed.add(element);if(REDUCED_MOTION.matches)return;
     this.track(element.animate([
-      {opacity:0},
-      {opacity:1}
-    ],{duration:240,delay,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
+      {opacity:0,translate:"0 18px"},
+      {opacity:1,translate:"0 0"}
+    ],{duration:620,delay,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
   },
   visibleElements() {
     const profile=state.route.screen==='profile';
