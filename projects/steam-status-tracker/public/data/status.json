@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-11-08T08:01:23.622Z",
+  "checkedAt": "2026-11-08T14:59:50.966Z",
   "monitoring": {
-    "previousCheckedAt": "2026-11-08T01:46:11.768Z",
-    "intervalSeconds": 22512
+    "previousCheckedAt": "2026-11-08T08:01:23.622Z",
+    "intervalSeconds": 25107
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Qu`lon",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/3bfa56fb313d8195595da26ebef0657f519ae42f_full.jpg",
-    "status": "offline",
-    "personaState": "offline",
+    "status": "online",
+    "personaState": "online",
     "gameName": null,
     "gameId": null,
-    "lastLogoff": "2026-11-05T15:46:25.000Z"
+    "lastLogoff": "2026-11-08T13:45:49.000Z"
   }
 }
