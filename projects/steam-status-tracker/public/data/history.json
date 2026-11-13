@@ -1877,6 +1877,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-11-13T09:59:22.728Z",
+    "endedAt": "2026-11-13T17:37:04.458Z",
+    "durationSeconds": 27462
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Casualties: Unknown",
+    "gameId": "4576490",
+    "startedAt": "2026-11-13T17:37:04.458Z",
     "endedAt": null,
     "durationSeconds": null
   }
