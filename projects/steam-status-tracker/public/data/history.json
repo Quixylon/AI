@@ -1886,6 +1886,15 @@
     "gameName": "Casualties: Unknown",
     "gameId": "4576490",
     "startedAt": "2026-11-13T17:37:04.458Z",
+    "endedAt": "2026-11-13T22:50:50.693Z",
+    "durationSeconds": 18826
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "Counter-Strike 2",
+    "gameId": "730",
+    "startedAt": "2026-11-13T22:50:50.693Z",
     "endedAt": null,
     "durationSeconds": null
   }
