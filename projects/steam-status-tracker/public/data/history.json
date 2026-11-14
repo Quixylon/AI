@@ -1913,6 +1913,15 @@
     "gameName": "Casualties: Unknown",
     "gameId": "4576490",
     "startedAt": "2026-11-14T09:29:13.896Z",
+    "endedAt": "2026-11-14T15:59:11.321Z",
+    "durationSeconds": 23397
+  },
+  {
+    "status": "online",
+    "personaState": "online",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-11-14T15:59:11.321Z",
     "endedAt": null,
     "durationSeconds": null
   }

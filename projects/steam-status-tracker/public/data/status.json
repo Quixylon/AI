@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-11-14T09:29:13.896Z",
+  "checkedAt": "2026-11-14T15:59:11.321Z",
   "monitoring": {
-    "previousCheckedAt": "2026-11-14T02:44:34.999Z",
-    "intervalSeconds": 24279
+    "previousCheckedAt": "2026-11-14T09:29:13.896Z",
+    "intervalSeconds": 23397
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Фyppи фeмбoй",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/a4099371a4e8f692c6ae6ee2056e08dc289dd65b_full.jpg",
-    "status": "in-game",
+    "status": "online",
     "personaState": "online",
-    "gameName": "Casualties: Unknown",
-    "gameId": "4576490",
-    "lastLogoff": "2026-11-14T05:57:02.000Z"
+    "gameName": null,
+    "gameId": null,
+    "lastLogoff": "2026-11-14T09:55:25.000Z"
   }
 }
