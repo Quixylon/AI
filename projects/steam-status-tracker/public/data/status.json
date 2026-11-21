@@ -1,19 +1,19 @@
 {
   "configured": true,
-  "checkedAt": "2026-11-20T21:27:57.588Z",
+  "checkedAt": "2026-11-21T02:42:03.739Z",
   "monitoring": {
-    "previousCheckedAt": "2026-11-20T13:29:47.713Z",
-    "intervalSeconds": 28690
+    "previousCheckedAt": "2026-11-20T21:27:57.588Z",
+    "intervalSeconds": 18846
   },
   "player": {
     "steamId": "76561199524001992",
     "name": "Фyppи фeмбoй",
     "profileUrl": "https://steamcommunity.com/id/quixylon/",
     "avatar": "https://avatars.steamstatic.com/a4099371a4e8f692c6ae6ee2056e08dc289dd65b_full.jpg",
-    "status": "in-game",
-    "personaState": "online",
-    "gameName": "OBS Studio",
-    "gameId": "1905180",
-    "lastLogoff": "2026-11-20T16:18:16.000Z"
+    "status": "offline",
+    "personaState": "offline",
+    "gameName": null,
+    "gameId": null,
+    "lastLogoff": "2026-11-21T00:18:50.000Z"
   }
 }
