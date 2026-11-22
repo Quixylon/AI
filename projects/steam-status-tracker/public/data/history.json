@@ -2012,6 +2012,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-11-21T02:42:03.739Z",
+    "endedAt": "2026-11-22T09:58:45.789Z",
+    "durationSeconds": 112602
+  },
+  {
+    "status": "online",
+    "personaState": "online",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-11-22T09:58:45.789Z",
     "endedAt": null,
     "durationSeconds": null
   }
