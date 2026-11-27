@@ -2084,6 +2084,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-11-26T23:01:22.897Z",
+    "endedAt": "2026-11-27T14:40:00.931Z",
+    "durationSeconds": 56318
+  },
+  {
+    "status": "in-game",
+    "personaState": "online",
+    "gameName": "OBS Studio",
+    "gameId": "1905180",
+    "startedAt": "2026-11-27T14:40:00.931Z",
     "endedAt": null,
     "durationSeconds": null
   }
