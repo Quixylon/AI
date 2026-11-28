@@ -2102,6 +2102,15 @@
     "gameName": null,
     "gameId": null,
     "startedAt": "2026-11-27T22:56:46.000Z",
+    "endedAt": "2026-11-28T13:31:21.574Z",
+    "durationSeconds": 52476
+  },
+  {
+    "status": "snooze",
+    "personaState": "snooze",
+    "gameName": null,
+    "gameId": null,
+    "startedAt": "2026-11-28T13:31:21.574Z",
     "endedAt": null,
     "durationSeconds": null
   }
